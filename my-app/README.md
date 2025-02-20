@@ -1,6 +1,9 @@
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+and then install the following packages:
+npm install @react-three/fiber @react-three/drei three
+
 
 ## Available Scripts
 

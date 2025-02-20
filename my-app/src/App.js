@@ -1,25 +1,33 @@
-import logo from './logo.svg';
+import { Canvas } from '@react-three/fiber';
+import { useGLTF, OrbitControls } from '@react-three/drei';
 import './App.css';
+import model from './assets/earth.glb'; // Go up one folder from /src/components
 
-function App() {
+
+
+function Box() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <mesh>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color="orange" />
+    </mesh>
   );
 }
 
-export default App;
+function Model() {
+  const { scene } = useGLTF(model); // Load the converted model
+  return <primitive object={scene} scale={1} />;
+}
+
+export default function App() {
+  return (
+    <Canvas camera={{ position: [3, 3, 3] }}>
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5, 5, 5]} />
+      <Model />
+      <OrbitControls />
+    </Canvas>
+  );
+}
+
+
