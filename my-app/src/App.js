@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls } from "@react-three/drei";
-import { useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 import "./App.css";
 import model from "./assets/earth.glb"; // Earth model
@@ -10,19 +10,19 @@ const ORBIT_SPEED = 0.02; // Speed of orbit
 const DESCALE_FACTOR = 0.3; 
 const ZOOM_THRESHOLD = 80; // Distance at which we switch views
 
-function Earth({ isAlternateView }) {
+function Earth({ isAlternateView, currentTime }) {
   const { scene } = useGLTF(model);
   const [angle, setAngle] = useState(0);
 
   useFrame((state, delta) => {
     if (!isAlternateView) {
-      setAngle((prev) => prev + delta * ORBIT_SPEED);
+      const angle = - currentTime * ORBIT_SPEED;
 
       // Compute Earth position using circular motion
       const x = ORBIT_RADIUS * Math.cos(angle);
       const y = ORBIT_RADIUS * Math.sin(angle);
 
-      scene.position.set(x, 0, y);
+      scene.position.set(-x, 0, -y);
     } else {
       scene.position.set(0, 0, 0);
     }
@@ -42,15 +42,37 @@ function Satellite({ isAlternateView }) {
   );
 }
 
-function AlternateViewObjects({ isAlternateView }) {
-  if (!isAlternateView) return null; // Hide these objects when not in alternate view
+function AlternateViewObjects({ isAlternateView, currentTime }) {
+  
 
-  return (
-    <mesh rotation={[Math.PI / 2, 0, 0]}> {/* Rotate to lay flat on XY plane */}
-      <ringGeometry args={[ORBIT_RADIUS*DESCALE_FACTOR, ORBIT_RADIUS*DESCALE_FACTOR + 0.5, 64]} /> {/* Inner radius, outer radius, segments */}
-      <meshBasicMaterial color="white" opacity={0.5} transparent={true} side={THREE.DoubleSide} />
-    </mesh>
-  );
+  useFrame(() => {
+    // Calculate position of the marker sphere
+    const angle = - currentTime * ORBIT_SPEED;
+    const x = ORBIT_RADIUS * DESCALE_FACTOR * Math.cos(angle);
+    const y = ORBIT_RADIUS * DESCALE_FACTOR * Math.sin(angle);
+    
+    // Update marker position
+    if (markerRef.current) {
+      markerRef.current.position.set(x, 0, y);
+    }
+  });
+
+  const markerRef = useRef();
+  if (!isAlternateView) return null;
+  else {
+    return (
+        <>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[ORBIT_RADIUS*DESCALE_FACTOR, ORBIT_RADIUS*DESCALE_FACTOR + 0.5, 64]} />
+          <meshBasicMaterial color="white" opacity={0.5} transparent={true} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh ref={markerRef}>
+          <sphereGeometry args={[1, 32, 32]} />
+          <meshStandardMaterial color="red" />
+        </mesh>
+      </>
+    );
+  }
 }
 
 // ✅ This component runs inside <Canvas> and correctly manages zoom level
@@ -74,6 +96,7 @@ export default function App() {
   const [isEditingMin, setIsEditingMin] = useState(false);
   const [isEditingMax, setIsEditingMax] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
 
   const handleKeyPress = (e, type) => {
     if (e.key === 'Enter') {
@@ -93,18 +116,52 @@ export default function App() {
     setIsPlaying(!isPlaying);
   };
 
+  const handleSliderChange = (e) => {
+    setCurrentTime(parseFloat(e.target.value));
+  };
+
+  // Calculate step size as 1/1000th of the range
+  const stepSize = (parseFloat(maxValue) - parseFloat(minValue)) / 1000;
+
+  useEffect(() => {
+    let intervalId;
+    
+    if (isPlaying) {
+      intervalId = setInterval(() => {
+        setCurrentTime((prevTime) => {
+          const newTime = prevTime + 0.05; // Update every 100ms
+          // If we reach max, loop back to min
+          return newTime > parseFloat(maxValue) ? parseFloat(minValue) : newTime;
+        });
+      }, 50);
+    }
+
+    // Cleanup interval on component unmount or when isPlaying changes
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isPlaying, maxValue, minValue]);
+
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-      <Canvas camera={{ position: [20, 20, 20] }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[5, 5, 5]} />
+    <Canvas camera={{ position: [20, 20, 20] }}>
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5, 5, 5]} />
 
-        {/* Runs inside Canvas to detect zoom changes */}
-        <CameraManager setIsAlternateView={setIsAlternateView} />
+      {/* Runs inside Canvas to detect zoom changes */}
+      <CameraManager setIsAlternateView={setIsAlternateView} />
 
-        <Earth isAlternateView={isAlternateView} />
-        <Satellite isAlternateView={isAlternateView} />
-        <AlternateViewObjects isAlternateView={isAlternateView} />
+      <Earth 
+        isAlternateView={isAlternateView} 
+        currentTime={currentTime} 
+      />
+      <Satellite isAlternateView={isAlternateView} />
+      <AlternateViewObjects 
+        isAlternateView={isAlternateView} 
+        currentTime={currentTime}
+      />
 
         <OrbitControls />
       </Canvas>
@@ -130,7 +187,9 @@ export default function App() {
           type="range"
           min={parseFloat(minValue)}
           max={parseFloat(maxValue)}
-          defaultValue={parseFloat(minValue)}
+          step={stepSize}
+          value={currentTime}
+          onChange={handleSliderChange}
           className="time-slider"
         />
         <input
@@ -141,6 +200,6 @@ export default function App() {
           onKeyDown={(e) => handleKeyPress(e, 'max')}
         />
       </div>
-    </div>
+  </div>
   );
 }

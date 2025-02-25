@@ -90,21 +90,22 @@
   border-width: 10px 0 10px 15px;
   border-color: transparent transparent transparent white;
   margin-left: 3px;
+  background: transparent; /* Ensure transparency */
 }
 
 .pause-icon {
   display: flex;
   gap: 4px;
-  height: 15px; /* Match height of pause bars */
+  height: 15px;
   align-items: center;
   justify-content: center;
-  margin-left: 0; /* Remove any default margin */
+  background: transparent; /* Ensure transparency */
 }
 
 .pause-icon span {
   width: 5px;
   height: 15px;
   background-color: white;
-  display: inline-block; /* Ensure consistent rendering */
+  display: inline-block;
 }
 
