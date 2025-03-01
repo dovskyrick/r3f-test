@@ -1,0 +1,13 @@
+.earth-view-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #000;
+} 
+
+canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+} 
