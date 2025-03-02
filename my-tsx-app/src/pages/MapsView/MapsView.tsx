@@ -32,6 +32,107 @@ const MapPlane = () => {
   );
 };
 
+// Grid lines component for meridians and parallels
+const GridLines = () => {
+  const { scene } = useThree();
+  const texture = useLoader(THREE.TextureLoader, mapImage);
+  
+  // Calculate aspect ratio to size the plane correctly
+  const aspectRatio = texture.image ? texture.image.width / texture.image.height : 2;
+  
+  // Set the plane width and height based on aspect ratio
+  const planeWidth = 10; // Base width
+  const planeHeight = planeWidth / aspectRatio;
+  
+  // Create grid lines on component mount
+  useEffect(() => {
+    // Create a material for grid lines - red with higher opacity
+    const lineMaterial = new THREE.LineBasicMaterial({ 
+      color: 0xff0000, 
+      transparent: true, 
+      opacity: 0.8
+    });
+    
+    // Create meridian (vertical line through center)
+    const meridianGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, -planeHeight/2, 0.01), // Slight offset in z to prevent z-fighting
+      new THREE.Vector3(0, planeHeight/2, 0.01)
+    ]);
+    const meridianLine = new THREE.Line(meridianGeometry, lineMaterial);
+    scene.add(meridianLine);
+    
+    // Create equator (horizontal line through center)
+    const equatorGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-planeWidth/2, 0, 0.01),
+      new THREE.Vector3(planeWidth/2, 0, 0.01)
+    ]);
+    const equatorLine = new THREE.Line(equatorGeometry, lineMaterial);
+    scene.add(equatorLine);
+    
+    // Add longitude grid lines (vertical lines)
+    // We'll add lines at 30-degree intervals (-180 to 180 degrees)
+    const longitudeLines: THREE.Line[] = [];
+    
+    // Calculate spacing between longitude lines
+    // Map width represents 360 degrees of longitude
+    const lonSpacing = planeWidth / 12; // 12 segments for 30-degree intervals
+    
+    for (let i = -5; i <= 5; i++) {
+      if (i === 0) continue; // Skip the prime meridian as we already added it
+      
+      const x = i * lonSpacing;
+      const lonGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x, -planeHeight/2, 0.01),
+        new THREE.Vector3(x, planeHeight/2, 0.01)
+      ]);
+      // Secondary grid lines also red but more transparent
+      const lonLine = new THREE.Line(lonGeometry, new THREE.LineBasicMaterial({ 
+        color: 0xff0000, 
+        transparent: true, 
+        opacity: 0.6
+      }));
+      scene.add(lonLine);
+      longitudeLines.push(lonLine);
+    }
+    
+    // Add latitude grid lines (horizontal lines)
+    // We'll add lines at 30-degree intervals (-90 to 90 degrees)
+    const latitudeLines: THREE.Line[] = [];
+    
+    // Calculate spacing between latitude lines
+    // Map height represents 180 degrees of latitude
+    const latSpacing = planeHeight / 6; // 6 segments for 30-degree intervals
+    
+    for (let i = -2; i <= 2; i++) {
+      if (i === 0) continue; // Skip the equator as we already added it
+      
+      const y = i * latSpacing;
+      const latGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-planeWidth/2, y, 0.01),
+        new THREE.Vector3(planeWidth/2, y, 0.01)
+      ]);
+      // Secondary grid lines also red but more transparent
+      const latLine = new THREE.Line(latGeometry, new THREE.LineBasicMaterial({ 
+        color: 0xff0000, 
+        transparent: true, 
+        opacity: 0.6
+      }));
+      scene.add(latLine);
+      latitudeLines.push(latLine);
+    }
+    
+    // Cleanup on component unmount
+    return () => {
+      scene.remove(meridianLine);
+      scene.remove(equatorLine);
+      longitudeLines.forEach(line => scene.remove(line));
+      latitudeLines.forEach(line => scene.remove(line));
+    };
+  }, [scene, planeWidth, planeHeight]);
+  
+  return null; // This component doesn't render anything directly
+};
+
 // Fallback component to show while assets are loading
 const LoadingFallback = () => {
   return (
@@ -49,9 +150,9 @@ const MapControls = () => {
   const [lastPosition, setLastPosition] = useState({ x: 0, y: 0 });
   
   // Min and max zoom levels
-  const MIN_ZOOM = 50;
+  const MIN_ZOOM = 150;
   const MAX_ZOOM = 1000;
-  const ZOOM_STEP = 50;
+  const ZOOM_STEP = 5; // Reduced from 50 to 5 for more gradual zooming
 
   // Set up event listeners for panning
   useEffect(() => {
@@ -87,8 +188,13 @@ const MapControls = () => {
       // Get the current zoom value
       const orthoCam = camera as THREE.OrthographicCamera;
       
-      // Calculate new zoom based on wheel direction
-      let newZoom = orthoCam.zoom + (e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
+      // Calculate a more gradual zoom change based on current zoom level
+      // This makes zooming smoother at different zoom levels
+      const zoomFactor = orthoCam.zoom / 200; // Makes zoom step proportional to current zoom
+      const zoomChange = Math.max(1, zoomFactor * ZOOM_STEP);
+      
+      // Calculate new zoom based on wheel direction with more gradual change
+      let newZoom = orthoCam.zoom + (e.deltaY < 0 ? zoomChange : -zoomChange);
       
       // Clamp zoom between min and max values
       newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
@@ -138,15 +244,10 @@ const MapsView: React.FC = () => {
         <directionalLight position={[0, 0, 10]} intensity={1} />
         <directionalLight position={[0, 0, -10]} intensity={0.5} />
         
-        {/* Grid helper for better spatial reference */}
-        <gridHelper args={[20, 20]} />
-        
-        {/* Axes to help with orientation */}
-        <axesHelper args={[5]} />
-        
         {/* Map plane with suspense for loading */}
         <Suspense fallback={<LoadingFallback />}>
           <MapPlane />
+          <GridLines />
         </Suspense>
         
         {/* Custom controls for panning and zooming */}

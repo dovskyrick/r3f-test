@@ -32,3 +32,51 @@ Both views share the same time control slider to synchronize the satellite posit
 
 - Use mouse to rotate, zoom, and pan the camera
 - Zooming out beyond a certain threshold will switch to the alternate view showing the orbit path
+
+# React Three Fiber Map Application
+
+This project implements an interactive map visualization using React Three Fiber, allowing users to explore geographical coordinates in 3D space.
+
+## Features Implemented
+
+- 3D map visualization with orthographic camera
+- Smooth panning controls
+- Gradual mouse wheel zooming with adaptive sensitivity
+- Map grid lines showing meridians (longitude) and parallels (latitude)
+  - Prime meridian (0° longitude) highlighted in center
+  - Equator (0° latitude) highlighted in center
+  - Additional grid lines at 30° intervals
+
+## Next Feature to Implement
+
+### Keyboard Mode Switching (H/P Keys)
+
+The next feature to implement is keyboard-based mode switching between panning and coordinate pointing:
+
+1. **H Key - Pan Mode**
+   - When the user presses the 'H' key, the application switches to "pan mode"
+   - In this mode, mouse dragging pans the map view (default behavior)
+   - The cursor should change to indicate pan functionality (e.g., grab cursor)
+
+2. **P Key - Pointer Mode** 
+   - When the user presses the 'P' key, the application switches to "pointer mode"
+   - In this mode, clicking on the map displays the latitude/longitude coordinates of the clicked point
+   - The cursor should change to indicate the coordinate selection functionality (e.g., crosshair)
+   - Coordinates should be displayed in a small info panel near the click point
+
+3. **Implementation Requirements**
+   - Add state tracking for the current mode (pan or pointer)
+   - Implement keyboard event listeners for 'H' and 'P' keys
+   - Create visual feedback to indicate the current mode
+   - Calculate accurate lat/long coordinates based on click position relative to the map
+   - Create a UI element to display the selected coordinates
+
+This feature will enhance the interactive experience by allowing users to easily switch between navigating the map and retrieving specific geographical coordinates.
+
+## Future Enhancements
+
+After implementing mode switching, potential future enhancements include:
+- Adding satellite tracking visualization
+- Implementing time-based animation controls
+- Adding the ability to save and label points of interest
+- Enhancing the visual appearance with additional map overlays
