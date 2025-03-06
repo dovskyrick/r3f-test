@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  godot-api:
+    build:
+      context: .
+      args:
+        GIT_USERNAME: ${GIT_USERNAME}
+        GIT_TOKEN: ${GIT_TOKEN}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+    environment:
+      - LOG_LEVEL=INFO
+    restart: unless-stopped 

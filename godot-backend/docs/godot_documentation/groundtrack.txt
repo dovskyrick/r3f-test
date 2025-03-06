@@ -1,0 +1,130 @@
+
+Sentinel 1 post-processing example
+
+This example shows how to plot the ground track of a satellite, in our case using Sentinel 1 trajectory. It also showcases how to detect when the satellite subsurface point is over a specific region.
+
+First we import numpy and the plotting module.
+
+%matplotlib inline
+import numpy as np
+import matplotlib.pyplot as plt
+
+Then we import GODOT modules and create a universe from configuration.
+
+from godot.core import num, tempo, astro
+from godot import cosmos
+
+# optionally avoid verbose logging messages
+import godot.core.util as util
+util.suppressLogger()
+
+# create the universe
+uni_config = cosmos.util.load_yaml('universe.yml')
+uni = cosmos.Universe(uni_config)
+
+We can inspect the loaded trajectory for Sentinel 1, range of the data and create grid.
+
+sent1 = uni.frames.pointId("Sentinel_1")
+blocks = uni.frames.blocks(sent1, True)
+assert(len(blocks)==1)
+start = blocks[0].range.start()
+end = start + 1 * tempo.SecondsInDay
+ran = tempo.EpochRange(start, end)
+print(start)
+print(end)
+
+2021-03-26T21:01:09.185641 TDB
+2021-03-27T21:01:09.185641 TDB
+
+We define a function that computes the subsatellite point for a specific epoch
+
+def subsat_point(epoch):
+    pos = uni.frames.vector3("Earth", "Sentinel_1", "ITRF", epoch)
+    pol = astro.sphericalFromCart(pos) # [radius, longitude, latitude]
+    return pol[1:] # [longitude, latitude]
+
+Then we can generate these in polar coordinates for our grid, for every 15 seconds.
+
+grid = ran.createGrid(15.0)
+points = np.asarray([subsat_point(e) for e in grid])
+
+Finally, we can plot the results.
+
+img = plt.imread("Earth.png")
+fig = plt.figure(figsize=(9, 5))
+
+plt.title('Sentinel 1 ground track')
+plt.xlabel('Latitude (deg)')
+plt.ylabel('Longitude (deg)')
+
+plt.imshow(img, extent=[-180, 180, -90, 90], alpha=0.5)
+plt.plot(num.Rad * points[:, 0], num.Rad * points[:, 1], '.', markersize=2)
+
+darm = np.asarray([8.6512, 49.8728]) # Darmstadt
+plt.plot([darm[0]], [darm[1]], 'o', label="Darmstadt")
+plt.legend()
+
+plt.xlim([-180, 180])
+plt.ylim([-90, 90])
+plt.xticks(np.linspace(-180, 180, 13))
+plt.yticks(np.linspace(-90, 90, 7))
+plt.tight_layout()
+
+We create a time evaluable that computes the geographical distance (not suitable for locations near the poles).
+
+from godot.model import common
+
+class DistanceFromLocation(common.ScalarTimeEvaluable):
+    def __init__(self, coords):
+        common.ScalarTimeEvaluable.__init__(self)
+        self.__coords = coords
+
+    def eval(self, epoch):
+        pt = subsat_point(epoch)
+        delta = pt - self.__coords
+        dist = np.linalg.norm(delta)
+        return dist
+
+from godot.model import eventgen
+
+target = np.asarray([8.6512 / num.Rad, 49.8728 / num.Rad]) # Darmstadt
+model = DistanceFromLocation(target)
+max_dist = 5 / num.Rad
+func = model - max_dist
+eps = 1e-6
+tol = 1e-6
+
+generator = eventgen.EventGenerator(-func, eps, tol) # pass negative of the function, we want < 5 deg
+
+event_grid = ran.contract(eps).createGrid(600.0)
+visib = generator.computeEventIntervals(event_grid)
+print(visib)
+
+2021-03-27T06:07:02.993030 TDB  -1.670344418e-11 +++ {} - 2021-03-27T06:09:37.884387 TDB  -3.204403409e-11 +++ {}
+
+
+fig = plt.figure(figsize=(9, 5))
+
+plt.title('Sentinel 1 ground track and visibility')
+plt.xlabel('Latitude (deg)')
+plt.ylabel('Longitude (deg)')
+
+plt.imshow(img, extent=[-180, 180, -90, 90], alpha=0.5)
+plt.plot(num.Rad * points[:, 0], num.Rad * points[:, 1], '.', markersize=2)
+plt.plot([darm[0]], [darm[1]], 'o', label="Darmstadt")
+
+for i, entry in enumerate(visib):
+    ran_visib = tempo.EpochRange(entry.start().value(), entry.end().value())
+    grid_visib = ran_visib.createGrid(15.0)
+    points_visib = np.asarray([subsat_point(e) for e in grid_visib])
+    plt.plot(num.Rad * points_visib[:, 0], num.Rad * points_visib[:, 1], '-', linewidth=5, label="Overflight " + str(i + 1))
+
+#plt.xlim([num.Rad * target[0] - 5, num.Rad * target[0] + 5])
+#plt.ylim([num.Rad * target[1] - 5, num.Rad * target[1] + 5])
+plt.xlim([-180, 180])
+plt.ylim([-90, 90])
+plt.xticks(np.linspace(-180, 180, 13))
+plt.yticks(np.linspace(-90, 90, 7))
+plt.tight_layout()
+plt.legend()
+

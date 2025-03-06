@@ -1,0 +1,372 @@
+.. _hhgtg:
+
+
+Hitchhiker's Guide to GODOT
+############################
+
+GODOT is a set of libraries which perform many tasks related to astrodynamics. There is a lot of it
+and it can be disconcerting to new users. 
+
+.. raw:: html
+
+    <style> .red {color:#aa0042; font-weight:bold; font-size:16px} </style>
+
+.. role:: red
+
+:red:`Don’t panic!`
+
+We have written an overview of the software  which will allow users to get their bearings. A hitchhiker’s
+guide to GODOT if you like.
+
+Starting from the GODOT root directory, notice the software is organized into several directories.
+
+* **godot** contans all of the C++ stuff we wrote
+* **pybind** contains the python interface libraries. We also wrote this.
+* **ext** contains the third party software is collected here. This is code from external sources.
+
+In this guide we will concentrate on the godot directory.
+
+The godot directory contains three sub directories. We will discuss each of these in turn.
+
+What's in a Library
+-------------------
+
+First a very quick look at what's in a library.
+
+Each library folder contains source files, a tests directory and a Makefile. These make up a library. 
+
+They are either compiled into a shared object library or, if they are a `template <https://en.wikipedia.org/wiki/Template_%28C%2B%2B%29>`_ library of 
+header only files, they make up a template library whose elements are included in other libraries' compiled code.
+
+The tests directory contains at least a unit subdirectory which hosts the unit test programs for the library.
+Sometimes there are other test directories e.g. comp or perf. The tests are run automatically on request as part of 
+the build process.
+
+The API (application programming interface) of each library is documented in the source files. This is then automatically converted using doxygen so that you can read it 
+as part of this documentation. Look for the API entry in the contents.
+
+Core Layer
+----------
+
+The core library folder contains many subdirectories. Each of these contains a library. 
+The core libraries may depend on each other and on the third party libraries.
+
+The core libraries do not have any particular coherent pattern. Each library implements an API which is peculiar to
+that library, and the structure of the software is particular to each library.
+
+* **Astro** Basic astrodynamics computation.
+* **Atmos** Planetary atmospheres.
+* **Autodif** Automatic differentiation, see :ref:`here <autodif_ug>`
+* **Constants** Constants collection
+* **Ephem** Planetary ephemeris access. Uses CALCEPH
+* **Estim** SRIF estimation library, uses lapack and
+* **Events** Event computation library, see :ref:`here <events_ug>`
+* **Integ** Numerical integration of ODEs
+* **Ipfwrap** Local wrapper for FD interpolation library.
+* **Linalg** Linear algebra interface for EIGEN.
+* **Num** Numerical utilities
+* **Orient** Planet and Earth orientation.
+* **Provider** File access library.
+* **Query** Query library for database access.
+* **Tempo** Time, see :ref:`here <tempo_ug>`
+* **Typetraits** Basic definitions for template libraries
+* **Util** A collection of useful utilities
+
+There is a lot of stuff here. Some of these libraries have their own users' guide which you are encouraged to read. 
+Others, although important, are intentionally hidden from the user. For some we will add documentation at a later date.
+
+Model layer
+-----------
+
+The model subdirectory is where the modelling software lives. These libraries are used to perform specific 
+computations needed for astrodynamics, e.g. dynamic models, orbit propagation, observation modelling, 
+geometry modelling, reference frame computations.
+
+* **Interface** The collection of interfaces implemented by the models
+* **Common** Common functionality
+* **Stations** Tracking station data book.
+* **Spacecraft** Spacecraft data book
+* **Dyn** Dynamics models
+* **Frames** :ref:`Reference frames <frames_ug>`
+* **Geometry** Geometry classes for events and propagation
+* **Gravity** :ref:`Gravity computations <gravity_ug>`
+* **Obs** :ref:`Observation models <obs_ug>`
+* **Prop** :ref:`ODE solution propagation <propagator_ug>`
+
+.. _hhgtg_functionalProgramming:
+
+Model Based Programming
+=======================
+
+The main design feature about these libraries is that they implement specific interfaces so that they can 
+make use of each other and applications can make use of them in a very flexible way.
+
+This can be thought of as a kind of model based programming scheme. This means that typically, when you construct an object, instead of passing the values of the inputs you instead pass
+an object (implementing a certain interface) which can be evaluated to get the input needed. 
+
+The most common interface family is TimeEvaluable.
+
+A TimeEvaluable class is one which implements `godot.model.interface.TimeEvaluableT<Size>`.
+It can be ScalarTimeEvaluable or VectorTimeEvaluable. There are different types
+for different dimension of Vector and Matrix TimeEvaluable (e.g. :py:class:`godot.model.interface.Vector3TimeEvaluable`).
+
+What this means is simply that if a class implements the :py:class:`godot.model.interface.ScalarTimeEvaluable` it must 
+have a pair of *eval* methods which take a time and returns a scalar.
+
+.. code:: cpp
+
+    double x = object.eval(epoch)
+
+    autodif::xdouble x = object.eval(xepoch)
+
+where *epoch* and *xepoch* are time objects with and without partial derivatives.
+
+How does this bring flexibility? Suppose you are writing a :py:class:`godot.model.interface.ScalarTimeEvaluable` class 
+which computes a simple area to mass ratio.
+
+Lets demonstrate the example in C++:
+
+.. code:: cpp
+
+    class AreaToMassRatio : public godot::model::interface::ScalarTimeEvaluable
+    {
+    public:
+
+        AreaToMassRatio ( double area, double mass ) :
+        area_(area),
+        mass_(mass)
+
+        double eval(tempo::Epoch epoch){ return eval_impl(epoch );  }
+
+        autodif::xdouble = object.eval(tempo::XEpoch epoch){ return eval_impl(epoch );  }
+
+    private:
+
+        template<typename S>
+        S eval_impl(tempo::Epoch<S>)
+        {
+            return area_/mass_;
+        }  
+
+        double area_;
+        double mass_;
+
+    };
+
+This fine, but suppose I wanted to change it so that the area was a function of time, e.g. a complex model based on 
+several polygons spinning in space?
+
+If I instead write
+
+.. code:: cpp
+
+    class AreaToMassRatio : public godot::model::interface::ScalarTimeEvaluable
+    {
+    public:
+        AreaToMassRatio ( ScalarTimeEvaluablePtr area, ScalarTimeEvaluablePtr mass ) :
+        area_(area),
+        mass_(mass)
+
+        double eval(tempo::Epoch epoch){ return eval_impl(epoch );  }
+
+        autodif::xdouble = object.eval(tempo::XEpoch epoch){ return eval_impl(epoch );  }
+
+    private:
+
+        template<typename S>
+        S eval_impl(tempo::Epoch<S>)
+        {
+            return area_->eval(epoch)/mass_->eval(epoch);
+        }  
+
+        ScalarTimeEvaluablePtr area_;
+        ScalarTimeEvaluablePtr mass_;
+
+    };
+
+Now I can create a :py:class:`godot.model.interface.ScalarTimeEvaluable` for the area , for the mass and the ratio. 
+I can use my :py:class:`godot.model.interface.ScalarTimeEvaluable` ratio class with a trivial constant area or a 
+complex area based on polygons and a rotating body.
+
+This means I can construct a more complex modelling by combining simpler models, and I can pass the final 
+complex model to another class, e.g. passing the RHS of the ODE to the propagator, without having to evaluate 
+any of the models in advance.
+
+We have tried to made the use of the time evaluable interface somewhat easier using operators and overloading 
+constructors of classes to allow time evaluables to be optionally constructed by the class which uses them.
+
+.. code:: cpp
+
+    godot::model::interface::ScalarTimeEvaluable s1; // ok you cant actually do this
+    godot::model::interface::ScalarTimeEvaluable s2; // ditto
+    double x=2;
+    autodif::xdouble xx(1.0);
+
+    res1 = s1 * x;
+    res2 = s1 + s2;
+    res3 = s1 + s2 * xx;
+
+     
+This is a simple example but imagine if the entire modelling system is written like this. It means that 
+generalization of the modelling and ease of extension and adaptation is greatly facilitated.
+
+
+Automatic differentiation and Parameters
+========================================
+
+We have seen that if a class implements the :py:class:`godot.model.interface.ScalarTimeEvaluable` it must 
+have a pair of *eval* methods, one for linalg computations and one for autodif computations. 
+From a user persective this means that the same objects and classes are used to do these different computations.
+
+One feature which might seem a bit obscure to new users is how partial derivatives are computed. You can look all day in the code 
+for partial derivative expressions, or numerical differentiation and find (almost) none. This is because the underlying mathematical operations themselves
+take care of this. You should read more about it :ref:`here <autodif_ug>`, it is fundamental to the entire design.
+
+Now, the objects which partial derivatives are computed with respect to are called leaves. Leaves are the final
+parameters in an automatic differentiation tree. There are several types of leaves that can be used. Two of the
+simplest are the :py:class:`godot.core.autodif.BasicLeaf` and :py:class:`godot.core.autodif.NamedLeaf`. Leaves are like an identifying
+tag which is kept track of during the computations. Every time an autodif operation is evaluated, 
+the chain rule is applied to update the partial derivatives of the output of the operation with respect to the leafs 
+tracked by the inputs.
+
+Now, we talked about model based programming concepts before. This means that all our modelling layer classes use as inputs (mostly) abstract things
+known as `godot::model::interface::TimeEvaluableT<Size>`. The classes are templates and either autodif or linalg types and Eigen matrices of both, can be used
+by all these classes. This means that we dont need to worry about what Parameters are right now. These we can define later, and as long as they are `godot::model::interface::TimeEvaluableT<Size>`
+classes, which make use of autodif leaves, they will work just fine.
+
+
+Frames
+======
+
+The other major aspect of the modelling which should be understood is the frames system. 
+There is a specific :ref:`user’s guide to frames <frames_ug>`, but the general concept is explained here.
+
+A frames object is a container to hold a collection of Points and Axes.
+
+An Axes is a coordinate axes defined by a rotation transform with respect to another parent Axes. 
+They form a tree with the root Axes the only one which does not have a parent. The root is usually the ICRF.
+
+A Point is a point in space which is defined by a translation transform in a particular Axes with respect to 
+a parent Point. They also form a tree with the parentless root usually being the SSB.
+
+The rotation and transform classes implement :py:class:`godot.model.interface.Rotation` and :py:class:`godot.model.interface.Translation`
+interfaces respectively, these are special types of time evaluable interface that handles time 
+derivatives as well as autodif partial derivatives and which perform the computation in place rather than return results 
+by value for efficiency.
+
+The frames system is constructed using helper functions. The helper functions can construct frames from:
+
+* An ephemeris file
+* A station book
+* An ipf orbit file
+* An ipf attitude file
+* The orient library from core
+* Rotating frames
+* ...the are more and more onthe way
+
+
+Once you have the frame you can use the frames interface to evaluate the state and time derivatives up to jerk (order 3) 
+and partial derivatives of translations and rotations of between any connected combination of Axes and Points.
+
+To use the frame system in a class or function it is necessary to pass a pointer to the frames and the points and/or axes 
+you want to use. The latter information can be in the form of names or Ids objects, which are typically used for efficiency.
+
+.. code:: cpp
+
+    linalg::Vector6 myFunction( frames::FramesPtr f, frames::PointId p1, frames::PointId p2, frames::AxesId ax, tempo::Epoch& epoch)
+    {
+        return f->vector< 1 >( p1, p2, ax , epoch );
+    }
+
+    linalg::Vector6 myFunction( frames::FramesPtr f, std::string p1, std::string p2, std::string ax, tempo::Epoch& epoch)
+    {
+        return f->vector< 1 >( f.pointId(p1), f.pointId(p2), f.axesId(ax), epoch );
+    }
+
+These two elements form the basis for understanding the model layer. Everything is based on this.
+
+Propagator
+==========
+
+It is worth looking at the propagator, it is such an important part of the system although it applies the above design 
+ideas rather than being an design idea in itself.
+
+The propagator allows you to solve the equations of motion for a spacecraft on its own, or a set of spacecraft, or the 
+Galilean moons, or a spinning comet with gravity torques, or the coupled orbit attitude motion of a piece of space debris, 
+or the mass or radiation dose accumulated by a spacecraft.
+
+As a user you have to prepare a :py:class:`godot.model.prop.InputVector` made up of :py:class:`godot.model.prop.ScalarInput`, :py:class:`godot.model.prop.PointInput`  
+:py:class:`godot.model.prop.AxesInput` and :py:class:`godot.model.prop.VectorInput` objects.
+
+Each of these inputs is constructed from various inputs including a right hand side (of the ODE you are solving) a time evaluable for 
+the initial value of the thing you are propagating, and a thing for getting the result, e.g. you can specify the frame system Point or
+Axes or a time evaluable for the propagated mass.
+
+Each type of input expects a certain type of TimeEvaluable right hand side, a PointInput requires a Vector3TimeEvaluable, a ScalarInput 
+requires a ScalarTimeEvaluable etc. The creation of the TimeEvaluables, how they are coupled with each other, how they combine other
+inputs and handle discontinuities is your business.
+
+The  right hand side (of the ODE you are solving) can contain Events which can force stops to the integration in the event of 
+model discontinuities, e.g. eclipses, manoeuvre starts etc. Each event is made up of a trigger, which determines when the event 
+occurs and an action to be taken when the trigger is fired. THe Events have to be registered with the propagator before the 
+propagation starts.
+
+The propagator inserts the resulting state or orientation into the frames system as a Point or Axes. 
+
+In the examples in the documentation there are quite a few interesting and fun examples of implementing propagations which complex and simple models.
+
+The Cosmos layer
+----------------
+
+Now that we fully grasp the concepts in the modelling layer we can move to the cosmos layer. Here is where the 
+implementation of the core and model layers is performed into a system for solving astrodynamics problems.
+
+We have talked about automatic differentiation and computing partial derivatives, but we have not defined 
+parameters until now. How can that be?
+
+A Parameter is a ScalarTimeEvaluable class which is therefore usable in the model layer. When you construct a Parameter
+you attach a unique Leaf to it. Think of the models connected to each other in a tree structure. The parameters are the 
+final points along the branches of that tree, the Leaf is a class which allows the parameters to be identified.
+
+The autodif library in core handles the computation of things which have partial derivatives, or gradients. The gradients
+are actually labelled and tracked in the computations by Leafs and therefore the gradient elements are also attributed 
+uniquely to Parameters via the Leaf.
+
+Having said that, normally the users shouldn’t need to worry about Leafs because the parameters are usually identified by
+a name as well. The Parameters are all stored in a ParameterBook, as long as the ParameterBook is used, the names of the 
+Parameters are also unique, so there is no problem.
+
+So, now we can pass parameters to any model which accepts a TimeEvaluable as input. We can also decide to track or not a 
+partial derivative element using the Parameter class.
+
+Now we can imagine the modelling with parameters. The Parameters are all stored in a ParameterBook.
+
+Next we can talk about Universes.
+
+Universe
+========
+
+Until now  we have talked about diverse models. When we build an application it is useful to collect these into one place,
+and provide the user with the means to construct, collect and evaluate these models. The Universe class is how this is 
+done in cosmos.
+
+You create a universe using a configuration file, this file will direct the software to build frames, dynamic models, parameters
+and all sorts of other things based on your input.
+
+The universe is made up of many plugin classes. Each is responsible for adding a certain collection of models to the universe.
+
+In the :ref:`cosmos guide <cosmos_ug>` a description of the universe and a detailed definition of the configuration file needed
+to create one is given. The way the application software usually works is based on a universe. Then you can have access to pretty 
+much everything you might ever need.
+
+Trajectory
+==========
+
+The trajectory class is also described in detail in the :ref:`cosmos guide <cosmos_ug>`.
+
+This class, like the universe, is created using a configuration file. The trajectory contains one or more propagations. The class handles
+the complexities of constructing the propagations for you. It also creates parameters based on you inputs for use in orbit determination or 
+optimisation applications.
+
+..  note::
+    to be continued
