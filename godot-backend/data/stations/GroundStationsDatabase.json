@@ -1,0 +1,575 @@
+{
+    "Bear_Lakes":
+    {
+        "stationAlias"                 :   ["BEAR_LAKES"],
+        "coordinates"                  :   ["2828.547498 km","2206.064086 km","5256.395991 km"],
+        "plateMotion"                  :   ["-1.4e-5 km/year","1.7e-5 km/year","1.2e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Canberra_34":
+    {
+        "stationAlias"                 :   ["DSS34"],
+        "stationComplex"               : "Canberra",
+        "coordinates"                  :   ["-4461.1471936996 km","2682.4392835214 km","-3674.3929674 km"],
+        "plateMotion"                  :   ["-3.66e-5 km/year","0.05e-5 km/year","4.54e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m",
+        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+    },
+    "Canberra_35":
+    {
+        "stationAlias"                 :   ["DSS35"],
+        "stationComplex"               : "Canberra",
+        "coordinates"                  :   ["-4461.2731850087 km","2682.5689669596 km","-3674.1519227 km"],
+        "plateMotion"                  :   ["-3.66e-5 km/year","0.05e-5 km/year","4.54e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Canberra_36":
+    {
+        "stationAlias"                 :   ["DSS36"],
+        "stationComplex"               : "Canberra",
+        "coordinates"                  :   ["-4461.168525 km","2682.814705 km","-3674.083742 km"],
+        "plateMotion"                  :   ["-3.66e-5 km/year","0.05e-5 km/year","4.54e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Canberra_42":
+    {
+        "stationAlias"                 :   ["DSS42"],
+        "stationComplex"               : "Canberra",
+        "coordinates"                  :   ["-4460.9814540347 km","2682.4135169029 km","-3674.581493 km"],
+        "plateMotion"                  :   ["-3.66e-5 km/year","0.05e-5 km/year","4.54e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "HA/DEC",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Canberra_43":
+    {
+        "stationAlias"                 :   ["DSS43"],
+        "stationComplex"               : "Canberra",
+        "coordinates"                  :   ["-4460.8949746696 km","2682.3615265457 km","-3674.7479625 km"],
+        "plateMotion"                  :   ["-3.66e-5 km/year","0.05e-5 km/year","4.54e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Canberra_45":
+    {
+        "stationAlias"                 :   ["DSS45"],
+        "stationComplex"               : "Canberra",
+        "coordinates"                  :   ["-4460.935676602 km","2682.7657043555 km","-3674.3808142 km"],
+        "plateMotion"                  :   ["-3.66e-5 km/year","0.05e-5 km/year","4.54e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Cebreros":
+    {
+        "stationAlias"                 :   ["CB11","CB12","CB13"],
+        "coordinates"                  :   ["4846.7338556 km","-370.1745339 km","4116.8790084 km"],
+        "plateMotion"                  :   ["-0.93e-5 km/year","1.92e-5 km/year","1.23e-5 km/year"],
+        "refEpoch"                     : "2011-05-21T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType": "AZ/EL",
+        "heightAboveAntennaFoot": "0.0 m",
+        "dryOffset": "-6.459 m",
+        "rangeCalLongLoopCorrection": {
+            "X_X": "-76.81 ns",
+            "X_Ka": "-73.06 ns",
+            "Ka_X": "-68.56 ns",
+            "Ka_Ka": "-71.22 ns"
+        },
+        "groupDelay": {
+            "transmit": {
+                "X": "0.000051 s",
+                "Ka": "0.000051 s"
+            },
+            "receive": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            }
+        },
+        "phaseDelay": {
+            "transmit": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            },
+            "receive": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            }
+        },
+        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+    },
+    "Goldstone_13":
+    {
+        "stationAlias"                 :   ["DSS13"],
+        "stationComplex"               : "Goldstone",
+        "coordinates"                  :   ["-2351.1126626803 km","-4655.5306184282 km","3660.9126875 km"],
+        "plateMotion"                  :   ["-1.56e-5 km/year","0.63e-5 km/year","-0.30e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Goldstone_14":
+    {
+        "stationAlias"                 :   ["DSS14"],
+        "stationComplex"               : "Goldstone",
+        "coordinates"                  :   ["-2353.6213988233 km","-4641.3414050126 km","3677.0522385 km"],
+        "plateMotion"                  :   ["-1.56e-5 km/year","0.63e-5 km/year","-0.30e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Goldstone_15":
+    {
+        "stationAlias"                 :   ["DSS15"],
+        "stationComplex"               : "Goldstone",
+        "coordinates"                  :   ["-2353.5389600013 km","-4641.6494081854 km","3676.6699412 km"],
+        "plateMotion"                  :   ["-1.56e-5 km/year","0.63e-5 km/year","-0.30e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Goldstone_24":
+    {
+        "stationAlias"                 :   ["DSS24"],
+        "stationComplex"               : "Goldstone",
+        "coordinates"                  :   ["-2354.9067147821 km","-4646.8400771239 km","3669.2422852 km"],
+        "plateMotion"                  :   ["-1.56e-5 km/year","0.63e-5 km/year","-0.30e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m",
+        "groupDelay": {
+            "transmit": {
+                "X": "0.000077 s"
+            },
+            "receive": {
+                "X": "0.000077 s"
+            }
+        },
+        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+    },
+    "Goldstone_25":
+    {
+        "stationAlias"                 :   ["DSS25"],
+        "stationComplex"               : "Goldstone",
+        "coordinates"                  :   ["-2355.0220180329 km","-4646.9531865292 km","3669.0405265 km"],
+        "plateMotion"                  :   ["-1.56e-5 km/year","0.63e-5 km/year","-0.30e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m",
+        "groupDelay": {
+            "transmit": {
+                "X": "0.000077 s"
+            },
+            "receive": {
+                "X": "0.000077 s"
+            }
+        }
+    },
+    "Goldstone_26":
+    {
+        "stationAlias"                 :   ["DSS26"],
+        "stationComplex"               : "Goldstone",
+        "coordinates"                  :   ["-2354.8908010583 km","-4647.1663107761 km","3668.8717147 km"],
+        "plateMotion"                  :   ["-1.56e-5 km/year","0.63e-5 km/year","-0.30e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m",
+        "groupDelay": {
+            "transmit": {
+                "X": "0.000077 s"
+            },
+            "receive": {
+                "X": "0.000077 s"
+            }
+        }
+    },
+    "Kalyazin":
+    {
+        "stationAlias"                 :   ["KALYAZIN"],
+        "coordinates"                  :   ["2731.191749 km","2126.199292 km","5339.538091 km"],
+        "plateMotion"                  :   ["-1.4e-5 km/year","1.7e-5 km/year","1.2e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Kiruna":
+    {
+        "stationAlias"                 :   [],
+        "coordinates"                  :   ["2251.5081710 km","862.6650400 km","5885.4778030 km"],
+        "plateMotion"                  :   ["-1.57e-5 km/year","1.10e-5 km/year","1.28e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Kourou":
+    {
+        "stationAlias"                 :   ["KO11","KO12"],
+        "coordinates"                  :   ["3839.7170150 km","-5059.4955070 km","579.8764430 km"],
+        "plateMotion"                  :   ["-0.56e-5 km/year","-0.13e-5 km/year","1.20e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "-3.323 m",
+        "rangeCalLongLoopCorrection"   : { "X_X": "-97.80 ns" },
+        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+
+    },
+    "Madrid_54":
+    {
+        "stationAlias"                 :   ["DSS54"],
+        "stationComplex"               : "Madrid",
+        "coordinates"                  :   ["4849.4344780942 km","-360.72389535149 km","4114.6188518 km"],
+        "plateMotion"                  :   ["-0.74e-5 km/year","1.92e-5 km/year","1.49e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m",
+        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+    },
+    "Madrid_55":
+    {
+        "stationAlias"                 :   ["DSS55"],
+        "stationComplex"               : "Madrid",
+        "coordinates"                  :   ["4849.5252463721 km","-360.606088513 km","4114.4951006 km"],
+        "plateMotion"                  :   ["-0.74e-5 km/year","1.92e-5 km/year","1.49e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Madrid_61":
+    {
+        "stationAlias"                 :   ["DSS61"],
+        "stationComplex"               : "Madrid",
+        "coordinates"                  :   ["4849.245076195 km","-360.277943772 km","4114.8845996 km"],
+        "plateMotion"                  :   ["-0.74e-5 km/year","1.92e-5 km/year","1.49e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "HA/DEC",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Madrid_63":
+    {
+        "stationAlias"                 :   ["DSS63"],
+        "stationComplex"               : "Madrid",
+        "coordinates"                  :   ["4849.0924565822 km","-360.18033967808 km","4115.1092231 km"],
+        "plateMotion"                  :   ["-0.74e-5 km/year","1.92e-5 km/year","1.49e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Madrid_65":
+    {
+        "stationAlias"                 :   ["DSS65"],
+        "stationComplex"               : "Madrid",
+        "coordinates"                  :   ["4849.3396208002 km","-360.42765025574 km","4114.7507302 km"],
+        "plateMotion"                  :   ["-0.74e-5 km/year","1.92e-5 km/year","1.49e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Malargue":
+    {
+        "stationAlias"                 :   ["MG11","MG12","MG13"],
+        "coordinates"                  :   ["1823.3431678 km","-4850.4579615 km","-3708.9718558 km"],
+        "plateMotion"                  :   ["-1.813e-5 km/year","-1.818e-5 km/year","1.089e-5  km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m",
+        "rangeCalLongLoopCorrection": {
+            "X_X": "-70.71 ns",
+            "X_Ka": "-63.57 ns",
+            "Ka_Ka": "-69.12 ns"
+        },
+        "groupDelay": {
+            "transmit": {
+                "X": "0.000051 s",
+                "Ka": "0.000051 s"
+            },
+            "receive": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            }
+        },
+        "phaseDelay": {
+            "transmit": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            },
+            "receive": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            }
+        },
+        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+    },
+    "Malindi_2":
+    {
+        "stationAlias"                 :   ["ML11", "ML12"],
+        "coordinates"                  :   ["4865.3675950 km","4110.7557020 km","-331.0828340 km"],
+        "plateMotion"                  :   ["-1.72e-5 km/year","2.00e-5 km/year","1.67e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Malindi_X":
+    {
+        "stationAlias"                 :   ["MLX4","MLX5"],
+        "coordinates"                  :   ["4865.38103 km","4110.72637 km","-331.10629 km"],
+        "plateMotion"                  :   ["-1.72e-5 km/year","2.00e-5 km/year","1.67e-5 km/year"],
+        "refEpoch"                     : "2015-04-24T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m",
+        "rangeCalLongLoopCorrection": {
+            "X_X": "-267.9 ns"
+        },
+        "groupDelay": {
+            "transmit": {
+                "X": "0.000051 s",
+                "Ka": "0.000051 s"
+            },
+            "receive": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            }
+        }
+    },
+    "Maspalomas":
+    {
+        "stationAlias"                 :   ["MS11","MS12"],
+        "coordinates"                  :   ["5439.2273740 km","-1522.1189410 km","2953.3751450 km"],
+        "plateMotion"                  :   ["-0.39e-5 km/year","1.83e-5 km/year","1.49e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m",
+        "rangeCalLongLoopCorrection"   : { "X_X": "-97.80 ns" }
+    },
+    "New_Norcia":
+    {        
+        "stationAlias"                 :   ["NN11","NN12","NN13"],    
+        "coordinates"                  :   ["-2414.0671800 km","4907.8694200 km","-3270.6051280 km"],
+        "plateMotion"                  :   ["-4.79e-5 km/year","0.97e-5 km/year","4.98e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "-5.039 m",
+        "rangeCalLongLoopCorrection": {
+            "S_S": "-59.47 ns",
+            "S_X": "-59.77 ns",
+            "X_S": "-59.58 ns",
+            "X_X": "-59.87 ns"
+        },
+        "groupDelay": {
+            "transmit": {
+                "X": "0.000051 s",
+                "Ka": "0.000051 s"
+            },
+            "receive": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            }
+        },
+        "phaseDelay": {
+            "transmit": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            },
+            "receive": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            }
+        },
+        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+    },
+    "New_Norcia_Two":
+    {
+        "stationAlias"                 :   ["NN21", "NN22", "NNO2"],
+        "coordinates"                  :   ["-2413.8237462 km","4907.9564599 km","-3270.6746289 km"],
+        "plateMotion"                  :   ["-4.79e-5 km/year","0.97e-5 km/year","4.98e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "-7.995 m",
+        "groupDelay": {
+            "transmit": {
+                "X": "0.000051 s",
+                "Ka": "0.000051 s"
+            },
+            "receive": {
+                "X": "0.0 s",
+                "Ka": "0.0 s"
+            }
+        }
+    },
+    "Perth":
+    {
+        "stationAlias"                 :   ["PR11","PR12"],
+        "coordinates"                  :   ["-2368.6694075 km","4881.2982889 km","-3341.8527049 km"],
+        "plateMotion"                  :   ["-4.76e-5 km/year","0.83e-5 km/year","5.05e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m",
+        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+    },
+    "Uchinoura":
+    {
+        "stationAlias"                 :   ["UCHINOURA"],
+        "coordinates"                  :   ["-3586.22921967 km","4114.10375908 km","3290.22475032 km"],
+        "plateMotion"                  :   ["-3.158e-05 km/year","-7.360e-06 km/year","-1.147e-05 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Usuda":
+    {
+        "stationAlias"                 :   ["USUDA"],
+        "coordinates"                  :   ["-3855.35542231 km","3427.42743690 km","3740.97117214 km"],
+        "plateMotion"                  :   ["-3.12433e-05 km/year","-1.93384e-05 km/year","0.43580e-05 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "-7.988 m",
+        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+    },
+    "Vilspa_1":
+    {
+        "stationAlias"                 :   ["VL11", "VL12"],
+        "coordinates"                  :   ["4849.9158090 km","-335.0208500 km","4115.9331180 km"],
+        "plateMotion"                  :   ["-1.04e-5 km/year","2.02e-5 km/year","1.20e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Vilspa_2":
+    {
+        "stationAlias"                 :   ["VL21","VL22"],
+        "coordinates"                  :   ["4849.6993870 km","-335.0923080 km","4116.1955090 km"],
+        "plateMotion"                  :   ["-1.04e-5 km/year","2.02e-5 km/year","1.20e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Vilspa_4":
+    {
+        "stationAlias"                 :   ["VL41","VL42"],
+        "coordinates"                  :   ["4849.7776680 km","-335.0225430 km","4116.1015310 km"],
+        "plateMotion"                  :   ["-1.04e-5 km/year","2.02e-5 km/year","1.20e-5 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "AZ/EL",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    },
+    "Weilheim":
+    {
+        "stationAlias"                 :   [],
+        "coordinates"                  :   ["4206.112755 km","823.546267 km","4708.526790 km"],
+        "plateMotion"                  :   ["0 km/year","0 km/year","0 km/year"],
+        "refEpoch"                     : "2005-01-01T00:00:00.000 TDB",
+        "refCenter"                    : "Earth",
+        "refAxis"                      : "ITRF",
+        "mountingType"                 : "X'/Y'",
+        "heightAboveAntennaFoot"       : "0.0 m",
+        "dryOffset"                    : "0.0 m"
+    }
+}

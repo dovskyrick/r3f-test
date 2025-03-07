@@ -22,8 +22,9 @@ try:
 
     # Create the universe
     print("Loading universe configuration...")
-    #uni_config = cosmos.util.load_yaml('config/universe.yml')  # Adjust path as needed
-    uni = cosmos.Universe()
+    uni_config = cosmos.util.load_yaml('../config/universe_stella.yml')  # Adjust path as needed
+    print(uni_config)
+    uni = cosmos.Universe(uni_config)
 
     # Get satellite trajectory data
     print("Fetching Sentinel 1 trajectory data...")

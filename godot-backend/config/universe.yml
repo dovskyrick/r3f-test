@@ -1,0 +1,168 @@
+# file version number
+version: '3.0'
+
+# GCRS space time system
+spacetime:
+  system: GCRS
+
+ephemeris:
+  - name: de432
+    cache: false
+    files:
+      - share/test/unxp2000.405
+
+stations:
+  - name: earthStations
+    file: share/test/GroundStationsDatabase.json
+
+constants:
+  ephemeris:
+    - source: de432
+  data:
+    EarthGM: 398600.4415
+    MoonGM: 4902.8029535968
+
+frames:
+  - name: ephem1
+    type: Ephem
+    config:
+      source: de432
+  - name: ITRF
+    type: AxesOrient
+    config:
+      model: IERS2000
+      nutation: share/test/nutation2000A.ipf
+      erp: share/test/erp2000A.ipf
+  - name: TOD
+    type: AxesOrient
+    config:
+      model: TOD
+      nutation: share/test/nutation2000A.ipf
+      erp: share/test/erp2000A.ipf
+  - name: TEME
+    type: AxesOrient
+    config:
+      model: TEME
+      nutation: share/test/nutation2000A.ipf
+  - name: ITRFRef
+    type: AxesFrozen
+    config:
+      reference: ITRF
+      epoch: 2012-12-01T00:00:00 UTC
+  - name: stations1
+    type: Stations
+    config:
+      source: earthStations
+      points: false
+  - name: stations2
+    type: Stations
+    config:
+      source: earthStations
+      axes: false
+
+bodies:
+  - name: Earth
+    point: Earth
+    gravity:
+      - EarthGrav
+    gm: EarthGrav
+  - name: Sun
+    point: Sun
+  - name: Moon
+    point: Moon
+
+gravity:
+  - name: EMS
+    bodies:
+      - Sun
+      - Earth
+      - center: Moon
+        parent: Earth
+        barycenter: ''
+  - name: reforb
+    bodies:
+      - Earth # Only Earth's potential in Reference orbit generation
+
+atmosphere:
+  - config:
+      point: Earth
+      axes: ITRF
+      file: share/test/solmag.ipf
+    name: EarthAtmos
+    type: nrlmsise00
+
+sphericalHarmonics:
+  - name: EarthGrav
+    type: File
+    config:
+      point: Earth
+      degree: 36
+      order: 36
+      axes: ITRF
+      file: share/test/eigen05c_80_sha.tab
+
+dynamics:
+
+  - name: EMS_gravity
+    type: SystemGravity
+    config:
+      model: EMS
+
+  - name: EMS_srp
+    type: SimpleSRP
+    config:
+      occulters:
+        - Earth
+      mass: SC_mass
+      area: SC_srp_area
+      cr: SC_srp_cr
+
+  - name: EMS_drag
+    type: SimpleDrag
+    config:
+      atmosphere: EarthAtmos
+      mass: SC_mass
+      area: SC_drag_area
+      cd: SC_drag_cd
+
+  - name: EMS
+    type: Combined
+    config:
+      - EMS_gravity
+      - EMS_srp
+      - EMS_drag
+
+  - name: reforb_gravity
+    type: SystemGravity
+    config:
+      model: reforb
+
+  - name: reforb
+    type: Combined
+    config:
+      - reforb_gravity
+
+spacecraft:
+  - name: SC
+    mass: 2000.0 kg
+    srp:
+      area: 38.0 m^2
+      cr: srp_cr
+    drag:
+      area: 6.35 m^2
+      cd: drag_cd
+    thrusters:
+      - name: main
+        thrust: 1 N
+        isp: 320 s
+
+
+#! parameters
+parameters:
+  - name: drag_cd
+    type: Parameter
+    value: '3.5'
+  - name: srp_cr
+    type: Parameter
+    value: '1.2'
+#! parameters

@@ -11,6 +11,8 @@ services:
       - "8000:8000"
     volumes:
       - ./src:/app/src
+      - ./config:/app/config
+      - ./data:/app/data
     environment:
       - LOG_LEVEL=INFO
     restart: unless-stopped 
