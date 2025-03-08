@@ -33,6 +33,11 @@ RUN pip install --no-index --find-links=/app/wheels/ godot fastapi uvicorn pydan
 
 # Copy application code
 COPY ./src /app/src
+COPY ./config /app/config
+COPY ./data /app/data
+
+# Create a directory for outputs
+RUN mkdir -p /app/output
 
 # Expose the API port
 EXPOSE 8000

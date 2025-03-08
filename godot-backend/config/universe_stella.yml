@@ -66,7 +66,7 @@ sphericalHarmonics:
       degree: 32
       order: 32
       axes: ITRF
-      file: ../data/gravity/eigen05c_80_sha.tab
+      file: data/gravity/eigen05c_80_sha.tab
 #! sphericalHarmonics
 
 #! ephemeris
@@ -74,12 +74,12 @@ ephemeris:
   # Named ephemeris objects with files to load
   - name: de432 #de405
     files:
-      - ../data/ephemeris/unxp2000.405 #data/ephemeris/de432.jpl
+      - data/ephemeris/unxp2000.405 #data/ephemeris/de432.jpl
     cache: false # Do not load file to memory
   # Another ephemeris for constants, default is loading file contents to memory
   - name: gm431
     files:
-      - ../data/ephemeris/gm_de431.tpc
+      - data/ephemeris/gm_de431.tpc
 #! ephemeris
 
 #! spacecraft
@@ -104,7 +104,7 @@ atmosphere:
     config:
       point: Earth
       axes: ITRF # Atmosphere glued to Earth body-fixed frame
-      file: ../data/atmosphere/solmag.ipf # Use solar activity file
+      file: data/atmosphere/solmag.ipf # Use solar activity file
 #! atmosphere
 
 #! mappings
@@ -138,7 +138,7 @@ frames:
     type: AxesOrient
     config:
       model: IERS2000   # Earth body fixed model
-      nutation: ../data/orientation/nutation2000A.ipf   # Supply nutation interpolation file
+      nutation: data/orientation/nutation2000A.ipf   # Supply nutation interpolation file
       #erp: ''   # Use no pole correction
   # - name: stations
   #   type: Stations

@@ -9,11 +9,11 @@ ephemeris:
   - name: de432
     cache: false
     files:
-      - ../data/ephemeris/unxp2000.405
+      - data/ephemeris/unxp2000.405
 
 stations:
   - name: earthStations
-    file: ../data/stations/GroundStationsDatabase.json
+    file: data/stations/GroundStationsDatabase.json
 
 constants:
   ephemeris:
@@ -31,19 +31,19 @@ frames:
     type: AxesOrient
     config:
       model: IERS2000
-      nutation: ../data/orientation/nutation2000A.ipf
-      erp: ../data/orientation/erp2000A.ipf
+      nutation: data/orientation/nutation2000A.ipf
+      erp: data/orientation/erp2000A.ipf
   - name: TOD
     type: AxesOrient
     config:
       model: TOD
-      nutation: ../data/orientation/nutation2000A.ipf
-      erp: ../data/orientation/erp2000A.ipf
+      nutation: data/orientation/nutation2000A.ipf
+      erp: data/orientation/erp2000A.ipf
   - name: TEME
     type: AxesOrient
     config:
       model: TEME
-      nutation: ../data/orientation/nutation2000A.ipf
+      nutation: data/orientation/nutation2000A.ipf
   - name: ITRFRef
     type: AxesFrozen
     config:
@@ -87,7 +87,7 @@ atmosphere:
   - config:
       point: Earth
       axes: ITRF
-      file: ../data/atmosphere/solmag.ipf
+      file: data/atmosphere/solmag.ipf
     name: EarthAtmos
     type: nrlmsise00
 
@@ -99,7 +99,7 @@ sphericalHarmonics:
       degree: 36
       order: 36
       axes: ITRF
-      file: ../data/gravity/eigen05c_80_sha.tab
+      file: data/gravity/eigen05c_80_sha.tab
 
 dynamics:
 
