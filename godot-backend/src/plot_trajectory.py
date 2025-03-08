@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
 """
-Trajectory Propagation Example
+Trajectory Extraction Example
 
-This example shows how to propagate and plot a trajectory using the GODOT cosmos module.
+This script extracts XYZ trajectory points from a GODOT trajectory.
 Based on the tutorial at: https://godot.io.esa.int/godotpy/tutorials/optimisation/generate_trajectory.html
+but simplified to only output coordinate data.
 """
 
 # Load godot and numpy
 from godot.core import tempo
 from godot import cosmos
 import numpy as np
-import matplotlib.pyplot as plt
+import json
+import os
 
 # optionally avoid verbose logging messages
 import godot.core.util as util
 util.suppressLogger()
 
 def run_trajectory_example():
-    print("Starting trajectory propagation example...")
+    print("Starting trajectory point extraction...")
     
     try:
         # Load the universe configuration and create the universe object
@@ -35,6 +37,9 @@ def run_trajectory_example():
         print("Computing trajectory...")
         tra.compute(partials=False)
         
+        # Pause and wait for user input
+        input("Trajectory computed. Press Enter to continue...")
+        
         # After evaluating the trajectory, we can request the solutions of specific timeline elements
         print("Timeline solutions:")
         sol = tra.getTimelineSolution()
@@ -42,113 +47,149 @@ def run_trajectory_example():
             for item in entry:
                 print('%24s%15.6f' % (item.name, item.epoch.mjd()))
         
-        # For each propagation arc, we generate some plotting data for the position vector,
-        # propagated mass and accumulated delta-V
+
+        # Pause and wait for user input
+        input("")
+
+        # Extract trajectory points
+        print("Extracting trajectory points...")
         
-        # Plot the X-Y position components
-        print("Plotting X-Y trajectory...")
-        try:
-            # import godot.cosmos.show
-            
-            # 2D trajectory plot
-            plt.figure(figsize=(10, 8))
-            ax = cosmos.show.Axes(
-                projection=(cosmos.show.Dimension.SPACE, cosmos.show.Dimension.SPACE),
-                uni=uni,
-                origin="Earth",
-                axes="ICRF",
-            )
-            ax.plot(cosmos.show.FramePoint("Earth"), label="Earth")
-            ax.plot(tra, start="launch", end="arrival", step=100, add_timeline_legend=True)
-            ax.configure_axes(leg_outside=True)
-            plt.savefig('../data/trajectory_2d.png')
-            
-            # 3D trajectory plot
-            plt.figure(figsize=(10, 8))
-            ax = cosmos.show.Axes(
-                projection=(cosmos.show.Dimension.SPACE, cosmos.show.Dimension.SPACE, cosmos.show.Dimension.SPACE),
-                uni=uni,
-                origin="Earth",
-                axes="ICRF",
-            )
-            ax.plot(cosmos.show.FramePoint("Earth"), label="Earth")
-            ax.plot(tra, start="launch", end="arrival", step=100, add_timeline_legend=True)
-            ax.configure_axes(leg_outside=True)
-            plt.savefig('../data/trajectory_3d.png')
-            
-            # Mass evolution plot
-            plt.figure(figsize=(10, 6))
-            ax = godot_show.Axes(projection=(godot_show.Dimension.TIME, godot_show.Dimension.SCALAR))
-            ax.plot(uni.evaluables.get('GeoSat_mass'), label='GeoSat Mass', 
-                   start=tra.range().start(), end=tra.range().end())
-            ax.configure_axes(
-                dateformat="Calendar_Date",
-                ylabel="Mass [Kg]",
-                leg_outside=False,
-                leg_loc="best",
-            )
-            plt.savefig('../data/mass_evolution.png')
-            
-            # Delta-V evolution plot
-            plt.figure(figsize=(10, 6))
-            ax = godot_show.Axes(projection=(godot_show.Dimension.TIME, godot_show.Dimension.SCALAR))
-            ax.plot(uni.evaluables.get('GeoSat_dv'), label='GeoSat DV', 
-                   start=tra.range().start(), end=tra.range().end())
-            ax.configure_axes(
-                dateformat="Calendar_Date",
-                ylabel="DV [m/s]",
-                leg_outside=False,
-                leg_loc="best",
-            )
-            plt.savefig('../data/deltav_evolution.png')
-            
-            print("Plots saved to data directory.")
-            
-        except Exception as plotting_error:
-            print(f"Error during plotting: {plotting_error}")
-            
-            # Fall back to simple matplotlib plotting if godot.cosmos.show is unavailable
-            print("Attempting simplified plotting with matplotlib...")
-            
-            # Create a basic plot using trajectory data
-            # This is a very simplified approach compared to the original tutorial
-            plt.figure(figsize=(10, 8))
-            plt.title('Simplified Trajectory Plot')
-            plt.xlabel('X [km]')
-            plt.ylabel('Y [km]')
-            plt.grid(True)
-            
-            # Save the plot
-            plt.savefig('../data/simple_trajectory_plot.png')
-            print("Simplified plot saved to data directory.")
-            
-        print("Trajectory example completed successfully.")
+        # Get the start and end epochs
+        start_epoch = tra.range().start()
+        end_epoch = tra.range().end()
+        
+        # Create a time grid with 10 points between start and end
+        print(f"Creating time grid from {start_epoch} to {end_epoch}")
+        time_grid = tempo.EpochRange(start_epoch, end_epoch).createGrid(10)
+        
+
+        # Pause and wait for user input
+        input("")
+        # Extract trajectory points
+        trajectory_points = []
+        
+        for epoch in time_grid:
+            try:
+                # Get spacecraft position in ICRF frame
+                # "SC" is the spacecraft ID from the configuration
+                spacecraft_id = "SC_center"  # This ID matches what's in the config
+                position = uni.frames.vector3("Earth", spacecraft_id, "ICRF", epoch)
+                
+                # Extract x, y, z components
+                x, y, z = position[0], position[1], position[2]
+                
+                # Get epoch as string
+                epoch_str = str(epoch)
+                
+                # Store the point
+                point = {
+                    "epoch": epoch_str,
+                    "x": float(x),
+                    "y": float(y),
+                    "z": float(z),
+                    "mjd": epoch.mjd()
+                }
+                
+                trajectory_points.append(point)
+                
+                # Print every 10th point to console
+                if len(trajectory_points) % 10 == 0:
+                    print(f"Point {len(trajectory_points)}: Epoch = {epoch_str}, X = {x}, Y = {y}, Z = {z}")
+                    
+            except Exception as point_error:
+                print(f"Error getting position at {epoch}: {point_error}")
+        
+        # Save the trajectory points to a JSON file
+        output_dir = '../data'
+        os.makedirs(output_dir, exist_ok=True)
+        
+        output_file = os.path.join(output_dir, 'trajectory_points.json')
+        with open(output_file, 'w') as f:
+            json.dump(trajectory_points, f, indent=2)
+        
+        print(f"Trajectory points saved to {output_file}")
+        
+        # Also save as CSV for easy import
+        csv_file = os.path.join(output_dir, 'trajectory_points.csv')
+        with open(csv_file, 'w') as f:
+            f.write("epoch,mjd,x,y,z\n")
+            for point in trajectory_points:
+                f.write(f"{point['epoch']},{point['mjd']},{point['x']},{point['y']},{point['z']}\n")
+        
+        print(f"Trajectory points also saved to {csv_file}")
         return True
         
     except Exception as e:
         print(f"Error in trajectory example: {e}")
         
-        # Create a very simple fallback plot if GODOT fails
-        plt.figure(figsize=(10, 8))
-        plt.title('Example Trajectory (Simulated)')
+        # Create some dummy trajectory data as fallback
+        print("Generating fallback trajectory data...")
         
-        # Simulate a simple orbit
-        t = np.linspace(0, 2*np.pi, 100)
-        x = 42000 * np.cos(t)  # GEO orbit radius in km
-        y = 42000 * np.sin(t)
+        fallback_points = []
+        # Generate a simple circular orbit with 10 points (changed from 100)
+        t = np.linspace(0, 2*np.pi, 10)  # Changed from 100 to 10
+        radius = 7000  # LEO orbit radius in km (based on STELLA's position in config file)
         
-        plt.plot(x, y, '-', color='blue', linewidth=1.5)
-        plt.plot([0], [0], 'o', color='green', markersize=8, label='Earth')
-        plt.grid(True)
-        plt.axis('equal')
-        plt.xlabel('X [km]')
-        plt.ylabel('Y [km]')
-        plt.legend()
+        for i, angle in enumerate(t):
+            x = radius * np.cos(angle)
+            y = radius * np.sin(angle)
+            z = 0.0  # Planar orbit for simplicity
+            
+            point = {
+                "epoch": f"Point_{i}",
+                "mjd": 59500.0 + i/100.0,  # MJD close to STELLA date
+                "x": float(x),
+                "y": float(y),
+                "z": float(z)
+            }
+            fallback_points.append(point)
+            
+            # Print every 10th point
+            if i % 10 == 0:
+                print(f"Fallback Point {i}: X = {x}, Y = {y}, Z = {z}")
         
-        plt.savefig('../data/fallback_trajectory.png')
-        print("Fallback plot saved to data directory.")
+        # Save the fallback points
+        output_dir = '../data'
+        os.makedirs(output_dir, exist_ok=True)
         
+        output_file = os.path.join(output_dir, 'fallback_trajectory_points.json')
+        with open(output_file, 'w') as f:
+            json.dump(fallback_points, f, indent=2)
+            
+        print(f"Fallback trajectory points saved to {output_file}")
+        
+        # Also save as CSV
+        csv_file = os.path.join(output_dir, 'fallback_trajectory_points.csv')
+        with open(csv_file, 'w') as f:
+            f.write("epoch,mjd,x,y,z\n")
+            for point in fallback_points:
+                f.write(f"{point['epoch']},{point['mjd']},{point['x']},{point['y']},{point['z']}\n")
+                
+        print(f"Fallback trajectory points also saved to {csv_file}")
         return False
+
+def get_example_trajectory():
+    """Function to return trajectory points directly (for API use)"""
+    run_result = run_trajectory_example()
+    
+    # Try to load the generated trajectory points
+    try:
+        if run_result:
+            with open('../data/trajectory_points.json', 'r') as f:
+                return json.load(f)
+        else:
+            with open('../data/fallback_trajectory_points.json', 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading trajectory data: {e}")
+        # Generate and return minimal fallback data
+        return [
+            {"epoch": "Fallback_1", "mjd": 59500.0, "x": 7000.0, "y": 0.0, "z": 0.0},
+            {"epoch": "Fallback_2", "mjd": 59500.1, "x": 4949.7, "y": 4949.7, "z": 0.0},
+            {"epoch": "Fallback_3", "mjd": 59500.2, "x": 0.0, "y": 7000.0, "z": 0.0},
+            {"epoch": "Fallback_4", "mjd": 59500.3, "x": -4949.7, "y": 4949.7, "z": 0.0},
+            {"epoch": "Fallback_5", "mjd": 59500.4, "x": -7000.0, "y": 0.0, "z": 0.0}
+        ]
 
 if __name__ == "__main__":
     run_trajectory_example()

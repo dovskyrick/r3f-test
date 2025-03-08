@@ -1,7 +1,7 @@
 # Trajectory File
 
 settings:
-  steps: 10000000 # 100000 default value for the maximum number of steps the propagator will be allowed  to take
+  steps: 100000 # 100000 default value for the maximum number of steps the propagator will be allowed  to take
   stepper: 
     method: adams # numerical integration stepper method to use during propagation, MUST BE ONE OF: "rk787", "rk788", "adams"
   initialStep: 10 s # default value  for the initial step size of the propagator in each segment (control) point

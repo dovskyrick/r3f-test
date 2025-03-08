@@ -4,3 +4,6 @@ print(epoch)
 epoch = tempo.convert(tempo.TimeScale.TCB, epoch)
 print(epoch)
 
+import godot
+print(godot.__version__)
+print(dir(godot))  # See available modules

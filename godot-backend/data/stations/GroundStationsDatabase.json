@@ -23,7 +23,7 @@
         "mountingType"                 : "AZ/EL",
         "heightAboveAntennaFoot"       : "0.0 m",
         "dryOffset"                    : "0.0 m",
-        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+        "horizonMaskFile"              : "../data/stations/StationHorizonMasks.json"
     },
     "Canberra_35":
     {
@@ -127,7 +127,7 @@
                 "Ka": "0.0 s"
             }
         },
-        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+        "horizonMaskFile"              : "../data/stations/StationHorizonMasks.json"
     },
     "Goldstone_13":
     {
@@ -188,7 +188,7 @@
                 "X": "0.000077 s"
             }
         },
-        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+        "horizonMaskFile"              : "../data/stations/StationHorizonMasks.json"
     },
     "Goldstone_25":
     {
@@ -268,7 +268,7 @@
         "heightAboveAntennaFoot"       : "0.0 m",
         "dryOffset"                    : "-3.323 m",
         "rangeCalLongLoopCorrection"   : { "X_X": "-97.80 ns" },
-        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+        "horizonMaskFile"              : "../data/stations/StationHorizonMasks.json"
 
     },
     "Madrid_54":
@@ -283,7 +283,7 @@
         "mountingType"                 : "AZ/EL",
         "heightAboveAntennaFoot"       : "0.0 m",
         "dryOffset"                    : "0.0 m",
-        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+        "horizonMaskFile"              : "../data/stations/StationHorizonMasks.json"
     },
     "Madrid_55":
     {
@@ -373,7 +373,7 @@
                 "Ka": "0.0 s"
             }
         },
-        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+        "horizonMaskFile"              : "../data/stations/StationHorizonMasks.json"
     },
     "Malindi_2":
     {
@@ -462,7 +462,7 @@
                 "Ka": "0.0 s"
             }
         },
-        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+        "horizonMaskFile"              : "../data/stations/StationHorizonMasks.json"
     },
     "New_Norcia_Two":
     {
@@ -497,7 +497,7 @@
         "mountingType"                 : "AZ/EL",
         "heightAboveAntennaFoot"       : "0.0 m",
         "dryOffset"                    : "0.0 m",
-        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+        "horizonMaskFile"              : "../data/stations/StationHorizonMasks.json"
     },
     "Uchinoura":
     {
@@ -522,7 +522,7 @@
         "mountingType"                 : "AZ/EL",
         "heightAboveAntennaFoot"       : "0.0 m",
         "dryOffset"                    : "-7.988 m",
-        "horizonMaskFile"              : "data/database/StationHorizonMasks.json"
+        "horizonMaskFile"              : "../data/stations/StationHorizonMasks.json"
     },
     "Vilspa_1":
     {

@@ -1,19 +1,19 @@
 # file version number
 version: '3.0'
 
-# GCRS space time system
+# BCRS space time system (changed from GCRS to be compatible with TDB timescale)
 spacetime:
-  system: GCRS
+  system: BCRS
 
 ephemeris:
   - name: de432
     cache: false
     files:
-      - share/test/unxp2000.405
+      - ../data/ephemeris/unxp2000.405
 
 stations:
   - name: earthStations
-    file: share/test/GroundStationsDatabase.json
+    file: ../data/stations/GroundStationsDatabase.json
 
 constants:
   ephemeris:
@@ -31,19 +31,19 @@ frames:
     type: AxesOrient
     config:
       model: IERS2000
-      nutation: share/test/nutation2000A.ipf
-      erp: share/test/erp2000A.ipf
+      nutation: ../data/orientation/nutation2000A.ipf
+      erp: ../data/orientation/erp2000A.ipf
   - name: TOD
     type: AxesOrient
     config:
       model: TOD
-      nutation: share/test/nutation2000A.ipf
-      erp: share/test/erp2000A.ipf
+      nutation: ../data/orientation/nutation2000A.ipf
+      erp: ../data/orientation/erp2000A.ipf
   - name: TEME
     type: AxesOrient
     config:
       model: TEME
-      nutation: share/test/nutation2000A.ipf
+      nutation: ../data/orientation/nutation2000A.ipf
   - name: ITRFRef
     type: AxesFrozen
     config:
@@ -87,7 +87,7 @@ atmosphere:
   - config:
       point: Earth
       axes: ITRF
-      file: share/test/solmag.ipf
+      file: ../data/atmosphere/solmag.ipf
     name: EarthAtmos
     type: nrlmsise00
 
@@ -99,7 +99,7 @@ sphericalHarmonics:
       degree: 36
       order: 36
       axes: ITRF
-      file: share/test/eigen05c_80_sha.tab
+      file: ../data/gravity/eigen05c_80_sha.tab
 
 dynamics:
 
