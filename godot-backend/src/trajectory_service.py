@@ -1,9 +1,11 @@
-from godot.core import tempo
+from godot.core import tempo, astro
 from godot import cosmos
 import numpy as np
 import json
 import os
 import godot.core.util as util
+from typing import Tuple
+from .models import CartesianPoint, SphericalPoint, TrajectoryPoint
 
 # Suppress verbose logging
 util.suppressLogger()
@@ -27,6 +29,15 @@ def resolve_config_path(relative_path):
     # If we get here, no path worked
     print(f"Warning: Could not locate {relative_path} in any of the checked paths. Using original path.")
     return relative_path
+
+def cartesian_to_spherical(x: float, y: float, z: float) -> Tuple[float, float]:
+    """Convert cartesian coordinates to longitude/latitude in degrees."""
+    pos = np.array([x, y, z])
+    spherical = astro.sphericalFromCart(pos)  # [radius, longitude, latitude]
+    # Convert radians to degrees
+    longitude = np.degrees(spherical[1])
+    latitude = np.degrees(spherical[2])
+    return longitude, latitude
 
 def generate_trajectory(universe_file='./config/universe_stella.yml',
                        trajectory_file='./config/trajectory_stella_2021.yml',
@@ -65,21 +76,22 @@ def generate_trajectory(universe_file='./config/universe_stella.yml',
         for epoch in time_grid:
             try:
                 # Get spacecraft position in ICRF frame
-                # Note the "SC_center" naming - this is crucial
                 spacecraft_id = "SC_center"
                 position = uni.frames.vector3("Earth", spacecraft_id, "ICRF", epoch)
                 
                 # Extract x, y, z components
-                x, y, z = position[0], position[1], position[2]
+                x, y, z = float(position[0]), float(position[1]), float(position[2])
                 
-                # Store the point
-                point = {
-                    "epoch": str(epoch),
-                    "x": float(x),
-                    "y": float(y),
-                    "z": float(z),
-                    "mjd": epoch.mjd()
-                }
+                # Convert to spherical coordinates
+                longitude, latitude = cartesian_to_spherical(x, y, z)
+                
+                # Store the point with both coordinate systems
+                point = TrajectoryPoint(
+                    epoch=str(epoch),
+                    cartesian=CartesianPoint(x=x, y=y, z=z),
+                    spherical=SphericalPoint(longitude=longitude, latitude=latitude),
+                    mjd=epoch.mjd()
+                )
                 
                 trajectory_points.append(point)
                 
@@ -103,17 +115,20 @@ def generate_trajectory(universe_file='./config/universe_stella.yml',
         radius = 7000  # LEO orbit radius in km
         
         for i, angle in enumerate(t):
+            # Calculate cartesian coordinates
             x = radius * np.cos(angle)
             y = radius * np.sin(angle)
             z = 0.0  # Planar orbit for simplicity
             
-            point = {
-                "epoch": f"Point_{i}",
-                "mjd": 59500.0 + i/100.0,
-                "x": float(x),
-                "y": float(y),
-                "z": float(z)
-            }
+            # Calculate spherical coordinates
+            longitude, latitude = cartesian_to_spherical(x, y, z)
+            
+            point = TrajectoryPoint(
+                epoch=f"Point_{i}",
+                cartesian=CartesianPoint(x=x, y=y, z=z),
+                spherical=SphericalPoint(longitude=longitude, latitude=latitude),
+                mjd=59500.0 + i/100.0
+            )
             fallback_points.append(point)
         
         return {
