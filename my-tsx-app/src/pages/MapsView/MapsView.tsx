@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
 import { useTimeContext } from '../../contexts/TimeContext';
 import './MapsView.css';
+import TrajectoryToggle from '../../components/TrajectoryToggle/TrajectoryToggle';
+import MapTrajectoryVisualization from '../../components/Map/MapTrajectoryVisualization';
 
 // Update the map image to the new PNG
 import mapImage from '../../assets/World_location_map_(equirectangular_180).png';
@@ -309,12 +311,14 @@ const MapsView: React.FC = () => {
           <MapPlane />
           <GridLines />
           <MovingSphere />
+          <MapTrajectoryVisualization />
         </Suspense>
         
         {/* Custom controls for panning and zooming */}
         <MapControls />
       </Canvas>
       
+      <TrajectoryToggle />
       <TimeSlider />
     </div>
   );

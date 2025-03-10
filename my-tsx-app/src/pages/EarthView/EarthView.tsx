@@ -5,7 +5,9 @@ import Earth from '../../components/3D/Earth';
 import Satellite from '../../components/3D/Satellite';
 import AlternateViewObjects from '../../components/3D/AlternateViewObjects';
 import CameraManager from '../../components/3D/CameraManager';
+import TrajectoryVisualization from '../../components/3D/TrajectoryVisualization';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
+import TrajectoryToggle from '../../components/TrajectoryToggle/TrajectoryToggle';
 import './EarthView.css';
 
 const EarthView: React.FC = () => {
@@ -23,9 +25,11 @@ const EarthView: React.FC = () => {
         <Earth isAlternateView={isAlternateView} />
         <Satellite isAlternateView={isAlternateView} />
         <AlternateViewObjects isAlternateView={isAlternateView} />
+        <TrajectoryVisualization />
 
         <OrbitControls />
       </Canvas>
+      <TrajectoryToggle />
       <TimeSlider />
     </div>
   );
