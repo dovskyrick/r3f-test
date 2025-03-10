@@ -1,13 +1,18 @@
 import React, { useRef, useState, useEffect, Suspense } from 'react';
 import { Canvas, useThree, useFrame, useLoader } from '@react-three/fiber';
-import { OrthographicCamera } from '@react-three/drei';
+import { OrthographicCamera, OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
 import { useTimeContext } from '../../contexts/TimeContext';
 import './MapsView.css';
 
-// Import the map image
-import mapImage from '../../assets/lat-lon.jpg';
+// Update the map image to the new PNG
+import mapImage from '../../assets/World_location_map_(equirectangular_180).png';
+
+// Constants for map image dimensions
+const MAP_IMAGE_WIDTH = 2521;
+const MAP_IMAGE_HEIGHT = 1260;
+const MAP_ASPECT_RATIO = MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT;
 
 // Map component that displays the map image as a plane
 const MapPlane = () => {
@@ -17,12 +22,9 @@ const MapPlane = () => {
   // Create a reference to the mesh
   const meshRef = useRef<THREE.Mesh>(null);
   
-  // Calculate aspect ratio to size the plane correctly
-  const aspectRatio = texture.image ? texture.image.width / texture.image.height : 2;
-  
   // Set the plane width and height based on aspect ratio
   const planeWidth = 10; // Base width
-  const planeHeight = planeWidth / aspectRatio;
+  const planeHeight = planeWidth / MAP_ASPECT_RATIO;
   
   return (
     // No rotation - plane facing camera directly
@@ -39,12 +41,9 @@ const MovingSphere = () => {
   const sphereRef = useRef<THREE.Mesh>(null);
   const texture = useLoader(THREE.TextureLoader, mapImage);
   
-  // Calculate aspect ratio to size coordinates correctly
-  const aspectRatio = texture.image ? texture.image.width / texture.image.height : 2;
-  
   // Set the plane width and height (same as in MapPlane)
   const planeWidth = 10; // Base width
-  const planeHeight = planeWidth / aspectRatio;
+  const planeHeight = planeWidth / MAP_ASPECT_RATIO;
   
   // Convert lat/long coordinates to 3D space
   const latLngToPosition = (lat: number, lng: number) => {
@@ -89,12 +88,9 @@ const GridLines = () => {
   const { scene } = useThree();
   const texture = useLoader(THREE.TextureLoader, mapImage);
   
-  // Calculate aspect ratio to size the plane correctly
-  const aspectRatio = texture.image ? texture.image.width / texture.image.height : 2;
-  
   // Set the plane width and height based on aspect ratio
   const planeWidth = 10; // Base width
-  const planeHeight = planeWidth / aspectRatio;
+  const planeHeight = planeWidth / MAP_ASPECT_RATIO;
   
   // Create grid lines on component mount
   useEffect(() => {
@@ -206,6 +202,15 @@ const MapControls = () => {
   const MAX_ZOOM = 1000;
   const ZOOM_STEP = 5; // Reduced from 50 to 5 for more gradual zooming
 
+  // Vertical movement limits based on map height
+  const planeHeight = 10 / MAP_ASPECT_RATIO; // Same calculation as in MapPlane
+  const VERTICAL_LIMIT = planeHeight / 2; // Half the map height
+
+  // Helper function to clamp vertical position
+  const clampVerticalPosition = (newY: number) => {
+    return Math.max(-VERTICAL_LIMIT, Math.min(VERTICAL_LIMIT, newY));
+  };
+
   // Set up event listeners for panning
   useEffect(() => {
     const canvas = gl.domElement;
@@ -224,7 +229,10 @@ const MapControls = () => {
       // Scale the movement based on zoom level to make panning feel natural
       const movementScale = 0.01;
       camera.position.x -= deltaX * movementScale;
-      camera.position.y += deltaY * movementScale; // Inverted because Y is up in 3D space
+      
+      // Calculate new Y position and clamp it
+      const newY = camera.position.y + (deltaY * movementScale);
+      camera.position.y = clampVerticalPosition(newY);
 
       setLastPosition({ x: e.clientX, y: e.clientY });
     };
