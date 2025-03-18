@@ -38,22 +38,22 @@ async def health_check():
 
 @app.get("/trajectory", response_model=TrajectoryResponse)
 async def get_trajectory(
-    points: Optional[int] = Query(10, description="Number of points to calculate")
+    time_interval: Optional[int] = Query(300, description="Time interval between trajectory points in seconds")
 ):
     """
     Get satellite trajectory data.
     
-    Returns a list of points with x, y, z coordinates in the ICRF frame.
+    Returns a list of points with cartesian and spherical coordinates, sampled at the specified time interval.
     """
     try:
-        if points < 2:
-            raise HTTPException(status_code=400, detail="Number of points must be at least 2")
+        if time_interval < 1:
+            raise HTTPException(status_code=400, detail="Time interval must be at least 1 second")
         
-        if points > 100:
-            raise HTTPException(status_code=400, detail="Maximum number of points is 100")
+        if time_interval > 86400:
+            raise HTTPException(status_code=400, detail="Maximum time interval is 86400 seconds (1 day)")
         
         # Call our trajectory service
-        result = generate_trajectory(num_points=points)
+        result = generate_trajectory(time_interval=time_interval)
         return result
     
     except Exception as e:
@@ -62,7 +62,7 @@ async def get_trajectory(
 # Optional: Add an endpoint for CSV format
 @app.get("/trajectory/csv")
 async def get_trajectory_csv(
-    points: Optional[int] = Query(10, description="Number of points to calculate")
+    time_interval: Optional[int] = Query(300, description="Time interval between trajectory points in seconds")
 ):
     """Get satellite trajectory in CSV format."""
     try:
@@ -70,23 +70,25 @@ async def get_trajectory_csv(
         import io
         import csv
         
-        result = generate_trajectory(num_points=points)
+        result = generate_trajectory(time_interval=time_interval)
         
         # Create CSV in memory
         output = io.StringIO()
         writer = csv.writer(output)
         
         # Write header
-        writer.writerow(["epoch", "mjd", "x", "y", "z"])
+        writer.writerow(["epoch", "mjd", "x", "y", "z", "longitude", "latitude"])
         
         # Write data rows
         for point in result["points"]:
             writer.writerow([
-                point["epoch"],
-                point["mjd"],
-                point["x"],
-                point["y"],
-                point["z"]
+                point.epoch,
+                point.mjd,
+                point.cartesian.x,
+                point.cartesian.y,
+                point.cartesian.z,
+                point.spherical.longitude,
+                point.spherical.latitude
             ])
         
         # Return CSV response

@@ -41,8 +41,18 @@ def cartesian_to_spherical(x: float, y: float, z: float) -> Tuple[float, float]:
 
 def generate_trajectory(universe_file='./config/universe_stella.yml',
                        trajectory_file='./config/trajectory_stella_2021.yml',
-                       num_points=10):
-    """Generate trajectory points using GODOT."""
+                       time_interval=300):
+    """
+    Generate trajectory points using GODOT.
+    
+    Args:
+        universe_file: Path to the universe configuration file
+        trajectory_file: Path to the trajectory configuration file
+        time_interval: Time interval between points in seconds (default: 300 seconds = 5 minutes)
+    
+    Returns:
+        Dictionary containing trajectory points and metadata
+    """
     try:
         # Resolve config paths
         resolved_universe_file = resolve_config_path(universe_file)
@@ -67,8 +77,8 @@ def generate_trajectory(universe_file='./config/universe_stella.yml',
         start_epoch = tra.range().start()
         end_epoch = tra.range().end()
         
-        # Create a time grid with specified number of points
-        time_grid = tempo.EpochRange(start_epoch, end_epoch).createGrid(num_points)
+        # Create a time grid with specified interval in seconds
+        time_grid = tempo.EpochRange(start_epoch, end_epoch).createGrid(time_interval)
         
         # Extract trajectory points
         trajectory_points = []
@@ -79,11 +89,18 @@ def generate_trajectory(universe_file='./config/universe_stella.yml',
                 spacecraft_id = "SC_center"
                 position = uni.frames.vector3("Earth", spacecraft_id, "ICRF", epoch)
                 
-                # Extract x, y, z components
+                # Extract x, y, z components in ICRF
                 x, y, z = float(position[0]), float(position[1]), float(position[2])
                 
-                # Convert to spherical coordinates
-                longitude, latitude = cartesian_to_spherical(x, y, z)
+                # Get position in ITRF (Earth-fixed) frame for longitude/latitude calculation
+                position_itrf = uni.frames.vector3("Earth", spacecraft_id, "ITRF", epoch)
+                
+                # Convert to spherical coordinates using ITRF position
+                longitude, latitude = cartesian_to_spherical(
+                    float(position_itrf[0]),
+                    float(position_itrf[1]),
+                    float(position_itrf[2])
+                )
                 
                 # Store the point with both coordinate systems
                 point = TrajectoryPoint(
@@ -110,8 +127,10 @@ def generate_trajectory(universe_file='./config/universe_stella.yml',
         # Fallback to generating a simple circular orbit
         print(f"Error in trajectory generation: {e}")
         
+        # For the fallback, generate a reasonable number of points
+        fallback_num_points = 20
         fallback_points = []
-        t = np.linspace(0, 2*np.pi, num_points)
+        t = np.linspace(0, 2*np.pi, fallback_num_points)
         radius = 7000  # LEO orbit radius in km
         
         for i, angle in enumerate(t):

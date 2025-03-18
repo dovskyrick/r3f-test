@@ -4,13 +4,13 @@ This API provides satellite trajectory data calculated using ESA's GODOT (Generi
 
 ## Overview
 
-The API exposes trajectory data as a series of 3D points (XYZ coordinates) in the ICRF reference frame, calculated from GODOT's propagation capabilities.
+The API exposes trajectory data as a series of points with both 3D Cartesian coordinates (XYZ) and spherical coordinates (longitude/latitude), calculated at specific time intervals using GODOT's propagation capabilities.
 
 ## Features
 
 - RESTful API built with FastAPI
 - Trajectory data available in both JSON and CSV formats
-- Configurable number of trajectory points
+- Configurable time interval between trajectory points
 - Automatic fallback to simplified orbit model if GODOT encounters errors
 - Automatic API documentation with Swagger UI
 
@@ -91,11 +91,11 @@ Health check endpoint to verify the API is running.
 Get trajectory data in JSON format.
 
 **Parameters:**
-- `points` (optional): Number of trajectory points to calculate (default: 10, min: 2, max: 100)
+- `time_interval` (optional): Time interval between trajectory points in seconds (default: 300 seconds = 5 minutes)
 
 **Example Request:**
 ```
-GET http://localhost:8000/trajectory?points=20
+GET http://localhost:8000/trajectory?time_interval=900
 ```
 
 **Example Response:**
@@ -104,9 +104,15 @@ GET http://localhost:8000/trajectory?points=20
   "points": [
     {
       "epoch": "2021-10-23T19:24:00.000000 TDB",
-      "x": 6876.5701861,
-      "y": -1975.00094305,
-      "z": -660.03339253,
+      "cartesian": {
+        "x": 6876.5701861,
+        "y": -1975.00094305,
+        "z": -660.03339253
+      },
+      "spherical": {
+        "longitude": -16.01234,
+        "latitude": 45.67890
+      },
       "mjd": 59510.8083333
     },
     // ... more points
@@ -123,17 +129,17 @@ GET http://localhost:8000/trajectory?points=20
 Get trajectory data in CSV format.
 
 **Parameters:**
-- `points` (optional): Number of trajectory points to calculate (default: 10, min: 2, max: 100)
+- `time_interval` (optional): Time interval between trajectory points in seconds (default: 300 seconds = 5 minutes)
 
 **Example Request:**
 ```
-GET http://localhost:8000/trajectory/csv?points=15
+GET http://localhost:8000/trajectory/csv?time_interval=600
 ```
 
 **Example Response:**
 ```
-epoch,mjd,x,y,z
-2021-10-23T19:24:00.000000 TDB,59510.8083333,6876.5701861,-1975.00094305,-660.03339253
+epoch,mjd,x,y,z,longitude,latitude
+2021-10-23T19:24:00.000000 TDB,59510.8083333,6876.5701861,-1975.00094305,-660.03339253,-16.01234,45.67890
 ...
 ```
 
@@ -142,9 +148,9 @@ epoch,mjd,x,y,z
 You can fetch trajectory data from your frontend application using the Fetch API:
 
 ```javascript
-async function fetchTrajectory(points = 10) {
+async function fetchTrajectory(timeInterval = 300) {
   try {
-    const response = await fetch(`http://localhost:8000/trajectory?points=${points}`);
+    const response = await fetch(`http://localhost:8000/trajectory?time_interval=${timeInterval}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error ${response.status}`);
@@ -159,7 +165,7 @@ async function fetchTrajectory(points = 10) {
 }
 
 // Use in React Three Fiber:
-fetchTrajectory(15).then(data => {
+fetchTrajectory(600).then(data => {
   if (data) {
     // Access trajectory points
     const points = data.points;
