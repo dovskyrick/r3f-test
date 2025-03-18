@@ -37,54 +37,6 @@ const MapPlane = () => {
   );
 };
 
-// Moving Sphere component that represents a point moving across the map
-const MovingSphere = () => {
-  const { currentTime, minValue, maxValue } = useTimeContext();
-  const sphereRef = useRef<THREE.Mesh>(null);
-  const texture = useLoader(THREE.TextureLoader, mapImage);
-  
-  // Set the plane width and height (same as in MapPlane)
-  const planeWidth = 10; // Base width
-  const planeHeight = planeWidth / MAP_ASPECT_RATIO;
-  
-  // Convert lat/long coordinates to 3D space
-  const latLngToPosition = (lat: number, lng: number) => {
-    // Map from lat/long range to plane coordinates
-    // Longitude: -180 to 180 maps to -planeWidth/2 to planeWidth/2
-    // Latitude: -90 to 90 maps to -planeHeight/2 to planeHeight/2
-    const x = (lng / 180) * (planeWidth / 2);
-    const y = (lat / 90) * (planeHeight / 2);
-    
-    // Z is slightly above the plane to avoid z-fighting
-    return new THREE.Vector3(x, y, 0.1);
-  };
-  
-  // Update position on each frame based on current time
-  useFrame(() => {
-    if (!sphereRef.current) return;
-    
-    // Calculate how far along the timeline we are (0 to 1)
-    const min = parseFloat(minValue);
-    const max = parseFloat(maxValue);
-    const timeProgress = (currentTime - min) / (max - min);
-    
-    // Calculate the current latitude and longitude based on a linear interpolation from (-90,-90) to (90,90)
-    const lat = -90 + timeProgress * 180; // From -90 to 90
-    const lng = -90 + timeProgress * 180; // From -90 to 90
-    
-    // Update the sphere position
-    const position = latLngToPosition(lat, lng);
-    sphereRef.current.position.copy(position);
-  });
-  
-  return (
-    <mesh ref={sphereRef}>
-      <sphereGeometry args={[0.1, 32, 32]} />
-      <meshStandardMaterial color="red" emissive="red" emissiveIntensity={0.5} />
-    </mesh>
-  );
-};
-
 // Grid lines component for meridians and parallels
 const GridLines = () => {
   const { scene } = useThree();
@@ -310,7 +262,6 @@ const MapsView: React.FC = () => {
         <Suspense fallback={<LoadingFallback />}>
           <MapPlane />
           <GridLines />
-          <MovingSphere />
           <MapTrajectoryVisualization />
         </Suspense>
         
