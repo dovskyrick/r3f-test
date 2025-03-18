@@ -5,7 +5,7 @@ import MapTrajectoryPath from './MapTrajectoryPath';
 
 /**
  * Combined trajectory visualization component for the 2D map view.
- * Displays both points and connecting lines.
+ * Displays only path lines, points are disabled.
  */
 const MapTrajectoryVisualization: React.FC = () => {
   const { isTrajectoryVisible, isLoading } = useTrajectoryContext();
@@ -16,7 +16,8 @@ const MapTrajectoryVisualization: React.FC = () => {
   return (
     <group>
       <MapTrajectoryPath />
-      <MapTrajectory />
+      {/* Points are disabled per requirement to show only lines */}
+      {/* <MapTrajectory /> */}
     </group>
   );
 };

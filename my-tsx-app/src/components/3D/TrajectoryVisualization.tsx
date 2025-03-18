@@ -4,8 +4,8 @@ import TrajectoryPoints from './TrajectoryPoints';
 import TrajectoryLines from './TrajectoryLines';
 
 /**
- * Combined trajectory visualization component that includes both
- * points and connecting lines for the 3D Earth view.
+ * Combined trajectory visualization component that includes
+ * lines for the 3D Earth view. Points are removed to show only lines.
  */
 const TrajectoryVisualization: React.FC = () => {
   const { isTrajectoryVisible, isLoading } = useTrajectoryContext();
@@ -16,7 +16,8 @@ const TrajectoryVisualization: React.FC = () => {
   return (
     <group>
       <TrajectoryLines />
-      <TrajectoryPoints />
+      {/* Points are disabled per requirement to show only lines */}
+      {/* <TrajectoryPoints /> */}
     </group>
   );
 };
