@@ -6,10 +6,11 @@ import { Line } from '@react-three/drei';
 const TrajectoryLines: React.FC = () => {
   const { trajectoryData, isTrajectoryVisible } = useTrajectoryContext();
   
-  // Create an array of Vector3 points for the line - moved BEFORE the conditional return
+  // Create an array of Vector3 points for the entire trajectory line
   const linePoints = useMemo(() => {
     if (!isTrajectoryVisible || !trajectoryData) return [];
     
+    // Map all trajectory points to 3D vectors
     return trajectoryData.points.map(point => 
       new THREE.Vector3(
         point.cartesian.x * SCALE_FACTOR,

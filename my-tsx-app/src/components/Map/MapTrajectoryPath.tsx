@@ -24,13 +24,14 @@ const latLngToPosition = (lat: number, lng: number) => {
 const MapTrajectoryPath: React.FC = () => {
   const { trajectoryData, isTrajectoryVisible } = useTrajectoryContext();
   
-  // Convert trajectory points to line points - moved BEFORE the conditional return
+  // Convert trajectory points to line points
   const linePoints = useMemo(() => {
     if (!isTrajectoryVisible || !trajectoryData) return [];
     
     const points: THREE.Vector3[] = [];
     let lastLongitude: number | null = null;
     
+    // Process all trajectory points for the full path
     trajectoryData.points.forEach((point, index) => {
       const { longitude, latitude } = point.spherical;
       

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useTimeContext } from './TimeContext';
 
 // Earth radius in kilometers
 export const EARTH_RADIUS_KM = 6371;
@@ -60,6 +61,9 @@ export const TrajectoryProvider: React.FC<TrajectoryProviderProps> = ({ children
   const [isTrajectoryVisible, setIsTrajectoryVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Access the TimeContext to update min/max values
+  const { setMinValue, setMaxValue, setCurrentTime } = useTimeContext();
 
   // Track if trajectory has been loaded
   const isTrajectoryLoaded = trajectoryData !== null;
@@ -87,6 +91,29 @@ export const TrajectoryProvider: React.FC<TrajectoryProviderProps> = ({ children
       setIsLoading(false);
     }
   };
+
+  // Update time slider range when trajectory data is loaded
+  useEffect(() => {
+    if (trajectoryData && trajectoryData.points.length > 0) {
+      // Find min and max MJD values in the trajectory data
+      const mjdValues = trajectoryData.points.map(point => point.mjd);
+      const minMJD = Math.min(...mjdValues);
+      const maxMJD = Math.max(...mjdValues);
+      
+      // Round to 4 decimal places for readability
+      const roundedMinMJD = Math.floor(minMJD * 10000) / 10000;
+      const roundedMaxMJD = Math.ceil(maxMJD * 10000) / 10000;
+      
+      console.log(`Setting time range to MJD: ${roundedMinMJD} - ${roundedMaxMJD}`);
+      
+      // Update the time slider range
+      setMinValue(roundedMinMJD.toString());
+      setMaxValue(roundedMaxMJD.toString());
+      
+      // Set current time to the minimum value to start
+      setCurrentTime(roundedMinMJD);
+    }
+  }, [trajectoryData, setMinValue, setMaxValue, setCurrentTime]);
 
   // Retry function for error recovery
   const retryFetch = async () => {

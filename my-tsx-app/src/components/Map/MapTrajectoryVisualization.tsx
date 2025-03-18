@@ -2,10 +2,11 @@ import React from 'react';
 import { useTrajectoryContext } from '../../contexts/TrajectoryContext';
 import MapTrajectory from './MapTrajectory';
 import MapTrajectoryPath from './MapTrajectoryPath';
+import MapTrajectoryMarker from './MapTrajectoryMarker';
 
 /**
  * Combined trajectory visualization component for the 2D map view.
- * Displays only path lines, points are disabled.
+ * Displays path lines and a time-based marker.
  */
 const MapTrajectoryVisualization: React.FC = () => {
   const { isTrajectoryVisible, isLoading } = useTrajectoryContext();
@@ -18,6 +19,7 @@ const MapTrajectoryVisualization: React.FC = () => {
       <MapTrajectoryPath />
       {/* Points are disabled per requirement to show only lines */}
       {/* <MapTrajectory /> */}
+      <MapTrajectoryMarker />
     </group>
   );
 };
