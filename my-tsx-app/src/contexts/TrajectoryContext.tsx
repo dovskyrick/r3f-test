@@ -76,7 +76,7 @@ export const TrajectoryProvider: React.FC<TrajectoryProviderProps> = ({ children
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:8000/trajectory?time_interval=300');
+      const response = await fetch('http://localhost:8000/trajectory?time_interval=30');
       
       if (!response.ok) {
         throw new Error(`Server responded with ${response.status}: ${response.statusText}`);

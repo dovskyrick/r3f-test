@@ -38,7 +38,7 @@ async def health_check():
 
 @app.get("/trajectory", response_model=TrajectoryResponse)
 async def get_trajectory(
-    time_interval: Optional[int] = Query(300, description="Time interval between trajectory points in seconds")
+    time_interval: Optional[int] = Query(30, description="Time interval between trajectory points in seconds")
 ):
     """
     Get satellite trajectory data.
@@ -62,7 +62,7 @@ async def get_trajectory(
 # Optional: Add an endpoint for CSV format
 @app.get("/trajectory/csv")
 async def get_trajectory_csv(
-    time_interval: Optional[int] = Query(300, description="Time interval between trajectory points in seconds")
+    time_interval: Optional[int] = Query(30, description="Time interval between trajectory points in seconds")
 ):
     """Get satellite trajectory in CSV format."""
     try:

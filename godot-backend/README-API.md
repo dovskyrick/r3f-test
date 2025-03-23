@@ -91,11 +91,11 @@ Health check endpoint to verify the API is running.
 Get trajectory data in JSON format.
 
 **Parameters:**
-- `time_interval` (optional): Time interval between trajectory points in seconds (default: 300 seconds = 5 minutes)
+- `time_interval` (optional): Time interval between trajectory points in seconds (default: 30 seconds)
 
 **Example Request:**
 ```
-GET http://localhost:8000/trajectory?time_interval=900
+GET http://localhost:8000/trajectory?time_interval=90
 ```
 
 **Example Response:**
@@ -129,11 +129,11 @@ GET http://localhost:8000/trajectory?time_interval=900
 Get trajectory data in CSV format.
 
 **Parameters:**
-- `time_interval` (optional): Time interval between trajectory points in seconds (default: 300 seconds = 5 minutes)
+- `time_interval` (optional): Time interval between trajectory points in seconds (default: 30 seconds)
 
 **Example Request:**
 ```
-GET http://localhost:8000/trajectory/csv?time_interval=600
+GET http://localhost:8000/trajectory/csv?time_interval=60
 ```
 
 **Example Response:**
@@ -148,7 +148,7 @@ epoch,mjd,x,y,z,longitude,latitude
 You can fetch trajectory data from your frontend application using the Fetch API:
 
 ```javascript
-async function fetchTrajectory(timeInterval = 300) {
+async function fetchTrajectory(timeInterval = 30) {
   try {
     const response = await fetch(`http://localhost:8000/trajectory?time_interval=${timeInterval}`);
     
@@ -165,7 +165,7 @@ async function fetchTrajectory(timeInterval = 300) {
 }
 
 // Use in React Three Fiber:
-fetchTrajectory(600).then(data => {
+fetchTrajectory(60).then(data => {
   if (data) {
     // Access trajectory points
     const points = data.points;

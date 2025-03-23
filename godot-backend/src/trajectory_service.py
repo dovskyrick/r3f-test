@@ -41,14 +41,14 @@ def cartesian_to_spherical(x: float, y: float, z: float) -> Tuple[float, float]:
 
 def generate_trajectory(universe_file='./config/universe_stella.yml',
                        trajectory_file='./config/trajectory_stella_2021.yml',
-                       time_interval=300):
+                       time_interval=30):
     """
     Generate trajectory points using GODOT.
     
     Args:
         universe_file: Path to the universe configuration file
         trajectory_file: Path to the trajectory configuration file
-        time_interval: Time interval between points in seconds (default: 300 seconds = 5 minutes)
+        time_interval: Time interval between points in seconds (default: 30 seconds)
     
     Returns:
         Dictionary containing trajectory points and metadata
