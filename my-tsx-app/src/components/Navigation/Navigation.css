@@ -1,5 +1,5 @@
 .navigation {
-  position: absolute;
+  position: fixed;
   top: 20px;
   right: 20px;
   z-index: 1500;
@@ -7,6 +7,12 @@
   gap: 10px;
   width: auto;
   height: auto;
+  transition: right 0.3s ease;
+}
+
+/* When sidebar is open, adjust the navigation position */
+.app-container.sidebar-open .navigation {
+  right: 320px;
 }
 
 .nav-item {

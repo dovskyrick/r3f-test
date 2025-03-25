@@ -7,20 +7,58 @@ body, html {
   padding: 0;
 }
 
-/* App container */
+/* App container with flex layout for sidebar */
 .app-container {
   position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  display: flex;
 }
 
+/* Main content area - will be squeezed by sidebar */
+.main-content {
+  flex: 1;
+  position: relative;
+  transition: all 0.3s ease;
+  min-width: 0; /* Prevent flex items from overflowing */
+  height: 100vh;
+  width: 100%;
+}
+
+/* When sidebar is visible, adjust content width */
+.app-container .main-content {
+  width: 100%;
+  transition: width 0.3s ease;
+}
+
+.app-container.sidebar-open .main-content {
+  width: calc(100% - 300px);
+}
+
+/* Position the sidebar toggle button */
+.sidebar-toggle-button {
+  position: fixed; /* Use fixed so it stays visible */
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  transition: right 0.3s ease;
+  z-index: 1001;
+}
+
+/* Move the button when sidebar is open */
+.app-container.sidebar-open .sidebar-toggle-button {
+  right: 300px;
+}
+
+/* Time slider in the main container */
 .slider-container {
-  position: fixed;
+  position: absolute;
   bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
   width: 80%;
+  max-width: calc(100% - 40px); /* Ensure the slider doesn't overflow */
   height: auto;
   background-color: rgba(0, 0, 0, 0.5);
   padding: 20px;
@@ -30,6 +68,13 @@ body, html {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  transition: left 0.3s ease, width 0.3s ease, max-width 0.3s ease;
+}
+
+/* Adjust slider position when sidebar is open - this applies at the app container level */
+.app-container.sidebar-open .slider-container {
+  width: calc(80% - 150px); /* Reduce width to account for sidebar */
+  left: calc(50% - 150px); /* Shift left to center in the remaining space */
 }
 
 .time-slider {
