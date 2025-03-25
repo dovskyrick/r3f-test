@@ -4,6 +4,7 @@ import { OrbitControls } from "@react-three/drei";
 import Earth from '../../components/3D/Earth';
 import Satellite from '../../components/3D/Satellite';
 import AlternateViewObjects from '../../components/3D/AlternateViewObjects';
+import AlternateViewTrajectory from '../../components/3D/AlternateViewTrajectory';
 import CameraManager from '../../components/3D/CameraManager';
 import TrajectoryVisualization from '../../components/3D/TrajectoryVisualization';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
@@ -25,7 +26,10 @@ const EarthView: React.FC = () => {
         <Earth isAlternateView={isAlternateView} />
         <Satellite isAlternateView={isAlternateView} />
         <AlternateViewObjects isAlternateView={isAlternateView} />
-        <TrajectoryVisualization />
+        <AlternateViewTrajectory isAlternateView={isAlternateView} />
+        
+        {/* Show trajectory in main view (not alternate view) */}
+        {!isAlternateView && <TrajectoryVisualization />}
 
         <OrbitControls />
       </Canvas>
