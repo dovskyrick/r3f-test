@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSatelliteContext } from '../../contexts/SatelliteContext';
+import SatelliteNameModal from './SatelliteNameModal';
 import './SatelliteAddModal.css';
 
 interface SatelliteAddModalProps {
@@ -7,16 +8,26 @@ interface SatelliteAddModalProps {
   onClose: () => void;
 }
 
+// TLE data interface to store parsed TLE information
+interface TLEData {
+  name?: string;
+  line1: string;
+  line2: string;
+}
+
 const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }) => {
   const { addSatellite } = useSatelliteContext();
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isNameModalOpen, setIsNameModalOpen] = useState(false);
+  const [tleData, setTleData] = useState<TLEData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Add keyboard event listener to close on Escape
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
+      if (event.key === 'Escape' && isOpen && !isNameModalOpen) {
         onClose();
       }
     };
@@ -30,13 +41,15 @@ const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isNameModalOpen]);
 
   // Reset the file state when the modal is closed
   useEffect(() => {
     if (!isOpen) {
       setFile(null);
+      setTleData(null);
       setIsDragging(false);
+      setError(null);
     }
   }, [isOpen]);
 
@@ -59,7 +72,10 @@ const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      setFile(event.target.files[0]);
+      const selectedFile = event.target.files[0];
+      setFile(selectedFile);
+      setError(null);
+      readTLEFile(selectedFile);
     }
   };
 
@@ -86,7 +102,10 @@ const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }
     setIsDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setFile(e.dataTransfer.files[0]);
+      const droppedFile = e.dataTransfer.files[0];
+      setFile(droppedFile);
+      setError(null);
+      readTLEFile(droppedFile);
     }
   };
 
@@ -96,16 +115,73 @@ const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }
     }
   };
 
+  // Read and validate the TLE file
+  const readTLEFile = (file: File) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        if (!content) {
+          throw new Error("Could not read file content");
+        }
+        
+        // Split the content into lines and remove empty lines
+        const lines = content.split('\n').filter(line => line.trim() !== '');
+        
+        // Validate basic TLE format
+        if (lines.length < 2) {
+          setError("Invalid TLE file: The file must contain at least 2 lines");
+          return;
+        }
+        
+        if (lines.length === 2) {
+          // 2-line TLE without a name
+          setTleData({
+            line1: lines[0],
+            line2: lines[1]
+          });
+        } else {
+          // 3-line TLE with a name
+          setTleData({
+            name: lines[0].trim(),
+            line1: lines[1],
+            line2: lines[2]
+          });
+        }
+      } catch (err) {
+        console.error("Error reading TLE file:", err);
+        setError("Failed to read the TLE file. Please ensure it's a valid text file.");
+      }
+    };
+    
+    reader.onerror = () => {
+      setError("Error reading the file. Please try again.");
+    };
+    
+    reader.readAsText(file);
+  };
+
   const handleSubmit = () => {
-    if (file) {
-      // In the future, this would send the file to the backend
-      // For now, we'll just add a satellite with the file name as its name
-      const satelliteName = file.name.split('.')[0].substring(0, 10).toUpperCase();
-      addSatellite(satelliteName);
-      
-      // Close the modal
+    if (!file || !tleData) {
+      setError("Please upload a valid TLE file first");
+      return;
+    }
+    
+    if (!tleData.name) {
+      // If there's no name in the TLE, open the name modal
+      setIsNameModalOpen(true);
+    } else {
+      // Use the name from the TLE
+      addSatellite(tleData.name);
       onClose();
     }
+  };
+  
+  const handleNameSubmit = (name: string) => {
+    addSatellite(name);
+    setIsNameModalOpen(false);
+    onClose();
   };
 
   // Close modal when clicking overlay
@@ -120,78 +196,98 @@ const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2>Add New Satellite</h2>
-          <button className="modal-close-button" onClick={onClose}>×</button>
-        </div>
-        
-        <div className="modal-body">
-          <div className="upload-section">
-            <h3>Upload TLE File</h3>
-            <div 
-              className={`file-drop-zone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onClick={handleUploadButtonClick}
-            >
-              <input 
-                type="file" 
-                ref={fileInputRef}
-                className="file-input" 
-                onChange={handleFileChange}
-                accept=".tle,.txt"
-              />
-              
-              {file ? (
-                <div className="file-info">
-                  <div className="file-name">{file.name}</div>
-                  <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
-                </div>
-              ) : (
-                <div className="upload-prompt">
-                  <div className="upload-icon">📄</div>
-                  <div className="upload-text">
-                    <p>Drag and drop a TLE file here, or click to browse</p>
-                    <p className="upload-hint">Accepted formats: .tle, .txt</p>
+    <>
+      <div className="modal-overlay" onClick={handleOverlayClick}>
+        <div className="modal-content">
+          <div className="modal-header">
+            <h2>Add New Satellite</h2>
+            <button className="modal-close-button" onClick={onClose}>×</button>
+          </div>
+          
+          <div className="modal-body">
+            <div className="upload-section">
+              <h3>Upload TLE File</h3>
+              <div 
+                className={`file-drop-zone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''} ${error ? 'has-error' : ''}`}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onClick={handleUploadButtonClick}
+              >
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  className="file-input" 
+                  onChange={handleFileChange}
+                  accept=".tle,.txt"
+                />
+                
+                {file ? (
+                  <div className="file-info">
+                    <div className="file-name">{file.name}</div>
+                    <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
+                    {tleData?.name && (
+                      <div className="file-satellite-name">
+                        Satellite: <span>{tleData.name}</span>
+                      </div>
+                    )}
                   </div>
+                ) : (
+                  <div className="upload-prompt">
+                    <div className="upload-icon">📄</div>
+                    <div className="upload-text">
+                      <p>Drag and drop a TLE file here, or click to browse</p>
+                      <p className="upload-hint">Accepted formats: .tle, .txt</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {error && (
+                <div className="upload-error">
+                  {error}
                 </div>
               )}
             </div>
+            
+            <div className="or-divider">
+              <span>OR</span>
+            </div>
+            
+            <div className="random-section">
+              <p>Generate a satellite with a random name</p>
+              <button className="random-satellite-button" onClick={handleAddRandomSatellite}>
+                Generate Random Satellite
+              </button>
+            </div>
           </div>
           
-          <div className="or-divider">
-            <span>OR</span>
-          </div>
-          
-          <div className="random-section">
-            <p>Generate a satellite with a random name</p>
-            <button className="random-satellite-button" onClick={handleAddRandomSatellite}>
-              Generate Random Satellite
+          <div className="modal-footer">
+            <button 
+              className="modal-cancel-button" 
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button 
+              className="modal-submit-button" 
+              onClick={handleSubmit}
+              disabled={!file || !!error}
+            >
+              Upload TLE
             </button>
           </div>
         </div>
-        
-        <div className="modal-footer">
-          <button 
-            className="modal-cancel-button" 
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button 
-            className="modal-submit-button" 
-            onClick={handleSubmit}
-            disabled={!file}
-          >
-            Upload TLE
-          </button>
-        </div>
       </div>
-    </div>
+      
+      {/* Satellite Name Modal */}
+      <SatelliteNameModal 
+        isOpen={isNameModalOpen}
+        onClose={() => setIsNameModalOpen(false)}
+        onSubmit={handleNameSubmit}
+      />
+    </>
   );
 };
 

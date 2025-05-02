@@ -113,6 +113,11 @@
   background-color: rgba(76, 175, 80, 0.1);
 }
 
+.file-drop-zone.has-error {
+  border-color: rgba(244, 67, 54, 0.6);
+  background-color: rgba(244, 67, 54, 0.05);
+}
+
 .file-input {
   display: none;
 }
@@ -248,4 +253,64 @@
 .modal-submit-button:disabled {
   background-color: rgba(66, 133, 244, 0.3);
   cursor: not-allowed;
+}
+
+/* Input group styles for satellite name modal */
+.input-group {
+  margin: 15px 0;
+  width: 100%;
+}
+
+.satellite-name-input {
+  width: 100%;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: white;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.satellite-name-input:focus {
+  outline: none;
+  border-color: rgba(66, 133, 244, 0.6);
+  background-color: rgba(66, 133, 244, 0.1);
+}
+
+.satellite-name-input.has-error {
+  border-color: rgba(244, 67, 54, 0.8);
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.input-error {
+  color: rgba(244, 67, 54, 0.9);
+  font-size: 12px;
+  margin-top: 5px;
+  padding-left: 5px;
+}
+
+.satellite-name-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Styles for TLE error and satellite name display */
+.upload-error {
+  color: rgba(244, 67, 54, 0.9);
+  background-color: rgba(244, 67, 54, 0.05);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.file-satellite-name {
+  margin-top: 5px;
+  font-size: 13px;
+  color: rgba(76, 175, 80, 0.9);
+}
+
+.file-satellite-name span {
+  font-weight: bold;
 } 
