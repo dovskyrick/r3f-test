@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   godot-api:
+    image: godot-backend-v3
     build:
       context: .
       args:
@@ -13,6 +14,7 @@ services:
       - ./src:/app/src
       - ./config:/app/config
       - ./data:/app/data
+      - ./test_misc:/app/test_misc
     environment:
       - LOG_LEVEL=INFO
     restart: unless-stopped 

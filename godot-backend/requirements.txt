@@ -5,4 +5,7 @@ pydantic<1.9.0
 numpy<=1.19.5
 scipy<1.8.0
 python-multipart>=0.0.5
-httpx<0.24.0 
+httpx<0.24.0
+astropy>=4.0.0
+sgp4>=2.21 
+pyyaml>=5.4.1
