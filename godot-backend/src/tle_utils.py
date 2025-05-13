@@ -10,41 +10,31 @@ from astropy.coordinates import TEME, ITRS, CartesianDifferential, CartesianRepr
 from astropy.time import Time
 from sgp4.api import Satrec
 
-# Function to parse TLE data
-def parse_tle(filename):
-    with open(filename, 'r') as file:
-        lines = file.readlines()
-        tle_line1 = lines[0].strip()
-        tle_line2 = lines[1].strip()
-    return tle_line1, tle_line2
-
+# Function to extract epoch and time information from TLE
 def extract_epoch_from_tle(tle_line1, tle_line2):
     """Extract and create a tempo.Epoch object from TLE data"""
     # Parse the TLE using sgp4
     satellite = Satrec.twoline2rv(tle_line1, tle_line2)
 
-
     # Get Julian date components directly
     jd = satellite.jdsatepoch
     jd_fraction = satellite.jdsatepochF
-
-    print(f"JD: {jd}, JD Fraction: {jd_fraction}")
     
     # Use astropy's Time to convert Julian date to ISO format
-    # Make sure to use UTC for the time scale
-    t_begining = Time(jd + jd_fraction, format='jd', scale='utc')
-    t_end = Time(jd + jd_fraction + 1, format='jd', scale='utc')
+    t_beginning = Time(jd + jd_fraction, format='jd', scale='tdb')
+    t_end = Time(jd + jd_fraction + 1, format='jd', scale='tdb')
     
     # Format the time as needed for tempo.Epoch constructor
-    # Format: "2018-10-02T19:54:12.123998 UTC"
-    formatted_time_begining = t_begining.iso.replace(' ', 'T') + " UTC"
-    formatted_time_end = t_end.iso.replace(' ', 'T') + " UTC"
-    # Create tempo.Epoch using the formatted string
-    e0 = tempo.Epoch(formatted_time_begining)
+    formatted_time_beginning = t_beginning.iso.replace(' ', 'T') + " TDB"
+    formatted_time_end = t_end.iso.replace(' ', 'T') + " TDB"
     
-    return e0, formatted_time_begining, formatted_time_end
+    # Create tempo.Epoch using the formatted string
+    e0 = tempo.Epoch(formatted_time_beginning)
+    
+    return e0, formatted_time_beginning, formatted_time_end
 
-def TLE_to_pos_vel(tle_line1, tle_line2, jd, jf):
+# Function to calculate position and velocity from TLE
+def tle_to_pos_vel(tle_line1, tle_line2, jd, jf):
     """Calculate position and velocity from TLE data and Julian date"""
     # Create a satellite object
     satellite = Satrec.twoline2rv(tle_line1, tle_line2)
@@ -66,37 +56,28 @@ def TLE_to_pos_vel(tle_line1, tle_line2, jd, jf):
 
     return itrf_p.cartesian.xyz.to(u.km), itrf_p.velocity.d_xyz.to(u.km/u.s)
 
-# Main execution
-def main():
-    # Path to the TLE file
-    tle_file = os.path.join(os.path.dirname(__file__), "testTLE.txt")
+# Main function to generate YAML configuration from TLE
+def generate_yaml_from_tle(tle_line1, tle_line2, output_path=None):
+    """
+    Generate a GODOT-compatible YAML configuration file from TLE data.
     
-    # Parse the TLE file
-    tle_line1, tle_line2 = parse_tle(tle_file)
-    print(f"TLE Line 1: {tle_line1}")
-    print(f"TLE Line 2: {tle_line2}")
-    
+    Args:
+        tle_line1 (str): First line of the TLE
+        tle_line2 (str): Second line of the TLE
+        output_path (str, optional): Path where to save the YAML file.
+            If None, uses a default path in the config directory.
+            
+    Returns:
+        str: Path to the generated YAML file
+    """
     # Extract and create the epoch from TLE
-    e0, formatted_time_begining, formatted_time_end = extract_epoch_from_tle(tle_line1, tle_line2)
-    print(f"Epoch: {e0.calStr('UTC')}")
+    e0, formatted_time_beginning, formatted_time_end = extract_epoch_from_tle(tle_line1, tle_line2)
     
     # Get Julian day components for position/velocity calculation
-    daysAndFraction = e0.jdPair(tempo.TimeScale.TT, tempo.JulianDay.JD)
-    print(f"Julian Day: {daysAndFraction.day}, Fraction: {daysAndFraction.fraction}")
+    days_and_fraction = e0.jdPair(tempo.TimeScale.TT, tempo.JulianDay.JD)
     
     # Compute position and velocity
-    pos_vel = TLE_to_pos_vel(tle_line1, tle_line2, daysAndFraction.day, daysAndFraction.fraction)
-    
-    # Print results
-    print("\nPosition (km):")
-    print(f"X: {pos_vel[0][0]}")
-    print(f"Y: {pos_vel[0][1]}")
-    print(f"Z: {pos_vel[0][2]}")
-    
-    print("\nVelocity (km/s):")
-    print(f"X: {pos_vel[1][0].value}")
-    print(f"Y: {pos_vel[1][1].value}")
-    print(f"Z: {pos_vel[1][2].value}")
+    pos_vel = tle_to_pos_vel(tle_line1, tle_line2, days_and_fraction.day, days_and_fraction.fraction)
     
     # Create a YAML structure that matches trajectory_stella_2021.yml
     yamldata = {
@@ -108,7 +89,7 @@ def main():
             'initialStep': '10 s',
             'relTol': 1e-09,
             'absTol': 1e-09,
-            'timeScale': 'UTC'  # Keep TDB as in the example, even though we're using UTC timestamps
+            'timeScale': 'TDB'  # Using UTC as requested
         },
         'setup': [
             {
@@ -127,7 +108,7 @@ def main():
             {
                 'type': 'control',
                 'name': 'start',
-                'epoch': formatted_time_begining,
+                'epoch': formatted_time_beginning,
                 'state': [
                     {
                         'name': 'SC_center',
@@ -156,22 +137,36 @@ def main():
         ]
     }
     
-    # Save the YAML data to a file
-    output_dir = os.path.join(os.path.dirname(__file__), "../config")
-    os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, "trajectory_modifiable.yml")
+    # Determine output path if not provided
+    if output_path is None:
+        output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config")
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, "trajectory_temp.yml")
     
-    with open(output_file, "w") as out:
+    # Save the YAML data to the file
+    with open(output_path, "w") as out:
         yaml.dump(yamldata, out)
-    print(f"\nYAML file saved to: {output_file}")
+    
+    return output_path
 
+# For testing/CLI usage
 if __name__ == "__main__":
-    main()
-
-# Load the universe configuration and create the universe object
-#uniConfig = cosmos.util.load_yaml('config/universe_modifiable.yml')
-#uni = cosmos.Universe(uniConfig)
-
-# Load the trajectory configuration and create the trajectory object using the universe object
-#traConfig = cosmos.util.load_yaml('config/trajectory_modifiable.yml')
-#tra = cosmos.Trajectory(uni, traConfig)
+    import sys
+    
+    if len(sys.argv) > 2:
+        # Use command line arguments if provided
+        tle_file = sys.argv[1]
+        with open(tle_file, 'r') as file:
+            lines = file.readlines()
+            tle_line1 = lines[0].strip()
+            tle_line2 = lines[1].strip()
+    else:
+        # Default test TLE if no arguments
+        tle_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "test_misc", "testTLE.txt")
+        with open(tle_file, 'r') as file:
+            lines = file.readlines()
+            tle_line1 = lines[0].strip()
+            tle_line2 = lines[1].strip()
+    
+    yaml_path = generate_yaml_from_tle(tle_line1, tle_line2)
+    print(f"YAML configuration saved to: {yaml_path}") 

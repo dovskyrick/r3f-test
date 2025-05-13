@@ -1,0 +1,36 @@
+settings:
+  absTol: 1.0e-09
+  initialStep: 10 s
+  relTol: 1.0e-09
+  stepper:
+    method: adams
+  steps: 100000
+  timeScale: TDB
+setup:
+- input:
+  - name: center
+    type: point
+  name: SC
+  spacecraft: SC
+  type: group
+timeline:
+- epoch: 2008-09-20T12:25:40.104 TDB
+  name: start
+  state:
+  - axes: ITRF
+    body: Earth
+    dynamics: EMS_combined
+    name: SC_center
+    value:
+      pos_x: -3953.196246826827 km
+      pos_y: 1427.4931461777155 km
+      pos_z: 5243.610015800998 km
+      vel_x: -3.1756945572324184 km/s
+      vel_y: -6.658906941488567 km/s
+      vel_z: -0.5837920846579436 km/s
+  type: control
+- input: SC
+  name: end
+  point:
+    epoch: 2008-09-21T12:25:40.104 TDB
+  type: point

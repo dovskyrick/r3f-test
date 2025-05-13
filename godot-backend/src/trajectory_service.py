@@ -4,7 +4,7 @@ import numpy as np
 import json
 import os
 import godot.core.util as util
-from typing import Tuple
+from typing import Tuple, Optional
 from .models import CartesianPoint, SphericalPoint, TrajectoryPoint
 
 # Suppress verbose logging
@@ -39,16 +39,15 @@ def cartesian_to_spherical(x: float, y: float, z: float) -> Tuple[float, float]:
     latitude = np.degrees(spherical[2])
     return longitude, latitude
 
-def generate_trajectory(universe_file='./config/universe_stella.yml',
-                       trajectory_file='./config/trajectory_stella_2021.yml',
-                       time_interval=30):
+def generate_trajectory(time_interval=30, universe_file='./config/universe_stella.yml',
+                       trajectory_file='./config/trajectory_temp.yml'):
     """
     Generate trajectory points using GODOT.
     
     Args:
-        universe_file: Path to the universe configuration file
-        trajectory_file: Path to the trajectory configuration file
         time_interval: Time interval between points in seconds (default: 30 seconds)
+        universe_file: Path to the universe configuration file
+        trajectory_file: Path to the trajectory configuration file (can be generated from TLE)
     
     Returns:
         Dictionary containing trajectory points and metadata
