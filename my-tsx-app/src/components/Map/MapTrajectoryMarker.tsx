@@ -97,6 +97,20 @@ const MapTrajectoryMarker: React.FC<MapTrajectoryMarkerProps> = ({ satellite }) 
     return interpolatePosition(satellite.trajectoryData.points, currentTime);
   }, [satellite.trajectoryData, currentTime]);
   
+  // Determine if the current time is outside the trajectory time range
+  const isOutsideTimeRange = useMemo(() => {
+    if (!satellite.trajectoryData) return true;
+    
+    return (
+      currentTime < satellite.trajectoryData.startTime || 
+      currentTime > satellite.trajectoryData.endTime
+    );
+  }, [satellite.trajectoryData, currentTime]);
+  
+  // Set opacity based on whether current time is outside the trajectory range
+  const opacity = isOutsideTimeRange ? 0.3 : 0.8;
+  const ringOpacity = isOutsideTimeRange ? 0.2 : 0.6;
+  
   // Don't render if position couldn't be determined
   if (!markerPosition) return null;
   
@@ -106,14 +120,14 @@ const MapTrajectoryMarker: React.FC<MapTrajectoryMarkerProps> = ({ satellite }) 
       <meshBasicMaterial 
         color={satellite.color}
         transparent
-        opacity={0.8}
+        opacity={opacity}
       />
       <mesh position={[0, 0, 0.001]}>
         <ringGeometry args={[0.15, 0.22, 32]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent
-          opacity={0.6}
+          opacity={ringOpacity}
         />
       </mesh>
     </mesh>
