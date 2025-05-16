@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { useTrajectoryContext } from '../../contexts/TrajectoryContext';
+import { useTimeContext } from '../../contexts/TimeContext';
+import { Satellite } from '../../contexts/SatelliteContext';
 import * as THREE from 'three';
 import { Line } from '@react-three/drei';
 
@@ -21,19 +22,21 @@ const latLngToPosition = (lat: number, lng: number) => {
   return new THREE.Vector3(x, y, 0.005);
 };
 
-const MapTrajectoryPath: React.FC = () => {
-  const { trajectoryData, isTrajectoryVisible } = useTrajectoryContext();
-  
+interface MapTrajectoryPathProps {
+  satellite: Satellite;
+}
+
+const MapTrajectoryPath: React.FC<MapTrajectoryPathProps> = ({ satellite }) => {
   // Convert trajectory points to line points
   const linePoints = useMemo(() => {
-    if (!isTrajectoryVisible || !trajectoryData) return [];
+    if (!satellite.trajectoryData) return [];
     
     const points: THREE.Vector3[] = [];
     let lastLongitude: number | null = null;
     
     // Process all trajectory points for the full path
-    trajectoryData.points.forEach((point, index) => {
-      const { longitude, latitude } = point.spherical;
+    satellite.trajectoryData.points.forEach((point) => {
+      const { longitude, latitude } = point;
       
       // Handle date line crossing (longitude wrapping)
       if (lastLongitude !== null) {
@@ -50,15 +53,15 @@ const MapTrajectoryPath: React.FC = () => {
     });
     
     return points;
-  }, [trajectoryData, isTrajectoryVisible]);
+  }, [satellite.trajectoryData]);
   
-  // Don't render if trajectory is not visible or data is not loaded
-  if (!isTrajectoryVisible || !trajectoryData) return null;
+  // Don't render if no trajectory data or points
+  if (!satellite.trajectoryData || linePoints.length === 0) return null;
   
   return (
     <Line
       points={linePoints}
-      color="#ff3333"
+      color={satellite.color}
       lineWidth={1.5}
       transparent
       opacity={0.7}

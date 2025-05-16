@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useTrajectoryContext, TrajectoryPoint } from '../../contexts/TrajectoryContext';
+import { Satellite } from '../../contexts/SatelliteContext';
 import { useTimeContext } from '../../contexts/TimeContext';
 import * as THREE from 'three';
 
@@ -21,12 +21,16 @@ const latLngToPosition = (lat: number, lng: number): [number, number, number] =>
   return [x, y, 0.02]; // Higher Z than the trajectory line
 };
 
+interface MapTrajectoryMarkerProps {
+  satellite: Satellite;
+}
+
 /**
  * Find the two trajectory points that surround the current MJD time
  * and interpolate spherical coordinates between them
  */
 const interpolatePosition = (
-  points: TrajectoryPoint[], 
+  points: { longitude: number; latitude: number; mjd: number }[], 
   currentMJD: number
 ): [number, number, number] | null => {
   // Early return for edge cases
@@ -35,13 +39,13 @@ const interpolatePosition = (
   // If current time is before first point, return first point position
   if (currentMJD <= points[0].mjd) {
     const p = points[0];
-    return latLngToPosition(p.spherical.latitude, p.spherical.longitude);
+    return latLngToPosition(p.latitude, p.longitude);
   }
   
   // If current time is after last point, return last point position
   if (currentMJD >= points[points.length - 1].mjd) {
     const p = points[points.length - 1];
-    return latLngToPosition(p.spherical.latitude, p.spherical.longitude);
+    return latLngToPosition(p.latitude, p.longitude);
   }
   
   // Find the two points that surround the current time
@@ -61,8 +65,8 @@ const interpolatePosition = (
   const factor = timeDiff === 0 ? 0 : (currentMJD - beforePoint.mjd) / timeDiff;
   
   // Special case for crossing the international date line
-  let longitude1 = beforePoint.spherical.longitude;
-  let longitude2 = afterPoint.spherical.longitude;
+  let longitude1 = beforePoint.longitude;
+  let longitude2 = afterPoint.longitude;
   
   // Adjust longitudes for date line crossing to ensure proper interpolation
   if (Math.abs(longitude2 - longitude1) > 180) {
@@ -74,7 +78,7 @@ const interpolatePosition = (
   }
   
   // Linear interpolation between the two points
-  const lat = beforePoint.spherical.latitude + factor * (afterPoint.spherical.latitude - beforePoint.spherical.latitude);
+  const lat = beforePoint.latitude + factor * (afterPoint.latitude - beforePoint.latitude);
   const lng = longitude1 + factor * (longitude2 - longitude1);
   
   // Normalize longitude back to -180 to 180 range
@@ -84,15 +88,14 @@ const interpolatePosition = (
   return latLngToPosition(lat, normalizedLng);
 };
 
-const MapTrajectoryMarker: React.FC = () => {
-  const { trajectoryData, isTrajectoryVisible } = useTrajectoryContext();
+const MapTrajectoryMarker: React.FC<MapTrajectoryMarkerProps> = ({ satellite }) => {
   const { currentTime } = useTimeContext();
   
   // Calculate the interpolated position of the marker
   const markerPosition = useMemo(() => {
-    if (!isTrajectoryVisible || !trajectoryData) return null;
-    return interpolatePosition(trajectoryData.points, currentTime);
-  }, [trajectoryData, isTrajectoryVisible, currentTime]);
+    if (!satellite.trajectoryData) return null;
+    return interpolatePosition(satellite.trajectoryData.points, currentTime);
+  }, [satellite.trajectoryData, currentTime]);
   
   // Don't render if position couldn't be determined
   if (!markerPosition) return null;
@@ -101,7 +104,7 @@ const MapTrajectoryMarker: React.FC = () => {
     <mesh position={markerPosition as [number, number, number]}>
       <circleGeometry args={[0.15, 32]} />
       <meshBasicMaterial 
-        color="#ff0000" 
+        color={satellite.color}
         transparent
         opacity={0.8}
       />

@@ -1,25 +1,33 @@
 import React from 'react';
-import { useTrajectoryContext } from '../../contexts/TrajectoryContext';
-import MapTrajectory from './MapTrajectory';
+import { useSatelliteContext } from '../../contexts/SatelliteContext';
 import MapTrajectoryPath from './MapTrajectoryPath';
 import MapTrajectoryMarker from './MapTrajectoryMarker';
 
 /**
  * Combined trajectory visualization component for the 2D map view.
- * Displays path lines and a time-based marker.
+ * Displays path lines and a time-based marker for multiple satellites.
  */
 const MapTrajectoryVisualization: React.FC = () => {
-  const { isTrajectoryVisible, isLoading } = useTrajectoryContext();
+  // Get satellites from SatelliteContext instead of using TrajectoryContext
+  const { satellites } = useSatelliteContext();
   
-  // Don't render if trajectory is not visible
-  if (!isTrajectoryVisible && !isLoading) return null;
+  // Filter visible satellites with trajectory data
+  const visibleSatellites = satellites.filter(
+    satellite => satellite.isVisible && satellite.trajectoryData !== null
+  );
+  
+  // Don't render if no visible satellites
+  if (visibleSatellites.length === 0) return null;
   
   return (
     <group>
-      <MapTrajectoryPath />
-      {/* Points are disabled per requirement to show only lines */}
-      {/* <MapTrajectory /> */}
-      <MapTrajectoryMarker />
+      {/* Render a trajectory path for each visible satellite */}
+      {visibleSatellites.map(satellite => (
+        <React.Fragment key={satellite.id}>
+          <MapTrajectoryPath satellite={satellite} />
+          <MapTrajectoryMarker satellite={satellite} />
+        </React.Fragment>
+      ))}
     </group>
   );
 };

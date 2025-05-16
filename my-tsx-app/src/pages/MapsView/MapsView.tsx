@@ -269,7 +269,6 @@ const MapsView: React.FC = () => {
         <MapControls />
       </Canvas>
       
-      <TrajectoryToggle />
       <TimeSlider />
     </div>
   );

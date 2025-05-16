@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { TimeProvider } from './contexts/TimeContext';
-import { TrajectoryProvider } from './contexts/TrajectoryContext';
 import { SatelliteProvider } from './contexts/SatelliteContext';
 import { useSatelliteContext } from './contexts/SatelliteContext';
 import EarthView from './pages/EarthView/EarthView';
@@ -40,11 +39,9 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <TimeProvider>
-      <TrajectoryProvider>
-        <SatelliteProvider>
-          <AppContent />
-        </SatelliteProvider>
-      </TrajectoryProvider>
+      <SatelliteProvider>
+        <AppContent />
+      </SatelliteProvider>
     </TimeProvider>
   );
 };

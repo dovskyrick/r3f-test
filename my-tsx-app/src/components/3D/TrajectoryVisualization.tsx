@@ -1,27 +1,13 @@
 import React from 'react';
-import { useTrajectoryContext } from '../../contexts/TrajectoryContext';
-import TrajectoryPoints from './TrajectoryPoints';
-import TrajectoryLines from './TrajectoryLines';
-import TrajectoryMarker from './TrajectoryMarker';
 
 /**
- * Combined trajectory visualization component that includes
- * lines for the 3D Earth view and a marker that follows based on time.
+ * This component is temporarily disabled until we implement multi-satellite support for 3D.
+ * It will be updated in a future phase to visualize trajectories in the 3D view.
  */
 const TrajectoryVisualization: React.FC = () => {
-  const { isTrajectoryVisible, isLoading } = useTrajectoryContext();
-  
-  // If not visible, don't render anything
-  if (!isTrajectoryVisible && !isLoading) return null;
-  
-  return (
-    <group>
-      <TrajectoryLines />
-      {/* Points are disabled per requirement to show only lines */}
-      {/* <TrajectoryPoints /> */}
-      <TrajectoryMarker />
-    </group>
-  );
+  // Temporarily disabled until we implement multi-satellite support
+  // This will be updated in a future phase
+  return null;
 };
 
 export default TrajectoryVisualization; 

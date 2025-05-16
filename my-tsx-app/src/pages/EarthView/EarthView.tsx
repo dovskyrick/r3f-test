@@ -6,9 +6,9 @@ import Satellite from '../../components/3D/Satellite';
 import AlternateViewObjects from '../../components/3D/AlternateViewObjects';
 import AlternateViewTrajectory from '../../components/3D/AlternateViewTrajectory';
 import CameraManager from '../../components/3D/CameraManager';
-import TrajectoryVisualization from '../../components/3D/TrajectoryVisualization';
+// Temporarily disable TrajectoryVisualization until we implement multi-satellite support for 3D
+// import TrajectoryVisualization from '../../components/3D/TrajectoryVisualization';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
-import TrajectoryToggle from '../../components/TrajectoryToggle/TrajectoryToggle';
 import './EarthView.css';
 
 const EarthView: React.FC = () => {
@@ -28,12 +28,12 @@ const EarthView: React.FC = () => {
         <AlternateViewObjects isAlternateView={isAlternateView} />
         <AlternateViewTrajectory isAlternateView={isAlternateView} />
         
+        {/* Temporarily disabled until we implement multi-satellite support for 3D */}
         {/* Show trajectory in main view (not alternate view) */}
-        {!isAlternateView && <TrajectoryVisualization />}
+        {/* {!isAlternateView && <TrajectoryVisualization />} */}
 
         <OrbitControls />
       </Canvas>
-      <TrajectoryToggle />
       <TimeSlider />
     </div>
   );
