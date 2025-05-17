@@ -16,13 +16,14 @@ interface TLEData {
 }
 
 const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }) => {
-  const { addSatellite } = useSatelliteContext();
+  const { addSatellite, addSatelliteFromTLE } = useSatelliteContext();
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
   const [tleData, setTleData] = useState<TLEData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isFileUploaded, setIsFileUploaded] = useState(false);
 
   // Add keyboard event listener to close on Escape
   useEffect(() => {
@@ -115,7 +116,7 @@ const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }
     }
   };
 
-  // Read and validate the TLE file
+  // Read TLE file content
   const readTLEFile = (file: File) => {
     const reader = new FileReader();
     
@@ -129,7 +130,9 @@ const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }
         // Split the content into lines and remove empty lines
         const lines = content.split('\n').filter(line => line.trim() !== '');
         
-        // Validate basic TLE format
+        // Always take the last two lines for TLE data
+        // For 2-line TLE: both lines are the TLE
+        // For 3-line+ TLE: last two lines are the TLE, first line is name
         if (lines.length < 2) {
           setError("Invalid TLE file: The file must contain at least 2 lines");
           return;
@@ -138,19 +141,22 @@ const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }
         if (lines.length === 2) {
           // 2-line TLE without a name
           setTleData({
-            line1: lines[0],
+            line1: lines[0].padEnd(69, ' ').substring(0, 69),
             line2: lines[1]
           });
         } else {
-          // 3-line TLE with a name
+          // 3-line or more TLE with a name
           setTleData({
             name: lines[0].trim(),
-            line1: lines[1],
-            line2: lines[2]
+            line1: lines[lines.length - 2].padEnd(69, ' ').substring(0, 69),
+            line2: lines[lines.length - 1]
           });
         }
+        
+        setIsFileUploaded(true);
+        setFile(file);
+        setError(null);
       } catch (err) {
-        console.error("Error reading TLE file:", err);
         setError("Failed to read the TLE file. Please ensure it's a valid text file.");
       }
     };
@@ -162,26 +168,40 @@ const SatelliteAddModal: React.FC<SatelliteAddModalProps> = ({ isOpen, onClose }
     reader.readAsText(file);
   };
 
+  // Handle form submission
   const handleSubmit = () => {
     if (!file || !tleData) {
       setError("Please upload a valid TLE file first");
       return;
     }
     
+    // If there's no name in the TLE, open the name modal
     if (!tleData.name) {
-      // If there's no name in the TLE, open the name modal
       setIsNameModalOpen(true);
     } else {
       // Use the name from the TLE
-      addSatellite(tleData.name);
-      onClose();
+      addSatelliteFromTLE(tleData.name, tleData.line1, tleData.line2)
+        .then(() => {
+          onClose();
+        })
+        .catch(err => {
+          setError(err instanceof Error ? err.message : "Failed to process TLE");
+        });
     }
   };
   
+  // Handle name submission from the name modal
   const handleNameSubmit = (name: string) => {
-    addSatellite(name);
-    setIsNameModalOpen(false);
-    onClose();
+    if (tleData) {
+      addSatelliteFromTLE(name, tleData.line1, tleData.line2)
+        .then(() => {
+          setIsNameModalOpen(false);
+          onClose();
+        })
+        .catch(err => {
+          setError(err instanceof Error ? err.message : "Failed to process TLE");
+        });
+    }
   };
 
   // Close modal when clicking overlay
