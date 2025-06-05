@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useTimeContext } from './TimeContext';
+import RESTCommunication from '../implementations/RESTCommunication';
+import type { TrajectoryData } from '../interfaces/CommunicationLayer';
+
+// Initialize communication layer
+const communication = new RESTCommunication();
 
 // Utility function to generate a unique ID
 const generateId = (): string => {
@@ -87,32 +92,6 @@ const generateSimpleTrajectory = (startMJD: number, endMJD: number) => {
   };
 };
 
-// Fetch trajectory from backend using TLE data
-const fetchTrajectoryFromTLE = async (tleLine1: string, tleLine2: string) => {
-  try {
-    const response = await fetch('http://localhost:8000/trajectory/from-tle', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        tle_line1: tleLine1,
-        tle_line2: tleLine2,
-        time_interval: 30 // Points every 30 seconds
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Failed to fetch trajectory:', error);
-    throw error;
-  }
-};
-
 // Context type definition
 interface SatelliteContextType {
   satellites: Satellite[];
@@ -124,6 +103,8 @@ interface SatelliteContextType {
   toggleSatellite: (id: string) => void;
   toggleSidebar: () => void;
   setActiveSatellite: (id: string | null) => void;
+  getLastError: () => string | null;
+  retryLastOperation: () => Promise<void>;
 }
 
 // Create the context
@@ -154,7 +135,7 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
   const { minValue, maxValue, setMinValue, setMaxValue, setCurrentTime } = useTimeContext();
 
   // Update timeline limits based on trajectory data
-  const updateTimelineLimits = (trajectoryData: { startTime: number, endTime: number }) => {
+  const updateTimelineLimits = (trajectoryData: TrajectoryData) => {
     // Only update if trajectory exists
     if (!trajectoryData) return;
 
@@ -197,13 +178,13 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
     try {
       // Validate TLE format
       if (!validateTLE(tleLine1, tleLine2)) {
-        throw new Error(`Invalid TLE format, ${tleLine1.startsWith('1 ')} ${tleLine2.startsWith('2 ')} ${tleLine1.length === 69} ${tleLine2.length === 69}`);
+        throw new Error('Invalid TLE format');
       }
 
-      // Create a new satellite with loading state
       const newId = generateId();
       const randomColor = generateRandomColor();
 
+      // Create new satellite with loading state
       const newSatellite: Satellite = {
         id: newId,
         name,
@@ -217,98 +198,92 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
         isLoading: true,
         error: null
       };
-      
+
       // Add the satellite to the list
-      setSatellites(prevSatellites => [...prevSatellites, newSatellite]);
+      setSatellites(prev => [...prev, newSatellite]);
+
+      // Fetch trajectory data using our communication layer
+      const trajectoryData = await communication.fetchTrajectoryFromTLE(tleLine1, tleLine2);
+
+      // Update the satellite with the trajectory data
+      setSatellites(prev => prev.map(sat => 
+        sat.id === newId 
+          ? {
+              ...sat,
+              trajectoryData: {
+                points: trajectoryData.points.map(point => ({
+                  longitude: point.spherical.longitude,
+                  latitude: point.spherical.latitude,
+                  mjd: point.mjd
+                })),
+                startTime: trajectoryData.startTime,
+                endTime: trajectoryData.endTime
+              },
+              isLoading: false
+            }
+          : sat
+      ));
+
+      // Update timeline limits based on the new trajectory
+      updateTimelineLimits(trajectoryData);
 
       // If this is the first satellite, make it active
       if (satellites.length === 0) {
         setActiveSatelliteId(newId);
       }
 
-      // Set global loading state
-      setIsGlobalLoading(true);
-
-      try {
-        // Fetch trajectory from backend
-        const trajectoryData = await fetchTrajectoryFromTLE(tleLine1, tleLine2);
-        
-        // Transform backend response to our format
-        const transformedTrajectory = {
-          points: trajectoryData.points.map((point: any) => ({
-            longitude: point.spherical.longitude,
-            latitude: point.spherical.latitude,
-            mjd: point.mjd
-          })),
-          startTime: parseFloat(trajectoryData.start_time.split(' ')[0]),
-          endTime: parseFloat(trajectoryData.end_time.split(' ')[0])
-        };
-
-        // Update the satellite with trajectory data
-        setSatellites(prevSatellites => 
-          prevSatellites.map(satellite => 
-            satellite.id === newId 
-              ? { 
-                  ...satellite, 
-                  trajectoryData: transformedTrajectory,
-                  isLoading: false,
-                  error: null
-                } 
-              : satellite
-          )
-        );
-
-        // Update timeline limits to match the new trajectory
-        updateTimelineLimits(transformedTrajectory);
-        
-        return newId;
-      } catch (error) {
-        // Update the satellite with error state
-        setSatellites(prevSatellites => 
-          prevSatellites.map(satellite => 
-            satellite.id === newId 
-              ? { 
-                  ...satellite, 
-                  isLoading: false, 
-                  error: error instanceof Error ? error.message : "Failed to fetch trajectory"
-                } 
-              : satellite
-          )
-        );
-        
-        throw error;
-      } finally {
-        setIsGlobalLoading(false);
-      }
+      return newId;
     } catch (error) {
-      console.error('Error adding satellite from TLE:', error);
-      throw error;
+      // Get the error from the communication layer
+      const lastError = communication.getLastError();
+      const errorMessage = lastError?.message || 'Failed to add satellite';
+
+      // Update the satellite with error state if it was added
+      setSatellites(prev => prev.map(sat => 
+        sat.name === name && sat.isLoading 
+          ? { ...sat, isLoading: false, error: errorMessage }
+          : sat
+      ));
+
+      throw new Error(errorMessage);
     }
   };
 
-  // Toggle satellite visibility
   const toggleSatellite = (id: string) => {
-    setSatellites(prevSatellites => 
-      prevSatellites.map(satellite => 
-        satellite.id === id 
-          ? { ...satellite, isVisible: !satellite.isVisible } 
+    setSatellites(prevSatellites =>
+      prevSatellites.map(satellite =>
+        satellite.id === id
+          ? { ...satellite, isVisible: !satellite.isVisible }
           : satellite
       )
     );
   };
 
-  // Toggle sidebar visibility
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);
   };
 
-  // Set the active satellite
   const setActiveSatellite = (id: string | null) => {
     setActiveSatelliteId(id);
   };
 
-  // Context value
-  const contextValue: SatelliteContextType = {
+  const getLastError = () => {
+    const error = communication.getLastError();
+    return error ? error.message : null;
+  };
+
+  const retryLastOperation = async () => {
+    setIsGlobalLoading(true);
+    try {
+      await communication.retryLastOperation();
+      setIsGlobalLoading(false);
+    } catch (error) {
+      setIsGlobalLoading(false);
+      throw error;
+    }
+  };
+
+  const value = {
     satellites,
     activeSatelliteId,
     isSidebarOpen,
@@ -317,11 +292,13 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
     addSatelliteFromTLE,
     toggleSatellite,
     toggleSidebar,
-    setActiveSatellite
+    setActiveSatellite,
+    getLastError,
+    retryLastOperation
   };
 
   return (
-    <SatelliteContext.Provider value={contextValue}>
+    <SatelliteContext.Provider value={value}>
       {children}
     </SatelliteContext.Provider>
   );
