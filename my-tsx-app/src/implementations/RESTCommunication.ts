@@ -48,8 +48,9 @@ class RESTCommunication implements CommunicationLayer {
           },
           mjd: point.mjd
         })),
-        startTime: parseFloat(rawData.start_time.split(' ')[0]),
-        endTime: parseFloat(rawData.end_time.split(' ')[0])
+        // Use the mjd values from first and last points for the time range
+        startTime: rawData.points[0].mjd,
+        endTime: rawData.points[rawData.points.length - 1].mjd
       };
 
       this.loading = false;
