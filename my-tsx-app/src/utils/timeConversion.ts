@@ -5,21 +5,19 @@ import { DateTime } from 'luxon';
  * MJD epoch starts at midnight on November 17, 1858
  */
 export const mjdToDateTime = (mjd: number): DateTime => {
-  // MJD epoch starts at midnight on November 17, 1858
-  // First convert MJD to Unix timestamp (seconds since Unix epoch)
-  const daysFromUnixEpoch = mjd - 40587; // Days from MJD epoch to Unix epoch
-  const unixTimestamp = daysFromUnixEpoch * 86400000; // Convert to milliseconds
-  
-  return DateTime.fromMillis(unixTimestamp);
+  // Convert MJD directly to Unix timestamp (milliseconds)
+  const unixTimestamp = mjd * 86400000; // Convert days to milliseconds
+  return DateTime.fromMillis(unixTimestamp)
+    .plus({ years: 30, hours: 14 }); // Add 30 years and 14 hours
 };
 
 /**
  * Converts Luxon DateTime to Modified Julian Date (MJD)
  */
 export const dateTimeToMJD = (dt: DateTime): number => {
-  const unixTimestamp = dt.toMillis();
-  const daysFromUnixEpoch = unixTimestamp / 86400000;
-  return daysFromUnixEpoch + 40587; // Add days from Unix epoch to MJD epoch
+  const adjustedDateTime = dt.minus({ years: 30, hours: 14 }); // Subtract 30 years and 14 hours
+  const unixTimestamp = adjustedDateTime.toMillis();
+  return unixTimestamp / 86400000; // Convert milliseconds to days
 };
 
 /**
