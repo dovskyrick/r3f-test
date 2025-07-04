@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTimeContext } from '../../contexts/TimeContext';
+import { TimePickerDialog } from './TimePickerDialog';
+import { mjdToFormattedString } from '../../utils/timeConversion';
 import './TimeSlider.css';
 
 const TimeSlider: React.FC = () => {
@@ -15,18 +17,23 @@ const TimeSlider: React.FC = () => {
     stepSize
   } = useTimeContext();
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, type: 'min' | 'max') => {
-    if (e.key === 'Enter') {
-      const target = e.target as HTMLInputElement;
-      target.blur();
-      const value = parseFloat(target.value);
-      if (!isNaN(value)) {
-        if (type === 'min') {
-          setMinValue(value.toString());
-        } else {
-          setMaxValue(value.toString());
-        }
-      }
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<'min' | 'max'>('min');
+
+  const handleOpenDialog = (type: 'min' | 'max') => {
+    setDialogType(type);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+  };
+
+  const handleSaveDialog = (mjd: number) => {
+    if (dialogType === 'min') {
+      setMinValue(mjd.toString());
+    } else {
+      setMaxValue(mjd.toString());
     }
   };
 
@@ -36,14 +43,13 @@ const TimeSlider: React.FC = () => {
 
   // Format MJD to a readable format
   const formatTime = (mjd: number) => {
-    // Round to 4 decimal places
-    return mjd.toFixed(4);
+    return mjdToFormattedString(mjd, true);
   };
 
   return (
     <div className="slider-container">
       <div className="slider-header">
-        <span className="current-time-label">MJD: {formatTime(currentTime)}</span>
+        <span className="current-time-label">Time: {formatTime(currentTime)}</span>
       </div>
       <div className="slider-controls">
         <button className="play-button" onClick={togglePlayPause}>
@@ -56,13 +62,12 @@ const TimeSlider: React.FC = () => {
             <div className="play-icon"></div>
           )}
         </button>
-        <input
-          type="text"
-          className="range-value"
-          value={minValue}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMinValue(e.target.value)}
-          onKeyDown={(e) => handleKeyPress(e, 'min')}
-        />
+        <button
+          className="range-value time-button"
+          onClick={() => handleOpenDialog('min')}
+        >
+          {formatTime(parseFloat(minValue))}
+        </button>
         <input
           type="range"
           min={parseFloat(minValue)}
@@ -72,14 +77,21 @@ const TimeSlider: React.FC = () => {
           onChange={handleSliderChange}
           className="time-slider"
         />
-        <input
-          type="text"
-          className="range-value"
-          value={maxValue}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxValue(e.target.value)}
-          onKeyDown={(e) => handleKeyPress(e, 'max')}
-        />
+        <button
+          className="range-value time-button"
+          onClick={() => handleOpenDialog('max')}
+        >
+          {formatTime(parseFloat(maxValue))}
+        </button>
       </div>
+
+      <TimePickerDialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        onSave={handleSaveDialog}
+        initialMJD={dialogType === 'min' ? parseFloat(minValue) : parseFloat(maxValue)}
+        title={`Select ${dialogType === 'min' ? 'Start' : 'End'} Time`}
+      />
     </div>
   );
 };

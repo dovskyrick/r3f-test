@@ -91,4 +91,25 @@
   height: 14px;
   background-color: white;
   display: inline-block;
+}
+
+.time-button {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+  text-align: center;
+}
+
+.time-button:hover {
+  background-color: #f5f5f5;
+  border-color: #999;
+}
+
+.time-button:active {
+  background-color: #e0e0e0;
 } 

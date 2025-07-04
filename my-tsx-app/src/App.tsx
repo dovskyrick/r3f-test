@@ -1,8 +1,12 @@
-import React from 'react';
+import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { TimeProvider } from './contexts/TimeContext';
 import { SatelliteProvider } from './contexts/SatelliteContext';
 import { useSatelliteContext } from './contexts/SatelliteContext';
+import { StyledEngineProvider, ThemeProvider } from '@mui/material/styles';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
+import { theme } from './theme';
 import EarthView from './pages/EarthView/EarthView';
 import MapsView from './pages/MapsView/MapsView';
 import Navigation from './components/Navigation/Navigation';
@@ -38,11 +42,17 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <TimeProvider>
-      <SatelliteProvider>
-        <AppContent />
-      </SatelliteProvider>
-    </TimeProvider>
+    <StyledEngineProvider injectFirst>
+      <ThemeProvider theme={theme}>
+        <LocalizationProvider dateAdapter={AdapterLuxon}>
+          <TimeProvider>
+            <SatelliteProvider>
+              <AppContent />
+            </SatelliteProvider>
+          </TimeProvider>
+        </LocalizationProvider>
+      </ThemeProvider>
+    </StyledEngineProvider>
   );
 };
 
