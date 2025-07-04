@@ -114,6 +114,165 @@ export const TimeProvider: React.FC = ({ children }) => {
 - Verify timezone handling
 - Test performance with rapid timeline updates
 
+## Additional Considerations for MJD Conversion
+
+### Existing Libraries
+Several established libraries can handle MJD conversions and date/time formatting more robustly than custom implementations:
+
+1. **Luxon**
+   - Comprehensive datetime library with built-in MJD support
+   - Better timezone handling than native Date
+   - Example usage:
+   ```typescript
+   import { DateTime } from 'luxon';
+   
+   const mjdToDateTime = (mjd: number): DateTime => {
+     // MJD to Julian Date
+     const jd = mjd + 2400000.5;
+     return DateTime.fromJulianDate(jd);
+   };
+   
+   const dateTimeToMJD = (dt: DateTime): number => {
+     const jd = dt.toJulianDate();
+     return jd - 2400000.5;
+   };
+   ```
+
+2. **Astronomy.js**
+   - Specifically designed for astronomical calculations
+   - Includes MJD, JD, and other astronomical time formats
+   - Example usage:
+   ```typescript
+   import { Time } from 'astronomy-engine';
+   
+   const mjdToDate = (mjd: number): Date => {
+     return Time.MakeTime(mjd).date;
+   };
+   ```
+
+3. **Moment.js** with **moment-jdconv**
+   - While Moment.js is in maintenance mode, it's still widely used
+   - The jdconv plugin handles Julian Date conversions
+   - Example usage:
+   ```typescript
+   import moment from 'moment';
+   import 'moment-jdconv';
+   
+   const mjdToMoment = (mjd: number) => {
+     const jd = mjd + 2400000.5;
+     return moment().jd(jd);
+   };
+   ```
+
+### Date/Time Picker Components
+Instead of implementing custom date/time selection, we can use established React components:
+
+1. **@mui/x-date-pickers**
+   - Part of Material-UI ecosystem
+   - Provides both date and time selection
+   - Supports custom time formats
+   - Example integration:
+   ```typescript
+   import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+   import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
+   import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+   
+   const TimelineEndpoints: React.FC = () => {
+     return (
+       <LocalizationProvider dateAdapter={AdapterLuxon}>
+         <DateTimePicker
+           label="Start Time"
+           value={mjdToDateTime(startTime)}
+           onChange={(newValue) => {
+             if (newValue) {
+               setStartTime(dateTimeToMJD(newValue));
+             }
+           }}
+           views={['year', 'month', 'day', 'hours', 'minutes', 'seconds']}
+         />
+       </LocalizationProvider>
+     );
+   };
+   ```
+
+2. **react-datepicker**
+   - Popular standalone date picker
+   - Customizable time selection
+   - Simpler than MUI but still feature-rich
+   - Example usage:
+   ```typescript
+   import DatePicker from "react-datepicker";
+   import "react-datepicker/dist/react-datepicker.css";
+   
+   const TimelineEndpoints: React.FC = () => {
+     return (
+       <DatePicker
+         selected={mjdToDate(startTime)}
+         onChange={(date: Date) => setStartTime(dateToMJD(date))}
+         showTimeSelect
+         timeFormat="HH:mm:ss"
+         timeIntervals={1}
+         dateFormat="MMMM d, yyyy h:mm:ss aa"
+       />
+     );
+   };
+   ```
+
+### Recommended Approach
+Based on the available options, here's the recommended approach:
+
+1. **Time Conversion Library**: Use Luxon
+   - Most actively maintained
+   - Best timezone support
+   - Built-in Julian Date conversions
+   - TypeScript support out of the box
+
+2. **Date Picker Component**: Use @mui/x-date-pickers
+   - Already uses Luxon as adapter
+   - Matches Material-UI design if we're using it
+   - Supports seconds precision
+   - Has TypeScript support
+
+### Implementation Updates
+With these libraries, we should modify our approach:
+
+1. Replace custom conversion utilities with Luxon:
+   - Remove `timeConversion.ts`
+   - Add Luxon-based utilities
+   - Update TimeContext to use Luxon's DateTime
+
+2. Add date/time picker popups:
+   - Add to TimeSlider component
+   - Show on click of start/end labels
+   - Use MUI's DateTimePicker
+   - Maintain MJD internally
+
+3. Benefits:
+   - More robust time handling
+   - Better timezone support
+   - Reduced custom code
+   - Professional UI components
+   - Better accessibility
+   - Reduced bug potential
+
+4. Package additions needed:
+   ```json
+   {
+     "dependencies": {
+       "luxon": "^3.4.0",
+       "@mui/x-date-pickers": "^6.10.0",
+       "@emotion/react": "^11.11.0",
+       "@emotion/styled": "^11.11.0",
+       "@mui/material": "^5.13.0"
+     },
+     "devDependencies": {
+       "@types/luxon": "^3.3.0"
+     }
+   }
+   ```
+
+These updates will significantly simplify our implementation while providing a more robust and user-friendly interface for time selection and display.
+
 ## 2. Earth Orientation in 3D View
 
 ### Problem Statement
