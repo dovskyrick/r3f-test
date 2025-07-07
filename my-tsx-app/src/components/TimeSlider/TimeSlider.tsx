@@ -49,7 +49,9 @@ const TimeSlider: React.FC = () => {
   return (
     <div className="slider-container">
       <div className="slider-header">
-        <span className="current-time-label">Time: {formatTime(currentTime)}</span>
+        <span className="current-time-label">
+          Time: {formatTime(currentTime)} (MJD: {currentTime.toFixed(5)})
+        </span>
       </div>
       <div className="slider-controls">
         <button className="play-button" onClick={togglePlayPause}>

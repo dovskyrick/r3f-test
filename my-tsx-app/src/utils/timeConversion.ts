@@ -8,14 +8,17 @@ export const mjdToDateTime = (mjd: number): DateTime => {
   // Convert MJD directly to Unix timestamp (milliseconds)
   const unixTimestamp = mjd * 86400000; // Convert days to milliseconds
   return DateTime.fromMillis(unixTimestamp)
-    .plus({ years: 30, hours: 14 }); // Add 30 years and 14 hours
+    .plus({ years: 30 }) // Add 30 years
+    .minus({ hours: 1 }); // Remove 15-hour offset by subtracting 1 hour from the previous +14
 };
 
 /**
  * Converts Luxon DateTime to Modified Julian Date (MJD)
  */
 export const dateTimeToMJD = (dt: DateTime): number => {
-  const adjustedDateTime = dt.minus({ years: 30, hours: 14 }); // Subtract 30 years and 14 hours
+  const adjustedDateTime = dt
+    .minus({ years: 30 }) // Subtract 30 years
+    .plus({ hours: 1 }); // Add 1 hour to compensate for the -1 in mjdToDateTime
   const unixTimestamp = adjustedDateTime.toMillis();
   return unixTimestamp / 86400000; // Convert milliseconds to days
 };
