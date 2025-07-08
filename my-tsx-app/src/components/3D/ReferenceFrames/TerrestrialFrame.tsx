@@ -2,14 +2,14 @@ import React from 'react';
 import { ArrowHelper, Vector3 } from 'three';
 import { Text } from '@react-three/drei';
 
-interface AxisVisualizationProps {
+interface TerrestrialFrameProps {
   scale?: number;
 }
 
-const AxisVisualization: React.FC<AxisVisualizationProps> = ({ scale = 2 }) => {
+const TerrestrialFrame: React.FC<TerrestrialFrameProps> = ({ scale = 2 }) => {
   return (
     <>
-      {/* X-axis (red) */}
+      {/* X-axis (red) - T100 */}
       <arrowHelper 
         args={[
           new Vector3(1, 0, 0), // direction
@@ -26,10 +26,10 @@ const AxisVisualization: React.FC<AxisVisualizationProps> = ({ scale = 2 }) => {
         fontSize={scale * 0.15}
         anchorX="left"
       >
-        100
+        T100
       </Text>
       
-      {/* Y-axis (green) */}
+      {/* Y-axis (green) - T010 */}
       <arrowHelper 
         args={[
           new Vector3(0, 1, 0), // direction
@@ -46,10 +46,10 @@ const AxisVisualization: React.FC<AxisVisualizationProps> = ({ scale = 2 }) => {
         fontSize={scale * 0.15}
         anchorY="bottom"
       >
-        010
+        T010
       </Text>
       
-      {/* Z-axis (blue) */}
+      {/* Z-axis (blue) - T001 */}
       <arrowHelper 
         args={[
           new Vector3(0, 0, 1), // direction
@@ -66,7 +66,7 @@ const AxisVisualization: React.FC<AxisVisualizationProps> = ({ scale = 2 }) => {
         fontSize={scale * 0.15}
         anchorX="left"
       >
-        001
+        T001
       </Text>
 
       {/* XY plane ring (blue normal - Z axis) */}
@@ -90,4 +90,4 @@ const AxisVisualization: React.FC<AxisVisualizationProps> = ({ scale = 2 }) => {
   );
 };
 
-export default AxisVisualization; 
+export default TerrestrialFrame; 
