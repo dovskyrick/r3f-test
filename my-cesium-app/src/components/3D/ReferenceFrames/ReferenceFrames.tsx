@@ -1,12 +1,11 @@
 import React from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Group, Quaternion, Vector3, Euler } from 'three';
+import { Group, Quaternion, Vector3 } from 'three';
 import TerrestrialFrame from './TerrestrialFrame';
 import CelestialFrame from './CelestialFrame';
 import { useTimeContext } from '../../../contexts/TimeContext';
 import { 
-  satelliteToThreeMatrix,
-  getGMST,
+  getSimpleEarthRotationMatrix,
   mjdToDate 
 } from '../../../utils/coordinateTransforms';
 
@@ -50,34 +49,25 @@ const ReferenceFrames: React.FC<ReferenceFramesProps> = ({
       Math.abs(date.getTime() - lastDate.current.getTime()) >= 24 * 60 * 60 * 1000;
 
     if (shouldLog) {
-      console.log('=== SATELLITE.JS TRANSFORMATION ===');
-      console.log('Date changed to:', date.toISOString());
+      console.log('=== SIMPLIFIED EARTH ROTATION ===');
+      console.log('Date:', date.toISOString());
+      console.log('Note: Using simplified rotation. Cesium ICRF↔ITRF transformation to be implemented.');
       lastDate.current = date;
     }
 
-    // Get complete ICRF to ITRF transformation from satellite.js
-    const transformMatrix = satelliteToThreeMatrix(date);
+    // Get simplified Earth rotation matrix (placeholder for Cesium implementation)
+    const transformMatrix = getSimpleEarthRotationMatrix(date);
     
-    if (shouldLog) {
-      console.log('Satellite.js transformation matrix:', transformMatrix.elements);
-      const gmst = getGMST(date);
-      console.log('GMST from satellite.js:', gmst, 'radians');
-    }
-
     // Extract quaternion from the transformation matrix
     quaternion.current.setFromRotationMatrix(transformMatrix);
 
-    // Apply final rotation to both Earth and terrestrial frame
+    // Apply rotation to both Earth and terrestrial frame
     terrestrialRef.current.quaternion.copy(quaternion.current);
     earthRef.current.quaternion.copy(quaternion.current);
 
     if (shouldLog) {
-      // Extract Euler angles for debugging
-      const finalEuler = new Euler().setFromQuaternion(quaternion.current);
-      const angles = [finalEuler.x, finalEuler.y, finalEuler.z]
-        .map(rad => (rad * 180 / Math.PI).toFixed(2));
-      console.log('Final rotation angles (deg):', angles);
-      console.log('=== END SATELLITE.JS TRANSFORMATION ===');
+      console.log('Applied simplified Earth rotation');
+      console.log('=== END SIMPLIFIED EARTH ROTATION ===');
     }
   });
 
@@ -116,7 +106,7 @@ const ReferenceFrames: React.FC<ReferenceFramesProps> = ({
         />
       )}
 
-      {/* Reference 23.4° vector (magenta) */}
+      {/* Reference 23.4° vector (magenta) - shows where Earth's axis should be */}
       {showCelestial && (
         <arrowHelper 
           args={[

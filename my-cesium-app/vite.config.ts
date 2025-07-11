@@ -7,4 +7,15 @@ export default defineConfig({
   server: {
     port: 3000, // Match the port from your tsx app if desired
   },
+  assetsInclude: [
+    '**/*.glb',
+    '**/*.gltf', 
+    '**/*.fbx',
+    '**/*.obj',
+    '**/*.mtl',
+    '**/*.dae',
+    '**/*.3ds',
+    '**/*.ply',
+    '**/*.stl'
+  ],
 });
