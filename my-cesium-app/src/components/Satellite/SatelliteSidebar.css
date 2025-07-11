@@ -1,0 +1,88 @@
+.satellite-sidebar {
+  width: 300px;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+  /* Initially hidden */
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+/* When visible, slide in */
+.satellite-sidebar.visible {
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  padding: 20px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: white;
+  text-align: center;
+}
+
+/* This is our scrollable container */
+.satellite-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  
+  /* Customize scrollbar for webkit browsers */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.2); /* Firefox */
+}
+
+/* Webkit scrollbar styles */
+.satellite-list::-webkit-scrollbar {
+  width: 8px;
+}
+  
+.satellite-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+  
+.satellite-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+  
+.satellite-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.empty-list-message {
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
+}
+
+.sidebar-footer {
+  padding: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.load-tle-button {
+  width: 100%;
+  padding: 10px;
+  background-color: rgba(66, 133, 244, 0.8);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.load-tle-button:hover {
+  background-color: rgba(66, 133, 244, 1);
+} 
