@@ -1,5 +1,7 @@
-import { Matrix3, Matrix4, Quaternion } from 'three';
+import { Matrix3, Matrix4, Quaternion, Vector3 } from 'three';
 import { RotationMatrix } from 'astronomy-engine';
+import * as satellite from 'satellite.js';
+import type { EciVec3, EcfVec3, GMSTime } from 'satellite.js';
 
 /**
  * Converts an astronomy-engine rotation matrix to Three.js Matrix3
@@ -56,4 +58,74 @@ export function calculateGMST(date: Date): number {
   
   // Convert to radians and normalize to [0, 2π]
   return (gmst * Math.PI / 12) % (2 * Math.PI);
+}
+
+// ============================================================================
+// NEW SATELLITE.JS FUNCTIONS
+// ============================================================================
+
+/**
+ * Wrapper around satellite.js gstime function
+ * Calculates Greenwich Mean Sidereal Time (GMST) from a JavaScript Date
+ */
+export function getGMST(date: Date): GMSTime {
+  return (satellite as any).gstime(date);
+}
+
+/**
+ * Transforms a vector from ICRF (ECI) to ITRF (ECF) using satellite.js
+ */
+export function transformICRFToITRF(icrfVector: Vector3, date: Date): Vector3 {
+  const gmst = (satellite as any).gstime(date);
+  
+  const eciVec: EciVec3<number> = {
+    x: icrfVector.x,
+    y: icrfVector.y,
+    z: icrfVector.z
+  };
+  
+  const ecfResult = (satellite as any).eciToEcf(eciVec, gmst);
+  
+  return new Vector3(ecfResult.x, ecfResult.y, ecfResult.z);
+}
+
+/**
+ * Transforms a vector from ITRF (ECF) to ICRF (ECI) using satellite.js
+ */
+export function transformITRFToICRF(itrfVector: Vector3, date: Date): Vector3 {
+  const gmst = (satellite as any).gstime(date);
+  
+  const ecfVec: EcfVec3<number> = {
+    x: itrfVector.x,
+    y: itrfVector.y,
+    z: itrfVector.z
+  };
+  
+  const eciResult = (satellite as any).ecfToEci(ecfVec, gmst);
+  
+  return new Vector3(eciResult.x, eciResult.y, eciResult.z);
+}
+
+/**
+ * Creates a transformation matrix from ICRF to ITRF using satellite.js
+ * Swaps Y and Z axes: satellite.js Z (north pole) → Three.js Y (T010)
+ */
+export function satelliteToThreeMatrix(date: Date): Matrix4 {
+  const gmst = (satellite as any).gstime(date);
+  
+  // Transform standard basis vectors from ECI to ECF
+  const xBasisECF = (satellite as any).eciToEcf({ x: 1, y: 0, z: 0 }, gmst);
+  const yBasisECF = (satellite as any).eciToEcf({ x: 0, y: 1, z: 0 }, gmst);
+  const zBasisECF = (satellite as any).eciToEcf({ x: 0, y: 0, z: 1 }, gmst);
+  
+  // Swap Y and Z: satellite.js Z → Three.js Y, satellite.js Y → Three.js Z
+  const matrix = new Matrix4();
+  matrix.set(
+    xBasisECF.x, zBasisECF.x, yBasisECF.x, 0,
+    xBasisECF.z, zBasisECF.z, yBasisECF.z, 0,  
+    xBasisECF.y, zBasisECF.y, yBasisECF.y, 0,
+    0, 0, 0, 1
+  );
+  
+  return matrix;
 } 

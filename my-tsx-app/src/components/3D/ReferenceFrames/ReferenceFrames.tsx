@@ -1,15 +1,14 @@
 import React from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Group, Matrix3, Matrix4, Quaternion, Vector3, Euler } from 'three';
+import { Group, Quaternion, Vector3, Euler } from 'three';
 import TerrestrialFrame from './TerrestrialFrame';
 import CelestialFrame from './CelestialFrame';
 import { useTimeContext } from '../../../contexts/TimeContext';
-import * as Astronomy from 'astronomy-engine';
 import { 
-  astronomyToThreeMatrix, 
-  calculateGMST,
+  satelliteToThreeMatrix,
+  getGMST,
   mjdToDate 
-} from '../../../utils/astronomy';
+} from '../../../utils/coordinateTransforms';
 
 interface ReferenceFramesProps {
   scale?: number;
@@ -31,9 +30,6 @@ const ReferenceFrames: React.FC<ReferenceFramesProps> = ({
 
   // Reusable objects to avoid garbage collection
   const quaternion = React.useRef(new Quaternion());
-  const matrix3 = React.useRef(new Matrix3());
-  const matrix4 = React.useRef(new Matrix4());
-  const euler = React.useRef(new Euler());
 
   // Debug: Create a reference vector tilted at exactly 23.4 degrees
   const referenceAngle = 23.4 * (Math.PI / 180); // Convert to radians
@@ -54,38 +50,22 @@ const ReferenceFrames: React.FC<ReferenceFramesProps> = ({
       Math.abs(date.getTime() - lastDate.current.getTime()) >= 24 * 60 * 60 * 1000;
 
     if (shouldLog) {
+      console.log('=== SATELLITE.JS TRANSFORMATION ===');
       console.log('Date changed to:', date.toISOString());
       lastDate.current = date;
     }
 
-    // Get Earth's orientation from astronomy-engine
-    const rotation = Astronomy.Rotation_EQJ_EQD(date);
+    // Get complete ICRF to ITRF transformation from satellite.js
+    const transformMatrix = satelliteToThreeMatrix(date);
     
     if (shouldLog) {
-      console.log('Raw rotation matrix from astronomy-engine:', 
-        rotation.rot.map(row => row.map(val => val.toFixed(6))));
+      console.log('Satellite.js transformation matrix:', transformMatrix.elements);
+      const gmst = getGMST(date);
+      console.log('GMST from satellite.js:', gmst, 'radians');
     }
 
-    // Convert astronomy-engine matrix to Three.js format
-    const rotationMatrix = astronomyToThreeMatrix(rotation);
-    
-    // Convert to Matrix4 for quaternion extraction
-    matrix4.current.identity();
-    matrix4.current.setFromMatrix3(rotationMatrix);
-    
-    // Extract the rotation without amplification
-    quaternion.current.setFromRotationMatrix(matrix4.current);
-
-    // Get Earth's daily rotation angle (GMST)
-    const gmst = calculateGMST(date);
-    
-    // Create daily rotation quaternion
-    const dailyRotation = new Quaternion();
-    euler.current.set(0, gmst, 0);
-    dailyRotation.setFromEuler(euler.current);
-
-    // Combine rotations: first apply astronomy-engine rotation, then daily rotation
-    quaternion.current.multiply(dailyRotation);
+    // Extract quaternion from the transformation matrix
+    quaternion.current.setFromRotationMatrix(transformMatrix);
 
     // Apply final rotation to both Earth and terrestrial frame
     terrestrialRef.current.quaternion.copy(quaternion.current);
@@ -97,7 +77,7 @@ const ReferenceFrames: React.FC<ReferenceFramesProps> = ({
       const angles = [finalEuler.x, finalEuler.y, finalEuler.z]
         .map(rad => (rad * 180 / Math.PI).toFixed(2));
       console.log('Final rotation angles (deg):', angles);
-      console.log('------------------------');
+      console.log('=== END SATELLITE.JS TRANSFORMATION ===');
     }
   });
 
