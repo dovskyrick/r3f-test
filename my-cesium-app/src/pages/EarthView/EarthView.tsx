@@ -6,24 +6,14 @@ import Satellite from '../../components/3D/Satellite';
 import AlternateViewObjects from '../../components/3D/AlternateViewObjects';
 import AlternateViewTrajectory from '../../components/3D/AlternateViewTrajectory';
 import CameraManager from '../../components/3D/CameraManager';
-// Temporarily disable TrajectoryVisualization until we implement multi-satellite support for 3D
-// import TrajectoryVisualization from '../../components/3D/TrajectoryVisualization';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
 import './EarthView.css';
 
 const EarthView: React.FC = () => {
   const [isAlternateView, setIsAlternateView] = useState(false);
-  const [showTestMode, setShowTestMode] = useState(false);
 
   return (
     <div className="earth-view-container">
-      <button 
-        className="test-mode-button"
-        onClick={() => setShowTestMode(!showTestMode)}
-      >
-        {showTestMode ? 'Hide Test Mode' : 'Show Test Mode'}
-      </button>
-
       <Canvas camera={{ position: [20, 20, 20] }}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[5, 5, 5]} />
@@ -31,14 +21,10 @@ const EarthView: React.FC = () => {
         {/* Runs inside Canvas to detect zoom changes */}
         <CameraManager setIsAlternateView={setIsAlternateView} />
 
-        <Earth isAlternateView={isAlternateView} showTestMode={showTestMode} />
+        <Earth isAlternateView={isAlternateView} />
         <Satellite isAlternateView={isAlternateView} />
         <AlternateViewObjects isAlternateView={isAlternateView} />
         <AlternateViewTrajectory isAlternateView={isAlternateView} />
-        
-        {/* Temporarily disabled until we implement multi-satellite support for 3D */}
-        {/* Show trajectory in main view (not alternate view) */}
-        {/* {!isAlternateView && <TrajectoryVisualization />} */}
 
         <OrbitControls />
       </Canvas>
