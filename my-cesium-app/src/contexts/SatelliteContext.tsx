@@ -44,6 +44,12 @@ export interface Satellite {
       longitude: number;
       latitude: number;
       mjd: number;
+      // 3D cartesian coordinates in ITRF frame
+      cartesian?: {
+        x: number;
+        y: number;
+        z: number;
+      };
     }[];
     startTime: number;
     endTime: number;
@@ -68,6 +74,11 @@ const generateSimpleTrajectory = (startMJD: number, endMJD: number) => {
   const endLon = startLon + length * Math.cos(angle);
   const endLat = startLat + length * Math.sin(angle);
   
+  // 3D trajectory parameters - well above Earth surface
+  const earthRadius = 6371; // km
+  const startAltitude = 500 + Math.random() * 1000; // 500-1500 km altitude
+  const endAltitude = 500 + Math.random() * 1000; // 500-1500 km altitude
+  
   // Create points along the line
   const numPoints = 20;
   const points = [];
@@ -78,10 +89,28 @@ const generateSimpleTrajectory = (startMJD: number, endMJD: number) => {
     const lon = startLon + fraction * (endLon - startLon);
     const lat = startLat + fraction * (endLat - startLat);
     
+    // Convert lat/lon to 3D cartesian coordinates (ITRF frame)
+    const altitude = startAltitude + fraction * (endAltitude - startAltitude);
+    const radius = earthRadius + altitude;
+    
+    // Convert spherical to cartesian
+    const lonRad = lon * Math.PI / 180;
+    const latRad = lat * Math.PI / 180;
+    
+    const x = radius * Math.cos(latRad) * Math.cos(lonRad);
+    const y = radius * Math.cos(latRad) * Math.sin(lonRad);
+    const z = radius * Math.sin(latRad);
+    
     points.push({
       longitude: lon,
       latitude: lat,
-      mjd: mjd
+      mjd: mjd,
+      // Add 3D cartesian coordinates in ITRF frame
+      cartesian: {
+        x: x,
+        y: y,
+        z: z
+      }
     });
   }
   
@@ -214,7 +243,13 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
                 points: trajectoryData.points.map(point => ({
                   longitude: point.spherical.longitude,
                   latitude: point.spherical.latitude,
-                  mjd: point.mjd
+                  mjd: point.mjd,
+                  // Add 3D cartesian coordinates from ITRF frame (only if available)
+                  cartesian: point.cartesian ? {
+                    x: point.cartesian.x,
+                    y: point.cartesian.y,
+                    z: point.cartesian.z
+                  } : undefined
                 })),
                 startTime: trajectoryData.startTime,
                 endTime: trajectoryData.endTime

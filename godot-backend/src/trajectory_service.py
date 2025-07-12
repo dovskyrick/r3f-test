@@ -84,15 +84,14 @@ def generate_trajectory(time_interval=30, universe_file='./config/universe_stell
         
         for epoch in time_grid:
             try:
-                # Get spacecraft position in ICRF frame
+                # Get spacecraft position in ITRF frame
                 spacecraft_id = "SC_center"
-                position = uni.frames.vector3("Earth", spacecraft_id, "ICRF", epoch)
-                
-                # Extract x, y, z components in ICRF
-                x, y, z = float(position[0]), float(position[1]), float(position[2])
-                
-                # Get position in ITRF (Earth-fixed) frame for longitude/latitude calculation
+                # Get position in ITRF (Earth-fixed) frame for both cartesian and spherical coordinates
                 position_itrf = uni.frames.vector3("Earth", spacecraft_id, "ITRF", epoch)
+                # Extract x, y, z components in ITRF
+                x, y, z = float(position_itrf[0]), float(position_itrf[1]), float(position_itrf[2])
+                
+                
                 
                 # Convert to spherical coordinates using ITRF position
                 longitude, latitude = cartesian_to_spherical(

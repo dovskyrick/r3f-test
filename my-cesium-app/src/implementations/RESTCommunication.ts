@@ -13,6 +13,9 @@ class RESTCommunication implements CommunicationLayer {
   private loading: boolean = false;
   private lastOperation: (() => Promise<any>) | null = null;
 
+  // Temporary scale factor for testing TLE coordinates
+  private static readonly TEMPORARY_SCALE = 1 / 20;
+
   /**
    * Fetches trajectory data from the backend using TLE data
    */
@@ -46,7 +49,13 @@ class RESTCommunication implements CommunicationLayer {
             longitude: point.spherical.longitude,
             latitude: point.spherical.latitude
           },
-          mjd: point.mjd
+          mjd: point.mjd,
+          // Include cartesian coordinates if they exist
+          cartesian: point.cartesian ? {
+            x: point.cartesian.x * RESTCommunication.TEMPORARY_SCALE,
+            y: point.cartesian.z * RESTCommunication.TEMPORARY_SCALE,  // Swap: use backend Z as frontend Y
+            z: point.cartesian.y * RESTCommunication.TEMPORARY_SCALE   // Swap: use backend Y as frontend Z
+          } : undefined
         })),
         // Use the mjd values from first and last points for the time range
         startTime: rawData.points[0].mjd,

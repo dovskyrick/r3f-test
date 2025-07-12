@@ -6,11 +6,14 @@ import Satellite from '../../components/3D/Satellite';
 import AlternateViewObjects from '../../components/3D/AlternateViewObjects';
 import AlternateViewTrajectory from '../../components/3D/AlternateViewTrajectory';
 import CameraManager from '../../components/3D/CameraManager';
+import TrajectoryPoints from '../../components/3D/TrajectoryPoints';
+import TrajectoryLines from '../../components/3D/TrajectoryLines';
+import TrajectoryMarker from '../../components/3D/TrajectoryMarker';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
 import './EarthView.css';
 
 const EarthView: React.FC = () => {
-  const [isAlternateView, setIsAlternateView] = useState(false);
+  const [isZoomedOutView, setIsZoomedOutView] = useState(false);
 
   return (
     <div className="earth-view-container">
@@ -19,12 +22,21 @@ const EarthView: React.FC = () => {
         <directionalLight position={[5, 5, 5]} />
 
         {/* Runs inside Canvas to detect zoom changes */}
-        <CameraManager setIsAlternateView={setIsAlternateView} />
+        <CameraManager setIsAlternateView={setIsZoomedOutView} />
 
-        <Earth isAlternateView={isAlternateView} />
-        <Satellite isAlternateView={isAlternateView} />
-        <AlternateViewObjects isAlternateView={isAlternateView} />
-        <AlternateViewTrajectory isAlternateView={isAlternateView} />
+        <Earth isAlternateView={isZoomedOutView} />
+        <Satellite isAlternateView={isZoomedOutView} />
+        <AlternateViewObjects isAlternateView={isZoomedOutView} />
+        <AlternateViewTrajectory isAlternateView={isZoomedOutView} />
+
+        {/* New multi-satellite trajectory components - only show in zoomed-out view */}
+        {isZoomedOutView && (
+          <>
+            <TrajectoryPoints />
+            <TrajectoryLines />
+            <TrajectoryMarker />
+          </>
+        )}
 
         <OrbitControls />
       </Canvas>
