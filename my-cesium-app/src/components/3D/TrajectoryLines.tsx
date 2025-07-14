@@ -1,10 +1,16 @@
 import React, { useMemo } from 'react';
-import { SCALE_FACTOR } from '../../contexts/TrajectoryContext';
 import { useSatelliteContext } from '../../contexts/SatelliteContext';
 import * as THREE from 'three';
 import { Line } from '@react-three/drei';
 
-const TrajectoryLines: React.FC = () => {
+// Alternative View descale factor - matches Earth scaling in alternate view
+const AV_DESCALE_FACTOR = 0.5;
+
+interface TrajectoryLinesProps {
+  isAlternateView: boolean;
+}
+
+const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({ isAlternateView }) => {
   const { satellites } = useSatelliteContext();
   
   // Create line points for each visible satellite
@@ -15,6 +21,9 @@ const TrajectoryLines: React.FC = () => {
       satelliteId: string;
     }> = [];
     
+    // Apply additional scaling only in alternate view to match Earth scaling
+    const viewScale = isAlternateView ? AV_DESCALE_FACTOR : 1.0;
+    
     satellites.forEach(satellite => {
       if (satellite.isVisible && satellite.trajectoryData) {
         // Filter points that have 3D cartesian coordinates
@@ -23,9 +32,9 @@ const TrajectoryLines: React.FC = () => {
         if (validPoints.length > 1) { // Need at least 2 points to draw a line
           const linePoints = validPoints.map(point => 
             new THREE.Vector3(
-              point.cartesian!.x * SCALE_FACTOR,
-              point.cartesian!.y * SCALE_FACTOR,
-              point.cartesian!.z * SCALE_FACTOR
+              point.cartesian!.x * viewScale,
+              point.cartesian!.y * viewScale,
+              point.cartesian!.z * viewScale
             )
           );
           
@@ -39,7 +48,7 @@ const TrajectoryLines: React.FC = () => {
     });
     
     return lines;
-  }, [satellites]);
+  }, [satellites, isAlternateView]);
   
   return (
     <group>

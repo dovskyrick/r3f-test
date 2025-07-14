@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
-import { SCALE_FACTOR } from '../../contexts/TrajectoryContext';
 import { useSatelliteContext } from '../../contexts/SatelliteContext';
 import { useTimeContext } from '../../contexts/TimeContext';
 import * as THREE from 'three';
+
+// Alternative View descale factor - matches Earth scaling in alternate view
+const AV_DESCALE_FACTOR = 0.5;
 
 // Define trajectory point type for satellites
 interface SatelliteTrajectoryPoint {
@@ -16,13 +18,18 @@ interface SatelliteTrajectoryPoint {
   };
 }
 
+interface TrajectoryMarkerProps {
+  isAlternateView: boolean;
+}
+
 /**
  * Find the two trajectory points that surround the current MJD time
  * and interpolate position between them
  */
 const interpolatePosition = (
   points: SatelliteTrajectoryPoint[], 
-  currentMJD: number
+  currentMJD: number,
+  viewScale: number
 ): THREE.Vector3 | null => {
   // Filter points that have cartesian coordinates
   const validPoints = points.filter(point => point.cartesian);
@@ -34,9 +41,9 @@ const interpolatePosition = (
   if (currentMJD <= validPoints[0].mjd) {
     const p = validPoints[0];
     return new THREE.Vector3(
-      p.cartesian!.x * SCALE_FACTOR,
-      p.cartesian!.y * SCALE_FACTOR,
-      p.cartesian!.z * SCALE_FACTOR
+      p.cartesian!.x * viewScale,
+      p.cartesian!.y * viewScale,
+      p.cartesian!.z * viewScale
     );
   }
   
@@ -44,9 +51,9 @@ const interpolatePosition = (
   if (currentMJD >= validPoints[validPoints.length - 1].mjd) {
     const p = validPoints[validPoints.length - 1];
     return new THREE.Vector3(
-      p.cartesian!.x * SCALE_FACTOR,
-      p.cartesian!.y * SCALE_FACTOR,
-      p.cartesian!.z * SCALE_FACTOR
+      p.cartesian!.x * viewScale,
+      p.cartesian!.y * viewScale,
+      p.cartesian!.z * viewScale
     );
   }
   
@@ -73,13 +80,13 @@ const interpolatePosition = (
   
   // Return the interpolated position scaled to scene units
   return new THREE.Vector3(
-    x * SCALE_FACTOR,
-    y * SCALE_FACTOR,
-    z * SCALE_FACTOR
+    x * viewScale,
+    y * viewScale,
+    z * viewScale
   );
 };
 
-const TrajectoryMarker: React.FC = () => {
+const TrajectoryMarker: React.FC<TrajectoryMarkerProps> = ({ isAlternateView }) => {
   const { satellites } = useSatelliteContext();
   const { currentTime } = useTimeContext();
   
@@ -91,9 +98,12 @@ const TrajectoryMarker: React.FC = () => {
       satelliteId: string;
     }> = [];
     
+    // Apply additional scaling only in alternate view to match Earth scaling
+    const viewScale = isAlternateView ? AV_DESCALE_FACTOR : 1.0;
+    
     satellites.forEach(satellite => {
       if (satellite.isVisible && satellite.trajectoryData) {
-        const position = interpolatePosition(satellite.trajectoryData.points, currentTime);
+        const position = interpolatePosition(satellite.trajectoryData.points, currentTime, viewScale);
         if (position) {
           markers.push({
             position,
@@ -105,7 +115,7 @@ const TrajectoryMarker: React.FC = () => {
     });
     
     return markers;
-  }, [satellites, currentTime]);
+  }, [satellites, currentTime, isAlternateView]);
   
   return (
     <group>

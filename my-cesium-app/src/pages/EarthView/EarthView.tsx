@@ -9,6 +9,7 @@ import CameraManager from '../../components/3D/CameraManager';
 import TrajectoryPoints from '../../components/3D/TrajectoryPoints';
 import TrajectoryLines from '../../components/3D/TrajectoryLines';
 import TrajectoryMarker from '../../components/3D/TrajectoryMarker';
+import TestRuler from '../../components/3D/TestRuler';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
 import './EarthView.css';
 
@@ -29,12 +30,15 @@ const EarthView: React.FC = () => {
         <AlternateViewObjects isAlternateView={isZoomedOutView} />
         <AlternateViewTrajectory isAlternateView={isZoomedOutView} />
 
+        {/* Test ruler to measure Earth scale - visible in both views */}
+        <TestRuler isAlternateView={isZoomedOutView} />
+
         {/* New multi-satellite trajectory components - only show in zoomed-out view */}
         {isZoomedOutView && (
           <>
-            <TrajectoryPoints />
-            <TrajectoryLines />
-            <TrajectoryMarker />
+            <TrajectoryPoints isAlternateView={isZoomedOutView} />
+            <TrajectoryLines isAlternateView={isZoomedOutView} />
+            <TrajectoryMarker isAlternateView={isZoomedOutView} />
           </>
         )}
 

@@ -4,6 +4,13 @@ import {
   CommunicationError 
 } from '../interfaces/CommunicationLayer';
 
+// Earth radius in kilometers - same as in TrajectoryContext
+const EARTH_RADIUS_KM = 6371;
+
+// Backend to frontend scaling: converts km coordinates to scene units
+// This ensures TLE coordinates are scaled to match Earth's 100-unit radius
+const BACKEND_TO_FRONTEND_SCALE = 100 / EARTH_RADIUS_KM; // approx. 0.0157
+
 /**
  * REST API implementation of the CommunicationLayer interface.
  * This class handles all REST API calls to the backend.
@@ -12,9 +19,6 @@ class RESTCommunication implements CommunicationLayer {
   private lastError: CommunicationError | null = null;
   private loading: boolean = false;
   private lastOperation: (() => Promise<any>) | null = null;
-
-  // Temporary scale factor for testing TLE coordinates
-  private static readonly TEMPORARY_SCALE = 1 / 20;
 
   /**
    * Fetches trajectory data from the backend using TLE data
@@ -52,9 +56,9 @@ class RESTCommunication implements CommunicationLayer {
           mjd: point.mjd,
           // Include cartesian coordinates if they exist
           cartesian: point.cartesian ? {
-            x: point.cartesian.x * RESTCommunication.TEMPORARY_SCALE,
-            y: point.cartesian.z * RESTCommunication.TEMPORARY_SCALE,  // Swap: use backend Z as frontend Y
-            z: point.cartesian.y * RESTCommunication.TEMPORARY_SCALE   // Swap: use backend Y as frontend Z
+            x: point.cartesian.x * BACKEND_TO_FRONTEND_SCALE,
+            y: point.cartesian.z * BACKEND_TO_FRONTEND_SCALE,  // Swap: use backend Z as frontend Y
+            z: point.cartesian.y * BACKEND_TO_FRONTEND_SCALE   // Swap: use backend Y as frontend Z
           } : undefined
         })),
         // Use the mjd values from first and last points for the time range

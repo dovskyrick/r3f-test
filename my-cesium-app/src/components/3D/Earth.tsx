@@ -4,7 +4,7 @@ import * as THREE from "three";
 import model from "../../assets/earth.glb";
 
 // Constants
-const DESCALE_FACTOR = 0.3;
+const DESCALE_FACTOR = 0.5;
 
 interface EarthProps {
   isAlternateView: boolean;
