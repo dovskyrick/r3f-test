@@ -56,9 +56,11 @@ class RESTCommunication implements CommunicationLayer {
           mjd: point.mjd,
           // Include cartesian coordinates if they exist
           cartesian: point.cartesian ? {
-            x: point.cartesian.x * BACKEND_TO_FRONTEND_SCALE,
-            y: point.cartesian.z * BACKEND_TO_FRONTEND_SCALE,  // Swap: use backend Z as frontend Y
-            z: point.cartesian.y * BACKEND_TO_FRONTEND_SCALE   // Swap: use backend Y as frontend Z
+            // Step 1: Scale from km to scene units
+            // Step 2: Swap Y/Z coordinates and negate Y
+            x: point.cartesian.x * BACKEND_TO_FRONTEND_SCALE,                // X stays X
+            y: point.cartesian.z * BACKEND_TO_FRONTEND_SCALE,             // backend Z -> frontend -Y
+            z: -(point.cartesian.y * BACKEND_TO_FRONTEND_SCALE)                 // backend Y -> frontend Z
           } : undefined
         })),
         // Use the mjd values from first and last points for the time range
