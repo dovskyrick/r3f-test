@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { CacheProvider } from './contexts/CacheContext';
 import { TimeProvider } from './contexts/TimeContext';
 import { SatelliteProvider } from './contexts/SatelliteContext';
 import { useSatelliteContext } from './contexts/SatelliteContext';
@@ -45,11 +46,13 @@ const App: React.FC = () => {
     <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
         <LocalizationProvider dateAdapter={AdapterLuxon}>
-          <TimeProvider>
-            <SatelliteProvider>
-              <AppContent />
-            </SatelliteProvider>
-          </TimeProvider>
+          <CacheProvider>
+            <TimeProvider>
+              <SatelliteProvider>
+                <AppContent />
+              </SatelliteProvider>
+            </TimeProvider>
+          </CacheProvider>
         </LocalizationProvider>
       </ThemeProvider>
     </StyledEngineProvider>

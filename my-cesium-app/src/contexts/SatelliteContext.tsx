@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useTimeContext } from './TimeContext';
 import RESTCommunication from '../implementations/RESTCommunication';
 import type { TrajectoryData } from '../interfaces/CommunicationLayer';
+import { useCacheContext } from './CacheContext';
+import { CachedSatellite } from '../utils/cacheUtils';
 
 // Initialize communication layer
 const communication = new RESTCommunication();
@@ -134,6 +136,11 @@ interface SatelliteContextType {
   setActiveSatellite: (id: string | null) => void;
   getLastError: () => string | null;
   retryLastOperation: () => Promise<void>;
+  
+  // New cache-related properties
+  isRestoringFromCache: boolean;
+  restoreSatellitesFromCache: () => Promise<void>;
+  cacheSatellites: () => void;
 }
 
 // Create the context
@@ -159,9 +166,13 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
   const [activeSatelliteId, setActiveSatelliteId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isGlobalLoading, setIsGlobalLoading] = useState<boolean>(false);
+  const [isRestoringFromCache, setIsRestoringFromCache] = useState<boolean>(false);
 
   // Access TimeContext to get and set current time range
   const { minValue, maxValue, setMinValue, setMaxValue, setCurrentTime } = useTimeContext();
+  
+  // Access CacheContext for cache operations
+  const { cacheService, isCacheLoaded } = useCacheContext();
 
   // Update timeline limits based on trajectory data
   const updateTimelineLimits = (trajectoryData: TrajectoryData) => {
@@ -318,6 +329,97 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
     }
   };
 
+  // Cache restoration method
+  const restoreSatellitesFromCache = useCallback(async (): Promise<void> => {
+    if (!isCacheLoaded) return;
+    
+    setIsRestoringFromCache(true);
+    try {
+      const cachedSatellites = cacheService.loadSatellites();
+      
+      if (cachedSatellites.length === 0) {
+        console.log('No cached satellites to restore');
+        return;
+      }
+
+      console.log(`Restoring ${cachedSatellites.length} satellites from cache`);
+      
+      // Convert cached satellites back to full satellite objects
+      for (const cached of cachedSatellites) {
+        try {
+          // Add satellite using existing TLE method if TLE data exists
+          if (cached.tleLine1 && cached.tleLine2) {
+            const newId = await addSatelliteFromTLE(cached.name, cached.tleLine1, cached.tleLine2);
+            
+            // Restore cached properties like color and visibility
+            setSatellites(prev => prev.map(sat => 
+              sat.id === newId 
+                ? { 
+                    ...sat, 
+                    color: cached.color, 
+                    isVisible: cached.isVisible,
+                    id: cached.id // Use original cached ID for consistency
+                  }
+                : sat
+            ));
+          } else {
+            // For satellites without TLE data, add as random trajectory
+            addSatellite(cached.name);
+            
+            // Update with cached properties
+            setSatellites(prev => prev.map((sat, index) => 
+              index === prev.length - 1 // Last added satellite
+                ? { 
+                    ...sat, 
+                    color: cached.color, 
+                    isVisible: cached.isVisible,
+                    id: cached.id // Use original cached ID
+                  }
+                : sat
+            ));
+          }
+        } catch (error) {
+          console.warn(`Failed to restore satellite ${cached.name}:`, error);
+        }
+      }
+      
+      console.log('Satellite restoration completed');
+    } catch (error) {
+      console.error('Failed to restore satellites from cache:', error);
+    } finally {
+      setIsRestoringFromCache(false);
+    }
+  }, [isCacheLoaded, cacheService, addSatelliteFromTLE, addSatellite]);
+
+  // Cache current satellites
+  const cacheSatellites = useCallback((): void => {
+    if (!isCacheLoaded || isRestoringFromCache) return;
+    
+    try {
+             const satellitesToCache: CachedSatellite[] = satellites.map(sat => ({
+         id: sat.id,
+         name: sat.name,
+         tleLine1: sat.tle?.line1 || '',
+         tleLine2: sat.tle?.line2 || '',
+         color: sat.color,
+         isVisible: sat.isVisible
+         // timeInterval will be added later when the feature is implemented
+       }));
+      
+      cacheService.saveSatellites(satellitesToCache);
+    } catch (error) {
+      console.warn('Failed to cache satellites:', error);
+    }
+  }, [satellites, isCacheLoaded, isRestoringFromCache, cacheService]);
+
+  // Auto-cache effect when satellites change
+  useEffect(() => {
+    if (isCacheLoaded && !isRestoringFromCache && satellites.length > 0) {
+      const timeoutId = setTimeout(cacheSatellites, 1000); // Debounce caching
+      return () => clearTimeout(timeoutId);
+    }
+  }, [satellites, isCacheLoaded, isRestoringFromCache, cacheSatellites]);
+
   const value = {
     satellites,
     activeSatelliteId,
@@ -329,7 +431,12 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
     toggleSidebar,
     setActiveSatellite,
     getLastError,
-    retryLastOperation
+    retryLastOperation,
+    
+    // Cache-related properties
+    isRestoringFromCache,
+    restoreSatellitesFromCache,
+    cacheSatellites
   };
 
   return (
