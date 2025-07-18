@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useCacheContext } from '../../contexts/CacheContext';
+import { useCacheRestoration } from '../../hooks/useCacheRestoration';
 import './CacheManager.css';
 
 const CacheManager: React.FC = () => {
   const [showBanner, setShowBanner] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
   const { cacheService, cacheInfo, refreshCacheInfo, clearCache } = useCacheContext();
+  const { isRestoring, restorationStep, progress, error, restoreFromCache, clearError } = useCacheRestoration();
 
   // Check for cached data on mount
   useEffect(() => {
     refreshCacheInfo();
-    
+  }, []); // Only run once on mount
+
+  // Separate effect to handle banner visibility based on cache info
+  useEffect(() => {
     // Show banner if there's meaningful cached data
     const hasMeaningfulData = cacheInfo.hasData && (
       cacheInfo.satelliteCount > 0 || 
@@ -20,33 +24,27 @@ const CacheManager: React.FC = () => {
     
     if (hasMeaningfulData && !isRestoring) {
       setShowBanner(true);
-    }
-  }, [cacheInfo, isRestoring, refreshCacheInfo]);
-
-  const handleRestore = () => {
-    // PLACEHOLDER: Component 2 will replace this
-    alert('Cache restoration will be implemented in Phase 2!\n\nFor now, this is a placeholder. The restoration system is ready but needs the progress UI.');
-    console.log('Restore clicked - placeholder for Component 2');
-    
-    // Simulate restoration for testing
-    setIsRestoring(true);
-    setTimeout(() => {
-      setIsRestoring(false);
+    } else if (!hasMeaningfulData) {
       setShowBanner(false);
-    }, 2000);
+    }
+  }, [cacheInfo.hasData, cacheInfo.satelliteCount, cacheInfo.hasTimeline, cacheInfo.hasUIState, isRestoring]);
+
+  const handleRestore = async () => {
+    // Component 2: Real restoration using the hook
+    try {
+      await restoreFromCache();
+      setShowBanner(false); // Hide banner after successful restoration
+    } catch (error) {
+      console.error('Restoration failed:', error);
+      // Error is handled by the restoration hook
+    }
   };
 
-  const handleContinueFresh = () => {
+  const handleStartFresh = () => {
+    // Clear cache and start fresh
+    clearCache();
     setShowBanner(false);
-    console.log('User chose to continue with fresh session');
-  };
-
-  const handleClearCache = () => {
-    if (window.confirm('Are you sure you want to clear all cached data? This cannot be undone.')) {
-      clearCache();
-      setShowBanner(false);
-      console.log('Cache cleared by user');
-    }
+    console.log('User chose to start fresh - cache cleared');
   };
 
   const handleDismiss = () => {
@@ -77,17 +75,40 @@ const CacheManager: React.FC = () => {
     return `Previous session found - ${parts.join(', ')} saved`;
   };
 
-  // PLACEHOLDER: Component 2 (Progress Overlay) will go here
+  // Component 2: Real Progress Overlay
   if (isRestoring) {
     return (
       <div className="cache-restoration-overlay">
         <div className="restoration-modal">
-          <h3>PLACEHOLDER: Progress Overlay</h3>
-          <p>Component 2 will show restoration progress here</p>
-          <div className="placeholder-progress">
-            <div>Progress bar will go here</div>
-            <div>Step descriptions will go here</div>
+          <h3>Restoring Session</h3>
+          
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="progress-text">
+              {progress}% Complete
+            </div>
           </div>
+          
+          <p className="restoration-step">
+            {restorationStep}
+          </p>
+          
+          {error && (
+            <div className="restoration-error">
+              <p>❌ {error}</p>
+              <button 
+                className="cache-btn cache-btn-secondary"
+                onClick={clearError}
+              >
+                Dismiss Error
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -113,16 +134,10 @@ const CacheManager: React.FC = () => {
               Restore
             </button>
             <button 
-              className="cache-btn cache-btn-secondary" 
-              onClick={handleContinueFresh}
-            >
-              Continue Fresh
-            </button>
-            <button 
               className="cache-btn cache-btn-danger" 
-              onClick={handleClearCache}
+              onClick={handleStartFresh}
             >
-              Clear Cache
+              Start Fresh
             </button>
           </div>
           <button 

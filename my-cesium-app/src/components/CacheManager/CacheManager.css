@@ -1,0 +1,306 @@
+/* Cache Detection Banner (Component 1) */
+.cache-manager-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(90deg, #ff9800, #f57c00);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 2000; /* Above sidebar and other elements */
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.cache-banner-content {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  gap: 15px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.cache-banner-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.cache-banner-message {
+  flex: 1;
+  min-width: 0;
+}
+
+.cache-banner-message {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.cache-banner-details {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+.cache-banner-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cache-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.cache-btn-primary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.cache-btn-primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.cache-btn-secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.cache-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.cache-btn-danger {
+  background: rgba(244, 67, 54, 0.8);
+  color: white;
+  border: 2px solid rgba(244, 67, 54, 0.3);
+}
+
+.cache-btn-danger:hover {
+  background: rgba(244, 67, 54, 1);
+  border-color: rgba(244, 67, 54, 0.5);
+  transform: translateY(-1px);
+}
+
+.cache-banner-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.cache-banner-dismiss:hover {
+  opacity: 1;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .cache-banner-content {
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px 20px;
+    text-align: center;
+  }
+  
+  .cache-banner-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .cache-btn {
+    min-width: 70px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .cache-banner-dismiss {
+    top: 5px;
+    right: 10px;
+  }
+}
+
+/* Progress Overlay (Component 2 - Placeholder Styling) */
+.cache-restoration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000; /* Above everything else */
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.restoration-modal {
+  background: rgba(30, 30, 30, 0.95);
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  color: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.restoration-modal h3 {
+  margin: 0 0 15px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ff9800;
+}
+
+.restoration-modal p {
+  margin: 0 0 20px 0;
+  opacity: 0.9;
+  line-height: 1.5;
+}
+
+/* Placeholder styling - will be replaced in Component 2 */
+.placeholder-progress {
+  background: rgba(255, 152, 0, 0.1);
+  border: 2px dashed rgba(255, 152, 0, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  color: rgba(255, 152, 0, 0.8);
+  font-style: italic;
+}
+
+.placeholder-progress div {
+  margin: 5px 0;
+}
+
+/* Real progress bar styling (ready for Component 2) */
+.progress-container {
+  margin: 20px 0;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progress-text {
+  font-size: 14px;
+  margin-top: 10px;
+  opacity: 0.9;
+}
+
+.restoration-step {
+  font-size: 16px;
+  margin: 15px 0;
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.restoration-error {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 8px;
+  color: #ff5252;
+}
+
+.restoration-error p {
+  margin: 0 0 10px 0;
+  font-weight: 500;
+}
+
+/* Ensure banner doesn't interfere with main content */
+body {
+  padding-top: 0; /* We'll add this dynamically when banner is shown */
+}
+
+/* Animation for banner removal */
+.cache-manager-banner.hiding {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+} 

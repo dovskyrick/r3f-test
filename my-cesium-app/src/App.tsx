@@ -13,6 +13,7 @@ import MapsView from './pages/MapsView/MapsView';
 import Navigation from './components/Navigation/Navigation';
 import SidebarToggle from './components/Satellite/SidebarToggle';
 import SatelliteSidebar from './components/Satellite/SatelliteSidebar';
+import CacheManager from './components/CacheManager/CacheManager';
 import './App.css';
 
 // Wrapper component to access context
@@ -21,6 +22,7 @@ const AppContent: React.FC = () => {
   
   return (
     <Router>
+      <CacheManager />
       <div className={`app-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         {/* Main content */}
         <div className="main-content">
