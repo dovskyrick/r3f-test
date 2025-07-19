@@ -141,6 +141,10 @@ interface SatelliteContextType {
   isRestoringFromCache: boolean;
   restoreSatellitesFromCache: () => Promise<void>;
   cacheSatellites: () => void;
+  
+  // Focus mode properties
+  focusedSatelliteId: string | null;
+  setFocusedSatellite: (id: string | null) => void;
 }
 
 // Create the context
@@ -167,6 +171,7 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isGlobalLoading, setIsGlobalLoading] = useState<boolean>(false);
   const [isRestoringFromCache, setIsRestoringFromCache] = useState<boolean>(false);
+  const [focusedSatelliteId, setFocusedSatelliteId] = useState<string | null>(null);
 
   // Access TimeContext to get and set current time range
   const { minValue, maxValue, setMinValue, setMaxValue, setCurrentTime } = useTimeContext();
@@ -451,6 +456,12 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
     }
   }, [satellites, isCacheLoaded, isRestoringFromCache, cacheSatellites]);
 
+  // Focus satellite handler
+  const setFocusedSatellite = (id: string | null) => {
+    setFocusedSatelliteId(id);
+    console.log('Focused satellite changed:', id);
+  };
+
   const value = {
     satellites,
     activeSatelliteId,
@@ -467,7 +478,11 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
     // Cache-related properties
     isRestoringFromCache,
     restoreSatellitesFromCache,
-    cacheSatellites
+    cacheSatellites,
+    
+    // Focus mode properties
+    focusedSatelliteId,
+    setFocusedSatellite
   };
 
   return (

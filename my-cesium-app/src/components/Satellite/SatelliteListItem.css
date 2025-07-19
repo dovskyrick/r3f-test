@@ -5,10 +5,22 @@
   padding: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   transition: background-color 0.2s ease;
+  cursor: pointer; /* Indicate clickability */
 }
 
 .satellite-list-item:hover {
   background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Focused satellite item styling */
+.satellite-list-item.focused {
+  border-left: 3px solid #ff9800; /* Orange left border indicator */
+  background-color: rgba(255, 152, 0, 0.05); /* Very subtle orange background */
+}
+
+/* Ensure focused state overrides hover */
+.satellite-list-item.focused:hover {
+  background-color: rgba(255, 152, 0, 0.08);
 }
 
 .satellite-name {
@@ -20,6 +32,13 @@
   white-space: nowrap;
   flex: 1;
   margin-right: 10px;
+  transition: color 0.2s ease;
+}
+
+/* Focused satellite name styling */
+.satellite-name.focused-name {
+  color: #ff9800 !important; /* Orange text color */
+  font-weight: 700; /* Slightly bolder */
 }
 
 .satellite-toggle {
