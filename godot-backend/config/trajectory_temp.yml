@@ -14,7 +14,7 @@ setup:
   spacecraft: SC
   type: group
 timeline:
-- epoch: 2025-04-28T16:58:48.719 TDB
+- epoch: 2023-06-07T20:53:20.443 TDB
   name: start
   state:
   - axes: ITRF
@@ -22,15 +22,15 @@ timeline:
     dynamics: EMS_combined
     name: SC_center
     value:
-      pos_x: 1436.8389865663971 km
-      pos_y: 6936.36948707324 km
-      pos_z: -0.004872499213381374 km
-      vel_x: 1.5501302121490426 km/s
-      vel_y: -0.32999029841903393 km/s
-      vel_z: 7.426658281588236 km/s
+      pos_x: -3652.845984102652 km
+      pos_y: 5681.158931179815 km
+      pos_z: 0.013465175878565954 km
+      vel_x: -4.318277465333722 km/s
+      vel_y: -2.763951255048596 km/s
+      vel_z: 5.245493245049466 km/s
   type: control
 - input: SC
   name: end
   point:
-    epoch: 2025-04-29T16:58:48.719 TDB
+    epoch: 2023-06-08T20:53:20.443 TDB
   type: point
