@@ -91,7 +91,7 @@ const EarthView: React.FC = () => {
         {/* New multi-satellite trajectory components - only show in zoomed-out view */}
         {isZoomedOutView && (
           <>
-            <TrajectoryPoints isAlternateView={isZoomedOutView} />
+            {/* <TrajectoryPoints isAlternateView={isZoomedOutView} /> */}
             <TrajectoryLines isAlternateView={isZoomedOutView} />
             <TrajectoryMarker isAlternateView={isZoomedOutView} />
           </>
