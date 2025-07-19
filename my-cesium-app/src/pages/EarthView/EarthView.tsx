@@ -14,6 +14,7 @@ import TimeSlider from '../../components/TimeSlider/TimeSlider';
 import { useCacheContext } from '../../contexts/CacheContext';
 import { useSatelliteContext } from '../../contexts/SatelliteContext';
 import { CachedUIState } from '../../utils/cacheUtils';
+import TestFocusHook from '../../components/3D/TestFocusHook';
 import './EarthView.css';
 
 const EarthView: React.FC = () => {
@@ -82,6 +83,9 @@ const EarthView: React.FC = () => {
 
         {/* Runs inside Canvas to detect zoom changes */}
         <CameraManager setIsAlternateView={setIsZoomedOutView} />
+        
+        {/* TEST: Hook functionality */}
+        <TestFocusHook />
 
         <Earth isAlternateView={isZoomedOutView} />
         <Satellite isAlternateView={isZoomedOutView} />
