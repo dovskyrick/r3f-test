@@ -340,29 +340,68 @@ const TestRuler: React.FC<TestRulerProps> = ({ isAlternateView }) => {
 2. Test Earth movement when satellite is focused
 3. **Keep all existing Earth rendering logic**
 
-### **Phase 4: Test Incrementally** 🧪 SAFETY FIRST
-1. Test each component individually
-2. Verify no performance degradation
-3. **Ensure existing functionality unchanged when no focus**
+### **Phase 4: Update Satellite Markers (OTHER SATELLITES)** 🛰️ CRITICAL PHASE
+1. **Already partially done** in Phase 1 - `TrajectoryMarker.tsx` imports shared utility
+2. **Update** `TrajectoryMarker.tsx` to use `useFocusPositioning` hook
+3. **Apply apparent positioning** to ALL satellite markers (focused + non-focused)
+4. **Test** that focused satellite appears at center, others move relative to it
 
-## Key Design Principles
+### **Phase 5: Update Trajectory Lines (IF EXISTS)** 📈 OTHER SATELLITES
+1. **Find** if `TrajectoryLines.tsx` component exists
+2. **Import** `useFocusPositioning` and shared interpolation utilities
+3. **Apply apparent positioning** to all trajectory line points for ALL satellites
+4. **Test** that trajectory lines follow satellite apparent positions
 
-### **DRY (Don't Repeat Yourself)** 🚀
-- **Single source of truth**: `interpolatePosition` in `utils/satelliteUtils.ts`
-- **Shared interface**: `SatelliteTrajectoryPoint` exported from utility
-- **Zero code duplication**: All components import from same utility
+### **Phase 6: Update Trajectory Points (IF ENABLED)** 🔵 OTHER SATELLITES  
+1. **Check** if `TrajectoryPoints.tsx` is being used (currently commented out)
+2. **If enabled**: Import `useFocusPositioning` hook
+3. **Apply apparent positioning** to all trajectory points for ALL satellites
+4. **Test** that trajectory point clouds move with satellites
 
-### **ZERO Duplicate Computation** 🚀
-- **Reuse existing**: `interpolatePosition` from shared utility
-- **No new calculations**: Position interpolation already optimized
-- **Performance maintained**: Same computation, just transformed for focus mode
+### **Phase 7: Update Test Ruler and Other Components** 📏 COMPLETE SYSTEM
+1. Modify `TestRuler.tsx` to use apparent positioning
+2. **Check for other 3D components** that might need focus mode updates
+3. Apply focus positioning to any remaining 3D objects
+4. **Test complete focus mode functionality**
 
-### **Real vs Apparent Position Separation**
-- **Real positions**: Calculated by shared `interpolatePosition` function
-- **Apparent positions**: Simple subtraction transformation for focus mode
-- **Clean separation**: Easy to switch between focus and normal modes
+### **Phase 8: Integration Testing** 🧪 FULL SYSTEM TEST
+1. Test **no focus mode**: Verify **identical behavior** to current system
+2. Test **focus satellite**: Verify ALL components appear relative to focused satellite
+3. Test **move time slider**: Verify **same performance** + correct relative positioning
+4. Test **change focus**: Verify smooth transition between satellite-centered views
+5. Test **unfocus**: Verify return to Earth-centered view
 
-### **Minimal Code Changes**
-- **Existing logic preserved**: All current position calculations unchanged
-- **Refactor first**: Extract shared utility before adding new features
-- **Backward compatible**: Normal mode behavior completely unchanged 
+## Key Components That Need Focus Mode Updates
+
+### **🎯 Primary Components (Must Update):**
+1. **`TrajectoryMarker.tsx`** ✅ - Satellite markers (focused + others)
+2. **`Earth.tsx`** ✅ - Earth positioning 
+3. **`TestRuler.tsx`** ✅ - Ruler positioning
+
+### **🛰️ Satellite-Related Components (Critical):**
+4. **`TrajectoryLines.tsx`** ❓ - IF EXISTS - All satellite trajectory lines
+5. **`TrajectoryPoints.tsx`** ❓ - IF USED - All satellite trajectory points  
+6. **`Satellite.tsx`** ❓ - Check if this component renders individual satellites
+
+### **🌍 Other 3D Components (Check During Implementation):**
+7. **`AlternateViewObjects.tsx`** - May need focus mode awareness
+8. **`AlternateViewTrajectory.tsx`** - May need focus mode awareness
+9. **Any other 3D objects** - Discovered during implementation
+
+## Critical Implementation Notes
+
+### **ALL Satellites Must Update Together**
+- **Focused satellite**: Appears at center (0,0,0) 
+- **All other satellites**: Get apparent position = real position - focused position
+- **Earth and other objects**: Also get apparent position relative to focused satellite
+- **Time slider changes**: All positions recalculate together
+
+### **Performance Considerations**  
+- **Focused satellite position**: Calculated once per frame
+- **All other positions**: Simple subtraction transformation  
+- **No duplicate interpolation**: Same calculations as current system + offset
+
+### **Component Discovery During Implementation**
+- **Phase 4-6**: Will reveal which satellite-related components actually exist
+- **Phase 7**: Will discover any other 3D components needing updates
+- **Incremental approach**: Test each component individually before proceeding 
