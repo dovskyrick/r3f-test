@@ -1,0 +1,190 @@
+/* Top Navigation Bar */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: linear-gradient(180deg, #f0f0f0 0%, #e0e0e0 100%);
+  border-bottom: 1px solid #ccc;
+  z-index: 4000; /* Above everything else */
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-size: 13px;
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 10px;
+  max-width: 100%;
+}
+
+/* App Brand/Title */
+.navbar-brand {
+  font-weight: 600;
+  color: #333;
+  padding: 0 15px;
+  font-size: 14px;
+}
+
+/* Menu Container */
+.navbar-menu {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+/* Individual Menu Items */
+.menu-item {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-button {
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  color: #333;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 3px;
+  transition: background-color 0.15s ease;
+  font-family: inherit;
+}
+
+.menu-button:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.menu-button.active {
+  background-color: rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Dropdown Menus */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  z-index: 4001;
+  padding: 4px 0;
+  margin-top: 1px;
+}
+
+.dropdown-menu button {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  transition: background-color 0.15s ease;
+  font-family: inherit;
+}
+
+.dropdown-menu button:hover {
+  background-color: #e3f2fd;
+}
+
+.dropdown-menu button:active {
+  background-color: #bbdefb;
+}
+
+/* Menu Separator */
+.menu-separator {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 4px 8px;
+}
+
+/* Right Side Content */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Status Indicator */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.online {
+  background-color: #4caf50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+}
+
+.status-dot.offline {
+  background-color: #f44336;
+  box-shadow: 0 0 4px rgba(244, 67, 54, 0.5);
+}
+
+.status-text {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Close dropdown when clicking outside */
+.menu-item:not(:hover) .dropdown-menu {
+  /* This will be handled by JavaScript click outside logic */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .top-navbar {
+    height: 36px; /* Slightly taller on mobile */
+  }
+  
+  .navbar-brand {
+    font-size: 13px;
+    padding: 0 8px;
+  }
+  
+  .menu-button {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  
+  .dropdown-menu {
+    min-width: 160px;
+  }
+  
+  .status-indicator {
+    display: none; /* Hide status on small screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-brand {
+    display: none; /* Hide brand on very small screens */
+  }
+  
+  .menu-button {
+    padding: 4px 6px;
+  }
+} 

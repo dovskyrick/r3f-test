@@ -189,6 +189,16 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
 
   // Add a new satellite with a random trajectory
   const addSatellite = (name: string) => {
+    // Check for duplicate names (case-insensitive)
+    const existingSatellite = satellites.find(sat => 
+      sat.name.toLowerCase() === name.toLowerCase()
+    );
+    
+    if (existingSatellite) {
+      console.warn(`Satellite with name "${name}" already exists. Skipping duplicate.`);
+      return;
+    }
+    
     const newId = generateId();
     const randomColor = generateRandomColor();
     
@@ -216,6 +226,16 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
   // Add a new satellite from TLE data
   const addSatelliteFromTLE = async (name: string, tleLine1: string, tleLine2: string): Promise<string> => {
     try {
+      // Check for duplicate names (case-insensitive)
+      const existingSatellite = satellites.find(sat => 
+        sat.name.toLowerCase() === name.toLowerCase()
+      );
+      
+      if (existingSatellite) {
+        console.warn(`Satellite with name "${name}" already exists. Skipping duplicate.`);
+        throw new Error(`Satellite "${name}" already exists`);
+      }
+      
       // Validate TLE format
       if (!validateTLE(tleLine1, tleLine2)) {
         throw new Error('Invalid TLE format');
@@ -342,10 +362,21 @@ export const SatelliteProvider: React.FC<SatelliteProviderProps> = ({ children }
         return;
       }
 
-      console.log(`Restoring ${cachedSatellites.length} satellites from cache`);
+      // Filter out satellites that already exist (prevent duplicates by name)
+      const currentSatelliteNames = satellites.map(sat => sat.name.toLowerCase());
+      const satellitesToRestore = cachedSatellites.filter(cached => 
+        !currentSatelliteNames.includes(cached.name.toLowerCase())
+      );
+      
+      if (satellitesToRestore.length === 0) {
+        console.log('No new satellites to restore (all already exist)');
+        return;
+      }
+      
+      console.log(`Restoring ${satellitesToRestore.length} new satellites from cache (${cachedSatellites.length - satellitesToRestore.length} duplicates skipped)`);
       
       // Convert cached satellites back to full satellite objects
-      for (const cached of cachedSatellites) {
+      for (const cached of satellitesToRestore) {
         try {
           // Add satellite using existing TLE method if TLE data exists
           if (cached.tleLine1 && cached.tleLine2) {
