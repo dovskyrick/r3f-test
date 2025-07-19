@@ -5,6 +5,7 @@ import './CacheManager.css';
 
 const CacheManager: React.FC = () => {
   const [showBanner, setShowBanner] = useState(false);
+  const [hasUserDecided, setHasUserDecided] = useState(false); // Track if user has made a decision this session
   const { cacheService, cacheInfo, refreshCacheInfo, clearCache } = useCacheContext();
   const { isRestoring, restorationStep, progress, error, restoreFromCache, clearError } = useCacheRestoration();
 
@@ -15,6 +16,11 @@ const CacheManager: React.FC = () => {
 
   // Separate effect to handle banner visibility based on cache info
   useEffect(() => {
+    // Only show banner on initial load if user hasn't decided yet
+    if (hasUserDecided) {
+      return; // User already made a decision this session, don't show banner again
+    }
+    
     // Show banner if there's meaningful cached data
     const hasMeaningfulData = cacheInfo.hasData && (
       cacheInfo.satelliteCount > 0 || 
@@ -27,13 +33,14 @@ const CacheManager: React.FC = () => {
     } else if (!hasMeaningfulData) {
       setShowBanner(false);
     }
-  }, [cacheInfo.hasData, cacheInfo.satelliteCount, cacheInfo.hasTimeline, cacheInfo.hasUIState, isRestoring]);
+  }, [cacheInfo.hasData, cacheInfo.satelliteCount, cacheInfo.hasTimeline, cacheInfo.hasUIState, isRestoring, hasUserDecided]);
 
   const handleRestore = async () => {
     // Component 2: Real restoration using the hook
     try {
       await restoreFromCache();
       setShowBanner(false); // Hide banner after successful restoration
+      setHasUserDecided(true); // Mark that user has made a decision
     } catch (error) {
       console.error('Restoration failed:', error);
       // Error is handled by the restoration hook
@@ -44,11 +51,13 @@ const CacheManager: React.FC = () => {
     // Clear cache and start fresh
     clearCache();
     setShowBanner(false);
+    setHasUserDecided(true); // Mark that user has made a decision
     console.log('User chose to start fresh - cache cleared');
   };
 
   const handleDismiss = () => {
     setShowBanner(false);
+    setHasUserDecided(true); // Mark that user has made a decision
     console.log('Cache banner dismissed');
   };
 
