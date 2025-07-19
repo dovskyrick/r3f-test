@@ -12,6 +12,7 @@ import TrajectoryMarker from '../../components/3D/TrajectoryMarker';
 import TestRuler from '../../components/3D/TestRuler';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
 import { useCacheContext } from '../../contexts/CacheContext';
+import { useSatelliteContext } from '../../contexts/SatelliteContext';
 import { CachedUIState } from '../../utils/cacheUtils';
 import './EarthView.css';
 
@@ -20,7 +21,9 @@ const EarthView: React.FC = () => {
   
   // Access CacheContext for UI state caching
   const { cacheService, isCacheLoaded } = useCacheContext();
-  // const { focusedSatellite } = useSatelliteContext(); // TODO: Add when focus mode is implemented
+  
+  // Access SatelliteContext for focus mode state
+  const { focusedSatelliteId } = useSatelliteContext();
 
   // Cache UI state
   const cacheUIState = useCallback((): void => {
@@ -97,7 +100,10 @@ const EarthView: React.FC = () => {
           </>
         )}
 
-        <OrbitControls />
+        <OrbitControls 
+          minDistance={focusedSatelliteId ? 5 : 80.5} // Prevent zoom beyond alternate view when no satellite focused
+          maxDistance={200}
+        />
       </Canvas>
       <TimeSlider />
     </div>
