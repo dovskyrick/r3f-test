@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import model from "../../assets/earth.glb";
+import { useFocusPositioning } from '../../hooks/useFocusPositioning';
 
 // Constants
 const DESCALE_FACTOR = 0.5;
@@ -13,6 +14,7 @@ interface EarthProps {
 
 const Earth: React.FC<EarthProps> = ({ isAlternateView }) => {
   const { scene } = useGLTF(model) as { scene: THREE.Group };
+  const { getApparentPosition, isInFocusMode } = useFocusPositioning();
 
   // Make Earth transparent to see trajectories inside
   useEffect(() => {
@@ -31,14 +33,26 @@ const Earth: React.FC<EarthProps> = ({ isAlternateView }) => {
     });
   }, [scene]);
 
-  // Earth is always at the center in both views
-  // Only the Earth scale changes between views
+  // Calculate Earth's apparent position (only in normal view)
+  const earthPosition = isAlternateView || !isInFocusMode 
+    ? { x: 0, y: 0, z: 0 } // Normal position - Earth at center
+    : getApparentPosition({ x: 0, y: 0, z: 0 }); // Apparent position - Earth relative to focused satellite
+
+  // Earth scale changes between views  
   const earthScale = isAlternateView ? DESCALE_FACTOR : 1;
+
+  // TEST: Log Earth positioning
+  console.log('[Earth] Positioning:', {
+    isAlternateView,
+    isInFocusMode,
+    earthPosition,
+    earthScale
+  });
   
   return (
       <primitive 
         object={scene} 
-        position={[0, 0, 0]}
+        position={[earthPosition.x, earthPosition.y, earthPosition.z]}
         scale={earthScale} 
       />
   );

@@ -30,13 +30,6 @@ export const useFocusPositioning = (): FocusPositioning => {
     const position = interpolatePosition(focusedSatellite.trajectoryData.points, currentTime, 1.0);
     if (!position) return null;
 
-    // TEST: Console log focused satellite position
-    console.log(`[useFocusPositioning] Focused satellite ${focusedSatelliteId} position:`, {
-      x: position.x,
-      y: position.y,
-      z: position.z
-    });
-
     return {
       x: position.x,
       y: position.y,
@@ -48,7 +41,6 @@ export const useFocusPositioning = (): FocusPositioning => {
   const getApparentPosition = useCallback((realPosition: Position3D, objectId?: string): Position3D => {
     // If this is the focused satellite itself, place it at center
     if (objectId === focusedSatelliteId) {
-      console.log(`[useFocusPositioning] Focused satellite ${objectId} positioned at center (0,0,0)`);
       return { x: 0, y: 0, z: 0 };
     }
 
@@ -64,23 +56,8 @@ export const useFocusPositioning = (): FocusPositioning => {
       z: realPosition.z - focusCenter.z
     };
 
-    // TEST: Console log apparent position calculation
-    console.log(`[useFocusPositioning] Object ${objectId || 'unknown'} apparent position:`, {
-      real: realPosition,
-      focusCenter: focusCenter,
-      apparent: apparentPosition
-    });
-
     return apparentPosition;
   }, [focusedSatelliteId, getFocusedSatellitePosition]);
-
-  // TEST: Console log hook state
-  console.log(`[useFocusPositioning] Hook state:`, {
-    focusedSatelliteId,
-    isInFocusMode: !!focusedSatelliteId,
-    satelliteCount: satellites.length,
-    currentTime
-  });
 
   return {
     getApparentPosition,
