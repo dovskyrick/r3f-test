@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useSatelliteContext } from '../../contexts/SatelliteContext';
 import * as THREE from 'three';
 import { Line } from '@react-three/drei';
+import { useFocusPositioning } from '../../hooks/useFocusPositioning';
 
 // Alternative View descale factor - matches Earth scaling in alternate view
 const AV_DESCALE_FACTOR = 0.5;
@@ -12,6 +13,7 @@ interface TrajectoryLinesProps {
 
 const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({ isAlternateView }) => {
   const { satellites } = useSatelliteContext();
+  const { getApparentPosition, isInFocusMode } = useFocusPositioning();
   
   // Create line points for each visible satellite
   const satelliteLines = useMemo(() => {
@@ -30,13 +32,26 @@ const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({ isAlternateView }) =>
         const validPoints = satellite.trajectoryData.points.filter(point => point.cartesian);
         
         if (validPoints.length > 1) { // Need at least 2 points to draw a line
-          const linePoints = validPoints.map(point => 
-            new THREE.Vector3(
+          const linePoints = validPoints.map(point => {
+            // Calculate real position for this trajectory point
+            const realPosition = new THREE.Vector3(
               point.cartesian!.x * viewScale,
               point.cartesian!.y * viewScale,
               point.cartesian!.z * viewScale
-            )
-          );
+            );
+            
+            // Apply focus mode positioning (only in normal view)
+            if (isAlternateView || !isInFocusMode) {
+              return realPosition; // Normal behavior - use real position
+            } else {
+              // Focus mode - transform trajectory points relative to focused satellite
+              const apparent = getApparentPosition(
+                { x: realPosition.x, y: realPosition.y, z: realPosition.z },
+                satellite.id
+              );
+              return new THREE.Vector3(apparent.x, apparent.y, apparent.z);
+            }
+          });
           
           lines.push({
             points: linePoints,
@@ -47,8 +62,20 @@ const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({ isAlternateView }) =>
       }
     });
     
+    // DEBUG: Log trajectory line processing
+    console.log('[TrajectoryLines] Lines calculated:', {
+      lineCount: lines.length,
+      isAlternateView,
+      isInFocusMode,
+      satellites: satellites.map(s => ({ 
+        id: s.id, 
+        isVisible: s.isVisible, 
+        pointCount: s.trajectoryData?.points.length || 0 
+      }))
+    });
+
     return lines;
-  }, [satellites, isAlternateView]);
+  }, [satellites, isAlternateView, getApparentPosition, isInFocusMode]);
   
   return (
     <group>

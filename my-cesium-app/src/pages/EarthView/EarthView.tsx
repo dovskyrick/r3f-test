@@ -92,14 +92,14 @@ const EarthView: React.FC = () => {
         {/* Test ruler to measure Earth scale - visible in both views */}
         <TestRuler isAlternateView={isZoomedOutView} />
 
-        {/* Satellite trajectory markers - show in BOTH views */}
+        {/* Satellite trajectory components - show in BOTH views */}
         <TrajectoryMarker isAlternateView={isZoomedOutView} />
+        <TrajectoryLines isAlternateView={isZoomedOutView} />
 
-        {/* Other trajectory components - only show in zoomed-out view */}
+        {/* Trajectory points - only show in zoomed-out view (if enabled) */}
         {isZoomedOutView && (
           <>
             {/* <TrajectoryPoints isAlternateView={isZoomedOutView} /> */}
-            <TrajectoryLines isAlternateView={isZoomedOutView} />
           </>
         )}
 
