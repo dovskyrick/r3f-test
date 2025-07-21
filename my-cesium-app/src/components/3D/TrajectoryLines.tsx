@@ -45,9 +45,11 @@ const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({ isAlternateView }) =>
               return realPosition; // Normal behavior - use real position
             } else {
               // Focus mode - transform trajectory points relative to focused satellite
+              // NOTE: For trajectory lines, we DON'T use satellite.id as objectId
+              // because that would collapse focused satellite's trajectory to origin
               const apparent = getApparentPosition(
                 { x: realPosition.x, y: realPosition.y, z: realPosition.z },
-                satellite.id
+                undefined // No objectId - treat as generic object, not the satellite itself
               );
               return new THREE.Vector3(apparent.x, apparent.y, apparent.z);
             }
