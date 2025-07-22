@@ -1,0 +1,88 @@
+.dev-view-toggle {
+  position: fixed;
+  top: 52px; /* Below TopNavBar (32px) + margin (20px) */
+  left: 20px; /* Left side to distinguish from navigation */
+  z-index: 1500;
+  
+  background-color: rgba(40, 40, 40, 0.9);
+  color: #ffa726; /* Orange color for dev tools */
+  border: 2px solid rgba(255, 167, 38, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  font-family: 'Courier New', monospace; /* Monospace for dev feel */
+  font-size: 13px;
+  font-weight: 600;
+  
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  user-select: none;
+  white-space: nowrap;
+}
+
+.dev-view-toggle:hover {
+  background-color: rgba(50, 50, 50, 0.95);
+  border-color: rgba(255, 167, 38, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 167, 38, 0.2);
+}
+
+.dev-view-toggle.active {
+  background-color: rgba(255, 167, 38, 0.2);
+  border-color: rgba(255, 167, 38, 0.8);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(255, 167, 38, 0.3);
+}
+
+.dev-view-toggle.active:hover {
+  background-color: rgba(255, 167, 38, 0.3);
+}
+
+.dev-toggle-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.dev-toggle-text {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Adjust position when cache banner is visible */
+body.cache-banner-visible .dev-view-toggle {
+  top: calc(52px + 60px); /* TopNavBar margin + Cache banner height */
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .dev-view-toggle {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .dev-toggle-icon {
+    font-size: 14px;
+  }
+  
+  .dev-toggle-text {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dev-view-toggle .dev-toggle-text {
+    display: none; /* Hide text on very small screens, keep only icon */
+  }
+  
+  .dev-view-toggle {
+    padding: 8px;
+    min-width: 40px;
+    justify-content: center;
+  }
+} 

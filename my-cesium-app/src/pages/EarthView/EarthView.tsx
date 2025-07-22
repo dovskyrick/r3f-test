@@ -1,40 +1,36 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+import { useSatelliteContext } from '../../contexts/SatelliteContext';
+import { useCacheContext } from '../../contexts/CacheContext';
 import Earth from '../../components/3D/Earth';
 import Satellite from '../../components/3D/Satellite';
+import TrajectoryMarker from '../../components/3D/TrajectoryMarker';
+import TrajectoryLines from '../../components/3D/TrajectoryLines';
 import AlternateViewObjects from '../../components/3D/AlternateViewObjects';
 import AlternateViewTrajectory from '../../components/3D/AlternateViewTrajectory';
-import CameraManager from '../../components/3D/CameraManager';
-import TrajectoryPoints from '../../components/3D/TrajectoryPoints';
-import TrajectoryLines from '../../components/3D/TrajectoryLines';
-import TrajectoryMarker from '../../components/3D/TrajectoryMarker';
 import TestRuler from '../../components/3D/TestRuler';
+import CameraManager from '../../components/3D/CameraManager';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
-import { useCacheContext } from '../../contexts/CacheContext';
-import { useSatelliteContext } from '../../contexts/SatelliteContext';
-import { CachedUIState } from '../../utils/cacheUtils';
-
+import DevViewToggle from '../../components/DevTools/DevViewToggle';
 import './EarthView.css';
 
 const EarthView: React.FC = () => {
   const [isZoomedOutView, setIsZoomedOutView] = useState(false);
-  
-  // Access CacheContext for UI state caching
-  const { cacheService, isCacheLoaded } = useCacheContext();
-  
-  // Access SatelliteContext for focus mode state
+  const [isDevViewVisible, setIsDevViewVisible] = useState(false); // New state for dev view
   const { focusedSatelliteId } = useSatelliteContext();
+  const { cacheService, isCacheLoaded } = useCacheContext();
 
-  // Cache UI state
+  // Cache UI state (isZoomedOutView) whenever it changes
   const cacheUIState = useCallback((): void => {
     if (!isCacheLoaded) return;
     
     try {
-      const uiState: CachedUIState = {
+      const uiState = {
         isAlternateView: isZoomedOutView,
-        // focusedSatelliteId: focusedSatellite?.id || null, // TODO: Add when focus mode is implemented
-        // Future: camera position, zoom level, etc.
+        // TODO: Add focus state when focus mode is implemented
+        focusedSatelliteId: focusedSatelliteId || null,
+        timestamp: Date.now()
       };
       
       cacheService.saveUIState(uiState);
@@ -75,8 +71,20 @@ const EarthView: React.FC = () => {
     }
   }, [isZoomedOutView, isCacheLoaded, cacheUIState]);
 
+  // Handle dev view toggle
+  const handleDevViewToggle = (isVisible: boolean) => {
+    setIsDevViewVisible(isVisible);
+    console.log(`[EarthView] Dev view ${isVisible ? 'enabled' : 'disabled'}`);
+  };
+
   return (
     <div className="earth-view-container">
+      {/* Dev View Toggle Button */}
+      <DevViewToggle 
+        onToggle={handleDevViewToggle}
+        isDevViewVisible={isDevViewVisible}
+      />
+      
       <Canvas camera={{ position: [20, 20, 20] }}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[5, 5, 5]} />
@@ -89,8 +97,16 @@ const EarthView: React.FC = () => {
         <AlternateViewObjects isAlternateView={isZoomedOutView} />
         <AlternateViewTrajectory isAlternateView={isZoomedOutView} />
 
-        {/* Test ruler to measure Earth scale - visible in both views */}
-        <TestRuler isAlternateView={isZoomedOutView} />
+        {/* Development/Debug Components - controlled by dev view toggle */}
+        {isDevViewVisible && (
+          <>
+            {/* Test ruler to measure Earth scale - visible in both views when dev mode is on */}
+            <TestRuler isAlternateView={isZoomedOutView} />
+            
+            {/* Add other dev components here in the future */}
+            {/* Example: <DebugGrid />, <CoordinateDisplay />, etc. */}
+          </>
+        )}
 
         {/* Satellite trajectory components - show in BOTH views */}
         <TrajectoryMarker isAlternateView={isZoomedOutView} />
