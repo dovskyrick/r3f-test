@@ -14,6 +14,7 @@ import Navigation from './components/Navigation/Navigation';
 import SidebarToggle from './components/Satellite/SidebarToggle';
 import SatelliteSidebar from './components/Satellite/SatelliteSidebar';
 import CacheManager from './components/CacheManager/CacheManager';
+import TopNavBar from './components/TopNavBar/TopNavBar';
 import './App.css';
 
 // Wrapper component to access context
@@ -22,6 +23,9 @@ const AppContent: React.FC = () => {
   
   return (
     <Router>
+      {/* Top Navigation Bar - overlays everything */}
+      <TopNavBar />
+      
       <CacheManager />
       <div className={`app-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         {/* Main content */}

@@ -1,6 +1,6 @@
 .navigation {
   position: fixed;
-  top: 20px;
+  top: 52px; /* 32px TopNavBar + 20px margin */
   right: 20px;
   z-index: 1500;
   display: flex;
@@ -13,6 +13,11 @@
 /* When sidebar is open, adjust the navigation position */
 .app-container.sidebar-open .navigation {
   right: 320px;
+}
+
+/* When cache banner is visible, move navigation further down */
+body.cache-banner-visible .navigation {
+  top: calc(52px + 60px); /* TopNavBar margin + Cache banner height */
 }
 
 .nav-item {

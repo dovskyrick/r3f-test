@@ -1,13 +1,13 @@
 /* Cache Detection Banner (Component 1) */
 .cache-manager-banner {
   position: fixed;
-  top: 0;
+  top: 32px; /* Below TopNavBar (32px height) */
   left: 0;
   right: 0;
   background: linear-gradient(90deg, #ff9800, #f57c00);
   color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  z-index: 2000; /* Above sidebar and other elements */
+  z-index: 3500; /* Below TopNavBar (4000) but above other elements */
   animation: slideDown 0.3s ease-out;
 }
 
@@ -289,6 +289,12 @@
 /* Ensure banner doesn't interfere with main content */
 body {
   padding-top: 0; /* We'll add this dynamically when banner is shown */
+}
+
+/* Adjust main content when cache banner is visible */
+body.cache-banner-visible .main-content {
+  margin-top: calc(32px + 60px); /* TopNavBar height + Cache banner height */
+  height: calc(100vh - 32px - 60px); /* Subtract both TopNavBar and banner heights */
 }
 
 /* Animation for banner removal */

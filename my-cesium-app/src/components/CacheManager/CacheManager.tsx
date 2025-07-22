@@ -35,6 +35,20 @@ const CacheManager: React.FC = () => {
     }
   }, [cacheInfo.hasData, cacheInfo.satelliteCount, cacheInfo.hasTimeline, cacheInfo.hasUIState, isRestoring, hasUserDecided]);
 
+  // Effect to manage body class for layout adjustments
+  useEffect(() => {
+    if (showBanner) {
+      document.body.classList.add('cache-banner-visible');
+    } else {
+      document.body.classList.remove('cache-banner-visible');
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('cache-banner-visible');
+    };
+  }, [showBanner]);
+
   const handleRestore = async () => {
     // Component 2: Real restoration using the hook
     try {

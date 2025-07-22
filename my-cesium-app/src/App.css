@@ -19,7 +19,8 @@ body, html {
 .main-content {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - 32px); /* Account for TopNavBar height */
+  margin-top: 32px; /* Push content below TopNavBar */
   /* Remove all sidebar-related transitions and width changes */
 }
 
