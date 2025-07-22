@@ -94,7 +94,10 @@ const EarthView: React.FC = () => {
 
         {/* Satellite trajectory components - show in BOTH views */}
         <TrajectoryMarker isAlternateView={isZoomedOutView} />
-        <TrajectoryLines isAlternateView={isZoomedOutView} />
+        <TrajectoryLines 
+          isAlternateView={isZoomedOutView} 
+          futureSegmentCount={12} // Show next 12 trajectory segments
+        />
 
         {/* Trajectory points - only show in zoomed-out view (if enabled) */}
         {isZoomedOutView && (
