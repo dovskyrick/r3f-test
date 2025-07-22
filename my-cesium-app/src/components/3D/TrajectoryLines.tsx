@@ -42,52 +42,67 @@ const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({
         const validPoints = satellite.trajectoryData.points.filter(point => point.cartesian);
         
         if (validPoints.length > 1) {
-          // Use time-based future trajectory filtering
-          const futurePoints = getFutureTrajectorySegments(validPoints, currentTime, {
-            ...DEFAULT_FUTURE_CONFIG,
-            segmentCount: futureSegmentCount
-          });
+          // Check if current time is within this satellite's trajectory time range
+          const trajectoryStartTime = validPoints[0].mjd;
+          const trajectoryEndTime = validPoints[validPoints.length - 1].mjd;
+          const isInTimeRange = currentTime >= trajectoryStartTime && currentTime <= trajectoryEndTime;
           
-          console.log(`[TrajectoryLines] Time-based filtering for satellite ${satellite.id}:`, {
+          console.log(`[TrajectoryLines] Time range check for satellite ${satellite.id}:`, {
             currentTime,
-            totalPoints: validPoints.length,
-            futurePointsCount: futurePoints.length,
-            timeRange: validPoints.length > 0 ? {
-              start: validPoints[0].mjd,
-              end: validPoints[validPoints.length - 1].mjd
-            } : null
+            trajectoryStartTime,
+            trajectoryEndTime,
+            isInTimeRange,
+            totalPoints: validPoints.length
           });
           
-          if (futurePoints.length > 1) { // Need at least 2 points to draw a line
-            const linePoints = futurePoints.map(point => {
-              // Calculate real position for this trajectory point
-              const realPosition = new THREE.Vector3(
-                point.cartesian!.x * viewScale,
-                point.cartesian!.y * viewScale,
-                point.cartesian!.z * viewScale
-              );
-              
-              // Apply focus mode positioning (only in normal view)
-              if (isAlternateView || !isInFocusMode) {
-                return realPosition; // Normal behavior - use real position
-              } else {
-                // Focus mode - transform trajectory points relative to focused satellite
-                // NOTE: For trajectory lines, we DON'T use satellite.id as objectId
-                // because that would collapse focused satellite's trajectory to origin
-                const apparent = getApparentPosition(
-                  { x: realPosition.x, y: realPosition.y, z: realPosition.z },
-                  undefined // No objectId - treat as generic object, not the satellite itself
-                );
-                return new THREE.Vector3(apparent.x, apparent.y, apparent.z);
-              }
+          // Only process future trajectory if current time is within satellite's trajectory range
+          if (isInTimeRange) {
+            // Use time-based future trajectory filtering
+            const futurePoints = getFutureTrajectorySegments(validPoints, currentTime, {
+              ...DEFAULT_FUTURE_CONFIG,
+              segmentCount: futureSegmentCount
             });
             
-            lines.push({
-              points: linePoints,
-              color: satellite.color,
-              satelliteId: satellite.id,
-              opacity: 0.8
+            console.log(`[TrajectoryLines] Future trajectory calculated for satellite ${satellite.id}:`, {
+              currentTime,
+              futurePointsCount: futurePoints.length,
+              firstFutureTime: futurePoints[0]?.mjd,
+              lastFutureTime: futurePoints[futurePoints.length - 1]?.mjd
             });
+            
+            if (futurePoints.length > 1) { // Need at least 2 points to draw a line
+              const linePoints = futurePoints.map(point => {
+                // Calculate real position for this trajectory point
+                const realPosition = new THREE.Vector3(
+                  point.cartesian!.x * viewScale,
+                  point.cartesian!.y * viewScale,
+                  point.cartesian!.z * viewScale
+                );
+                
+                // Apply focus mode positioning (only in normal view)
+                if (isAlternateView || !isInFocusMode) {
+                  return realPosition; // Normal behavior - use real position
+                } else {
+                  // Focus mode - transform trajectory points relative to focused satellite
+                  // NOTE: For trajectory lines, we DON'T use satellite.id as objectId
+                  // because that would collapse focused satellite's trajectory to origin
+                  const apparent = getApparentPosition(
+                    { x: realPosition.x, y: realPosition.y, z: realPosition.z },
+                    undefined // No objectId - treat as generic object, not the satellite itself
+                  );
+                  return new THREE.Vector3(apparent.x, apparent.y, apparent.z);
+                }
+              });
+              
+              lines.push({
+                points: linePoints,
+                color: satellite.color,
+                satelliteId: satellite.id,
+                opacity: 0.8
+              });
+            }
+          } else {
+            console.log(`[TrajectoryLines] Skipping satellite ${satellite.id} - current time outside trajectory range`);
           }
         }
       }
@@ -103,7 +118,11 @@ const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({
       satellites: satellites.map(s => ({ 
         id: s.id, 
         isVisible: s.isVisible, 
-        pointCount: s.trajectoryData?.points.length || 0 
+        pointCount: s.trajectoryData?.points?.length || 0,
+        timeRange: s.trajectoryData?.points && s.trajectoryData.points.length > 0 ? {
+          start: s.trajectoryData.points[0].mjd,
+          end: s.trajectoryData.points[s.trajectoryData.points.length - 1].mjd
+        } : null
       }))
     });
 
