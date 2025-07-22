@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import { useSatelliteContext } from '../../contexts/SatelliteContext';
+import { useTimeContext } from '../../contexts/TimeContext';
 import * as THREE from 'three';
 import { Line } from '@react-three/drei';
 import { useFocusPositioning } from '../../hooks/useFocusPositioning';
+import { getFutureTrajectorySegments, DEFAULT_FUTURE_CONFIG } from '../../utils/trajectoryUtils';
 
 // Alternative View descale factor - matches Earth scaling in alternate view
 const AV_DESCALE_FACTOR = 0.5;
@@ -17,6 +19,7 @@ const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({
   futureSegmentCount = 12 
 }) => {
   const { satellites } = useSatelliteContext();
+  const { currentTime } = useTimeContext();
   const { getApparentPosition, isInFocusMode } = useFocusPositioning();
   
   // Create future trajectory lines for each visible satellite
@@ -31,23 +34,28 @@ const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({
     // Apply additional scaling only in alternate view to match Earth scaling
     const viewScale = isAlternateView ? AV_DESCALE_FACTOR : 1.0;
     
-    console.log('[TrajectoryLines] Processing satellite lines with future segments');
+    console.log('[TrajectoryLines] Processing satellite lines with time-based future segments, currentTime:', currentTime);
     
     satellites.forEach(satellite => {
       if (satellite.isVisible && satellite.trajectoryData) {
         // Filter points that have 3D cartesian coordinates
         const validPoints = satellite.trajectoryData.points.filter(point => point.cartesian);
         
-        // For now, let's use a simpler approach - take a slice of points from current time forward
-        // This avoids the hooks violation while we refactor
         if (validPoints.length > 1) {
-          // Simple future segments: take first futureSegmentCount points
-          // TODO: Replace with proper time-based filtering in next phase
-          const futurePoints = validPoints.slice(0, Math.min(futureSegmentCount, validPoints.length));
+          // Use time-based future trajectory filtering
+          const futurePoints = getFutureTrajectorySegments(validPoints, currentTime, {
+            ...DEFAULT_FUTURE_CONFIG,
+            segmentCount: futureSegmentCount
+          });
           
-          console.log(`[TrajectoryLines] Processing satellite ${satellite.id}:`, {
+          console.log(`[TrajectoryLines] Time-based filtering for satellite ${satellite.id}:`, {
+            currentTime,
             totalPoints: validPoints.length,
-            futurePointsCount: futurePoints.length
+            futurePointsCount: futurePoints.length,
+            timeRange: validPoints.length > 0 ? {
+              start: validPoints[0].mjd,
+              end: validPoints[validPoints.length - 1].mjd
+            } : null
           });
           
           if (futurePoints.length > 1) { // Need at least 2 points to draw a line
@@ -86,7 +94,8 @@ const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({
     });
     
     // DEBUG: Log trajectory processing
-    console.log('[TrajectoryLines] Trajectory lines calculated (simplified):', {
+    console.log('[TrajectoryLines] Time-based trajectory lines calculated:', {
+      currentTime,
       lineCount: lines.length,
       isAlternateView,
       isInFocusMode,
@@ -99,7 +108,7 @@ const TrajectoryLines: React.FC<TrajectoryLinesProps> = ({
     });
 
     return lines;
-  }, [satellites, isAlternateView, getApparentPosition, isInFocusMode, futureSegmentCount]);
+  }, [satellites, currentTime, isAlternateView, getApparentPosition, isInFocusMode, futureSegmentCount]);
   
   return (
     <group>
