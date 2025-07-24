@@ -101,6 +101,16 @@
   background-color: #bbdefb;
 }
 
+.dropdown-menu button.menu-item-active {
+  background-color: #ffa726;
+  color: white;
+  font-weight: 600;
+}
+
+.dropdown-menu button.menu-item-active:hover {
+  background-color: #ff9800;
+}
+
 /* Menu Separator */
 .menu-separator {
   height: 1px;

@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import './TopNavBar.css';
 
-const TopNavBar: React.FC = () => {
+interface TopNavBarProps {
+  isDevViewVisible?: boolean;
+  onDevViewToggle?: (isVisible: boolean) => void;
+}
+
+const TopNavBar: React.FC<TopNavBarProps> = ({ 
+  isDevViewVisible = false, 
+  onDevViewToggle 
+}) => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   const handleMenuClick = (menuName: string) => {
@@ -10,6 +18,12 @@ const TopNavBar: React.FC = () => {
 
   const handleMenuItemClick = (item: string) => {
     console.log(`Menu item clicked: ${item}`);
+    
+    // Handle dev view toggle specifically
+    if (item === 'Toggle Dev View' && onDevViewToggle) {
+      onDevViewToggle(!isDevViewVisible);
+    }
+    
     setActiveMenu(null); // Close menu after selection
   };
 
@@ -81,6 +95,13 @@ const TopNavBar: React.FC = () => {
                 <div className="menu-separator"></div>
                 <button onClick={() => handleMenuItemClick('Reset Camera')}>Reset Camera</button>
                 <button onClick={() => handleMenuItemClick('Focus Earth')}>Focus Earth</button>
+                <div className="menu-separator"></div>
+                <button 
+                  onClick={() => handleMenuItemClick('Toggle Dev View')}
+                  className={isDevViewVisible ? 'menu-item-active' : ''}
+                >
+                  🔧 {isDevViewVisible ? 'Hide Dev View' : 'Show Dev View'}
+                </button>
               </div>
             )}
           </div>

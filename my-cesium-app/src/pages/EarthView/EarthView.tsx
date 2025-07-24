@@ -12,12 +12,14 @@ import AlternateViewTrajectory from '../../components/3D/AlternateViewTrajectory
 import TestRuler from '../../components/3D/TestRuler';
 import CameraManager from '../../components/3D/CameraManager';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
-import DevViewToggle from '../../components/DevTools/DevViewToggle';
 import './EarthView.css';
 
-const EarthView: React.FC = () => {
+interface EarthViewProps {
+  isDevViewVisible: boolean;
+}
+
+const EarthView: React.FC<EarthViewProps> = ({ isDevViewVisible }) => {
   const [isZoomedOutView, setIsZoomedOutView] = useState(false);
-  const [isDevViewVisible, setIsDevViewVisible] = useState(false); // New state for dev view
   const { focusedSatelliteId } = useSatelliteContext();
   const { cacheService, isCacheLoaded } = useCacheContext();
 
@@ -71,20 +73,13 @@ const EarthView: React.FC = () => {
     }
   }, [isZoomedOutView, isCacheLoaded, cacheUIState]);
 
-  // Handle dev view toggle
-  const handleDevViewToggle = (isVisible: boolean) => {
-    setIsDevViewVisible(isVisible);
-    console.log(`[EarthView] Dev view ${isVisible ? 'enabled' : 'disabled'}`);
-  };
+  // Log dev view state changes
+  useEffect(() => {
+    console.log(`[EarthView] Dev view ${isDevViewVisible ? 'enabled' : 'disabled'}`);
+  }, [isDevViewVisible]);
 
   return (
     <div className="earth-view-container">
-      {/* Dev View Toggle Button */}
-      <DevViewToggle 
-        onToggle={handleDevViewToggle}
-        isDevViewVisible={isDevViewVisible}
-      />
-      
       <Canvas camera={{ position: [20, 20, 20] }}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[5, 5, 5]} />
@@ -97,7 +92,7 @@ const EarthView: React.FC = () => {
         <AlternateViewObjects isAlternateView={isZoomedOutView} />
         <AlternateViewTrajectory isAlternateView={isZoomedOutView} />
 
-        {/* Development/Debug Components - controlled by dev view toggle */}
+        {/* Development/Debug Components - controlled by dev view toggle from TopNavBar */}
         {isDevViewVisible && (
           <>
             {/* Test ruler to measure Earth scale - visible in both views when dev mode is on */}

@@ -20,11 +20,21 @@ import './App.css';
 // Wrapper component to access context
 const AppContent: React.FC = () => {
   const { isSidebarOpen } = useSatelliteContext();
+  const [isDevViewVisible, setIsDevViewVisible] = React.useState(false);
+
+  // Handle dev view toggle from TopNavBar
+  const handleDevViewToggle = (isVisible: boolean) => {
+    setIsDevViewVisible(isVisible);
+    console.log(`[App] Dev view ${isVisible ? 'enabled' : 'disabled'}`);
+  };
   
   return (
     <Router>
       {/* Top Navigation Bar - overlays everything */}
-      <TopNavBar />
+      <TopNavBar 
+        isDevViewVisible={isDevViewVisible}
+        onDevViewToggle={handleDevViewToggle}
+      />
       
       <CacheManager />
       <div className={`app-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
@@ -32,7 +42,10 @@ const AppContent: React.FC = () => {
         <div className="main-content">
           <Navigation />
           <Routes>
-            <Route path="/" element={<EarthView />} />
+            <Route 
+              path="/" 
+              element={<EarthView isDevViewVisible={isDevViewVisible} />} 
+            />
             <Route path="/maps" element={<MapsView />} />
           </Routes>
         </div>
