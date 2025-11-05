@@ -103,4 +103,50 @@ export const calculateSegmentOpacity = (
   // Linear fade from 1.0 (current) to 0.3 (distant future)
   const fadeRatio = 1 - (segmentIndex / totalSegments);
   return 0.3 + (fadeRatio * 0.7); // Range: 0.3 to 1.0
+};
+
+/**
+ * Get interpolated satellite position at a specific time
+ * Returns cartesian coordinates in ITRF frame
+ */
+export const getPositionAtTime = (
+  points: SatelliteTrajectoryPoint[],
+  currentMJD: number
+): { x: number; y: number; z: number } | null => {
+  if (!points || points.length === 0) return null;
+  
+  // If current time is before first point, return first point
+  if (currentMJD <= points[0].mjd) {
+    return points[0].cartesian || null;
+  }
+  
+  // If current time is after last point, return last point
+  if (currentMJD >= points[points.length - 1].mjd) {
+    return points[points.length - 1].cartesian || null;
+  }
+  
+  // Find surrounding points and interpolate
+  for (let i = 0; i < points.length - 1; i++) {
+    if (points[i].mjd <= currentMJD && points[i + 1].mjd >= currentMJD) {
+      const beforePoint = points[i];
+      const afterPoint = points[i + 1];
+      
+      // Check if both points have cartesian coordinates
+      if (!beforePoint.cartesian || !afterPoint.cartesian) {
+        return beforePoint.cartesian || afterPoint.cartesian || null;
+      }
+      
+      // Linear interpolation
+      const timeDiff = afterPoint.mjd - beforePoint.mjd;
+      const fraction = timeDiff === 0 ? 0 : (currentMJD - beforePoint.mjd) / timeDiff;
+      
+      return {
+        x: beforePoint.cartesian.x + fraction * (afterPoint.cartesian.x - beforePoint.cartesian.x),
+        y: beforePoint.cartesian.y + fraction * (afterPoint.cartesian.y - beforePoint.cartesian.y),
+        z: beforePoint.cartesian.z + fraction * (afterPoint.cartesian.z - beforePoint.cartesian.z)
+      };
+    }
+  }
+  
+  return null;
 }; 

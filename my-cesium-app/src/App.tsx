@@ -10,6 +10,7 @@ import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import { theme } from './theme';
 import EarthView from './pages/EarthView/EarthView';
 import MapsView from './pages/MapsView/MapsView';
+import CelestialView from './pages/CelestialView/CelestialView';
 import Navigation from './components/Navigation/Navigation';
 import SidebarToggle from './components/Satellite/SidebarToggle';
 import SatelliteSidebar from './components/Satellite/SatelliteSidebar';
@@ -47,6 +48,7 @@ const AppContent: React.FC = () => {
               element={<EarthView isDevViewVisible={isDevViewVisible} />} 
             />
             <Route path="/maps" element={<MapsView />} />
+            <Route path="/celestial" element={<CelestialView />} />
           </Routes>
         </div>
         

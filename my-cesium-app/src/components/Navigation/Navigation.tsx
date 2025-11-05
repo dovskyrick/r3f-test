@@ -19,6 +19,12 @@ const Navigation: React.FC = () => {
       >
         Maps View
       </Link>
+      <Link 
+        to="/celestial" 
+        className={`nav-item ${location.pathname === '/celestial' ? 'active' : ''}`}
+      >
+        Celestial Map
+      </Link>
     </div>
   );
 };
