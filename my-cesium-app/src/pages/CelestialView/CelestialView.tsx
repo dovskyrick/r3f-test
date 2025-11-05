@@ -32,8 +32,8 @@ const CelestialView: React.FC = () => {
         
         {/* Camera controls - same as EarthView */}
         <OrbitControls 
-          minDistance={5}
-          maxDistance={200}
+          minDistance={1}
+          maxDistance={2}
         />
       </Canvas>
       
