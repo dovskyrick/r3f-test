@@ -25,6 +25,7 @@ const CelestialView: React.FC = () => {
         <CustomStarmap 
           minMagnitude={6.5}
           showConstellations={false} // Can be toggled with UI later
+          highlightConstellationStars={true} // Make constellation stars 10x larger
           rotation={[0, 0, 0]} // Can add rotation logic later
         />
         

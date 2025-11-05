@@ -21,7 +21,17 @@ starsData.forEach(star => {
   }
 });
 
+// Create a Set of all HR numbers that belong to constellations
+export const constellationStarHRNumbers: Set<number> = new Set();
+
+Object.values(constellationsData).forEach(constellation => {
+  constellation.stars.forEach(hrNumber => {
+    constellationStarHRNumbers.add(hrNumber);
+  });
+});
+
 console.log(`[StarmapData] Loaded ${starsData.length} stars`);
 console.log(`[StarmapData] Loaded ${Object.keys(constellationsData).length} constellations`);
 console.log(`[StarmapData] Created HR lookup map with ${starsByHR.size} entries`);
+console.log(`[StarmapData] Identified ${constellationStarHRNumbers.size} constellation stars`);
 

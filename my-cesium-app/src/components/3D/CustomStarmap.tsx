@@ -12,6 +12,7 @@ import ConstellationLines from './ConstellationLines';
 interface CustomStarmapProps {
   minMagnitude?: number;
   showConstellations?: boolean;
+  highlightConstellationStars?: boolean; // Make constellation stars larger
   constellationColor?: string;
   rotation?: [number, number, number]; // Euler angles [x, y, z] in radians
   position?: [number, number, number];
@@ -20,6 +21,7 @@ interface CustomStarmapProps {
 const CustomStarmap: React.FC<CustomStarmapProps> = ({
   minMagnitude = 6.5,
   showConstellations = false,
+  highlightConstellationStars = false,
   constellationColor = '#d1d9e6',
   rotation = [0, 0, 0],
   position = [0, 0, 0]
@@ -29,6 +31,7 @@ const CustomStarmap: React.FC<CustomStarmapProps> = ({
   console.log('[CustomStarmap] Rendering with:', {
     minMagnitude,
     showConstellations,
+    highlightConstellationStars,
     rotation,
     position
   });
@@ -40,7 +43,11 @@ const CustomStarmap: React.FC<CustomStarmapProps> = ({
       position={position}
     >
       {/* Star points - ~9000 stars */}
-      <StarPoints minMagnitude={minMagnitude} />
+      <StarPoints 
+        minMagnitude={minMagnitude}
+        highlightConstellationStars={highlightConstellationStars}
+        constellationStarSizeMultiplier={100000}
+      />
 
       {/* Constellation lines - 88 constellations */}
       <ConstellationLines

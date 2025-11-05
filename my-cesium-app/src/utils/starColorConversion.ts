@@ -55,14 +55,14 @@ export function colorIndexToRGB(colorIndex: number | null): [number, number, num
  * - Faint visible stars: ~6.5
  * 
  * @param magnitude Apparent magnitude of the star
- * @returns Size in pixels (range: 1.0 to 4.0)
+ * @returns Size in pixels (range: 5.0 to 20.0)
  */
 export function magnitudeToSize(magnitude: number): number {
   // Invert scale: brighter stars (lower magnitude) get larger size
   const normalized = (6.5 - magnitude) / 8.0; // Normalize to 0-1 range
-  const size = 1.0 + (normalized * 3.0); // Scale to 1.0-4.0 range
+  const size = 5.0 + (normalized * 15.0); // Scale to 5.0-20.0 range
   
-  return Math.max(1.0, Math.min(4.0, size));
+  return Math.max(5.0, Math.min(20.0, size));
 }
 
 /**
