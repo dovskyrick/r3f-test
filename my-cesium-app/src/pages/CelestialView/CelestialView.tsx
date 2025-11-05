@@ -2,7 +2,7 @@ import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import TimeSlider from '../../components/TimeSlider/TimeSlider';
-import Starfield from '../../components/3D/Starfield';
+import CustomStarmap from '../../components/3D/CustomStarmap';
 import Earth from '../../components/3D/Earth';
 import './CelestialView.css';
 
@@ -21,8 +21,12 @@ const CelestialView: React.FC = () => {
         <ambientLight intensity={0.5} />
         <directionalLight position={[5, 5, 5]} />
         
-        {/* Starfield background - temporary, will be replaced with three-starmap */}
-        <Starfield count={5000} />
+        {/* Custom starmap with real astronomical data (~9000 stars) */}
+        <CustomStarmap 
+          minMagnitude={6.5}
+          showConstellations={false} // Can be toggled with UI later
+          rotation={[0, 0, 0]} // Can add rotation logic later
+        />
         
         {/* Earth - same as EarthView, locked to zoomed-in appearance */}
         <Earth isAlternateView={false} />
