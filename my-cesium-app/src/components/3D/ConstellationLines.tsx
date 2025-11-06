@@ -37,7 +37,7 @@ const ConstellationLines: React.FC<ConstellationLinesProps> = ({
       : Object.keys(constellationsData);
 
     // Slightly larger radius than stars (1000) to prevent z-fighting
-    const LINE_RADIUS = 1001;
+    const LINE_RADIUS = 999;
 
     constsToRender.forEach((constKey) => {
       const constellation = constellationsData[constKey];
