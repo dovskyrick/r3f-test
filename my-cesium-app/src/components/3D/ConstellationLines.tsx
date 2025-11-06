@@ -45,7 +45,7 @@ const ConstellationLines: React.FC<ConstellationLinesProps> = ({
 
       // Connect stars in pairs: [0-1], [2-3], [4-5], etc.
       // Note: increment by 2 to get correct pairs, not overlapping connections
-      for (let i = 0; i < constellation.stars.length - 1; i += 2) {
+      for (let i = 0; i < constellation.stars.length - 1; i += 1) {
         const hrNumber1 = constellation.stars[i];
         const hrNumber2 = constellation.stars[i + 1];
         
