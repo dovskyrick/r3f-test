@@ -36,12 +36,16 @@ const ConstellationLines: React.FC<ConstellationLinesProps> = ({
       ? constellations 
       : Object.keys(constellationsData);
 
+    // Slightly larger radius than stars (1000) to prevent z-fighting
+    const LINE_RADIUS = 1001;
+
     constsToRender.forEach((constKey) => {
       const constellation = constellationsData[constKey];
       if (!constellation) return;
 
-      // Connect stars in order
-      for (let i = 0; i < constellation.stars.length - 1; i++) {
+      // Connect stars in pairs: [0-1], [2-3], [4-5], etc.
+      // Note: increment by 2 to get correct pairs, not overlapping connections
+      for (let i = 0; i < constellation.stars.length - 1; i += 2) {
         const hrNumber1 = constellation.stars[i];
         const hrNumber2 = constellation.stars[i + 1];
         
@@ -49,9 +53,16 @@ const ConstellationLines: React.FC<ConstellationLinesProps> = ({
         const star2 = starsByHR.get(hrNumber2);
 
         if (star1 && star2) {
+          // Scale positions to LINE_RADIUS to prevent z-fighting with stars
+          const pos1 = new THREE.Vector3(star1.x, star1.y, star1.z);
+          pos1.normalize().multiplyScalar(LINE_RADIUS);
+          
+          const pos2 = new THREE.Vector3(star2.x, star2.y, star2.z);
+          pos2.normalize().multiplyScalar(LINE_RADIUS);
+          
           // Add line segment (two points)
-          allPoints.push(star1.x, star1.y, star1.z);
-          allPoints.push(star2.x, star2.y, star2.z);
+          allPoints.push(pos1.x, pos1.y, pos1.z);
+          allPoints.push(pos2.x, pos2.y, pos2.z);
           lineCount++;
         } else {
           // Star not found in database
@@ -84,8 +95,8 @@ const ConstellationLines: React.FC<ConstellationLinesProps> = ({
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
+          args={[lineSegments, 3]}
           count={lineSegments.length / 3}
-          array={lineSegments}
           itemSize={3}
         />
       </bufferGeometry>

@@ -7,6 +7,9 @@ import Earth from '../../components/3D/Earth';
 import './CelestialView.css';
 
 const CelestialView: React.FC = () => {
+  // Toggle constellation line visibility by changing this variable
+  const SHOW_CONSTELLATION_LINES = true;
+
   return (
     <div className="celestial-view-container">
       <Canvas 
@@ -24,8 +27,9 @@ const CelestialView: React.FC = () => {
         {/* Custom starmap with real astronomical data (~9000 stars) */}
         <CustomStarmap 
           minMagnitude={6.5}
-          showConstellations={false} // Can be toggled with UI later
-          highlightConstellationStars={true} // Make constellation stars 10x larger
+          showConstellations={SHOW_CONSTELLATION_LINES} // Toggle with variable above
+          highlightConstellationStars={true} // Make constellation stars larger
+          constellationColor="#d1d9e6" // Light gray-blue
           rotation={[0, 0, 0]} // Can add rotation logic later
         />
         
