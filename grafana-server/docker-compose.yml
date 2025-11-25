@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-dev
+    ports:
+      - "3000:3000"
+    environment:
+      # Allow unsigned plugins (required for development)
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=test-plugin
+      # Enable development mode
+      - GF_DEFAULT_APP_MODE=development
+      # Disable plugin signature validation
+      - GF_PLUGINS_ENABLE_ALPHA=true
+      # Optional: Set admin credentials
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      # Enable logging for debugging
+      - GF_LOG_LEVEL=debug
+    volumes:
+      # Mount the plugin dist folder (note: relative path from grafana-server/ to grafana-plugins/)
+      - ../grafana-plugins/test-plugin:/var/lib/grafana/plugins/test-plugin
+      # Persist Grafana data
+      - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
+
+volumes:
+  grafana-storage:
+
