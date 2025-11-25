@@ -84,20 +84,26 @@ Your approach is fundamentally sound with the corrections above. The workflow wi
 
 **Directory Structure:**
 ```
-grafana-plugins/
-├── docker/
+r3f-test/
+├── grafana-server/          # Grafana Docker infrastructure
 │   ├── docker-compose.yml
 │   ├── grafana.ini (optional custom config)
 │   └── README.md
-└── test-plugin/
-    ├── src/
-    ├── dist/
-    └── package.json
+└── grafana-plugins/         # Plugin development
+    ├── shared/              # Shared utilities across plugins
+    ├── test-plugin/
+    │   ├── src/
+    │   ├── dist/
+    │   └── package.json
+    ├── 3d-orbit-attitude-plugin/
+    └── ground-track-r3f-plugin/
 ```
+
+**Rationale:** Keeping server infrastructure separate from plugin source code provides better separation of concerns and semantic clarity.
 
 **Step 1.1: Create `docker-compose.yml`**
 
-Location: `grafana-plugins/docker/docker-compose.yml`
+Location: `grafana-server/docker-compose.yml`
 
 ```yaml
 version: '3.8'
@@ -121,8 +127,8 @@ services:
       # Enable logging for debugging
       - GF_LOG_LEVEL=debug
     volumes:
-      # Mount the plugin dist folder
-      - ../test-plugin:/var/lib/grafana/plugins/test-plugin
+      # Mount the plugin dist folder (note: relative path from grafana-server/ to grafana-plugins/)
+      - ../grafana-plugins/test-plugin:/var/lib/grafana/plugins/test-plugin
       # Persist Grafana data
       - grafana-storage:/var/lib/grafana
     restart: unless-stopped
@@ -133,9 +139,9 @@ volumes:
 
 **Step 1.2: Start Grafana**
 
-Open PowerShell and navigate to the docker directory:
+Open PowerShell and navigate to the grafana-server directory:
 ```powershell
-cd C:\Dev\r3f-test\grafana-plugins\docker
+cd C:\Dev\r3f-test\grafana-server
 docker-compose up -d
 ```
 
@@ -245,7 +251,7 @@ This should:
 
 Restart command:
 ```powershell
-cd C:\Dev\r3f-test\grafana-plugins\docker
+cd C:\Dev\r3f-test\grafana-server
 docker-compose restart grafana
 ```
 
