@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { PanelProps } from '@grafana/data';
 import * as THREE from 'three';
-import { OrbitControls } from 'three-stdlib';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { SimpleOptions } from 'types';
 
 interface Props extends PanelProps<SimpleOptions> {}
