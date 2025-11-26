@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { PanelProps } from '@grafana/data';
 import * as THREE from 'three';
 import { OrbitControls } from 'three-stdlib';
@@ -6,13 +6,28 @@ import { SimpleOptions } from 'types';
 
 interface Props extends PanelProps<SimpleOptions> {}
 
-export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) => {
+export const SimplePanel: React.FC<Props> = ({ options, data, width, height, timeRange, timeZone }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const cubeRef = useRef<THREE.Mesh | null>(null);
+  
+  // State for formatted time range display
+  const [timeRangeText, setTimeRangeText] = useState<string>('');
+  
+  // Update time range text when timeRange changes
+  useEffect(() => {
+    if (timeRange) {
+      const fromTime = timeRange.from.format('YYYY-MM-DD HH:mm:ss');
+      const toTime = timeRange.to.format('YYYY-MM-DD HH:mm:ss');
+      const duration = timeRange.to.valueOf() - timeRange.from.valueOf();
+      const durationHours = (duration / (1000 * 60 * 60)).toFixed(1);
+      
+      setTimeRangeText(`${fromTime} → ${toTime} (${durationHours}h)`);
+    }
+  }, [timeRange]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -58,13 +73,7 @@ export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) =
     const animate = () => {
       requestAnimationFrame(animate);
 
-      // Rotate cube
-      if (cubeRef.current) {
-        cubeRef.current.rotation.x += 0.001;
-        cubeRef.current.rotation.y += 0.001;
-      }
-
-      // Update controls
+      // Update controls (for smooth damping)
       if (controlsRef.current) {
         controlsRef.current.update();
       }
@@ -103,5 +112,33 @@ export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) =
     }
   }, [width, height]);
 
-  return <div ref={containerRef} style={{ width, height }} />;
+  return (
+    <div style={{ width, height, position: 'relative' }}>
+      {/* 3D Canvas */}
+      <div ref={containerRef} style={{ width, height }} />
+      
+      {/* Time Range Overlay */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          background: 'rgba(0, 0, 0, 0.7)',
+          color: 'white',
+          padding: '10px 15px',
+          borderRadius: '5px',
+          fontFamily: 'monospace',
+          fontSize: '12px',
+          pointerEvents: 'none',
+          backdropFilter: 'blur(4px)',
+        }}
+      >
+        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Time Range</div>
+        <div>{timeRangeText || 'Loading...'}</div>
+        <div style={{ marginTop: '5px', fontSize: '10px', opacity: 0.7 }}>
+          Timezone: {timeZone || 'UTC'}
+        </div>
+      </div>
+    </div>
+  );
 };
