@@ -60,8 +60,8 @@ export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) =
 
       // Rotate cube
       if (cubeRef.current) {
-        cubeRef.current.rotation.x += 0.01;
-        cubeRef.current.rotation.y += 0.01;
+        cubeRef.current.rotation.x += 0.001;
+        cubeRef.current.rotation.y += 0.001;
       }
 
       // Update controls
