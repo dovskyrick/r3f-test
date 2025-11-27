@@ -8,7 +8,7 @@ services:
       - "3000:3000"
     environment:
       # Allow unsigned plugins (required for development)
-      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=the-cube-panel
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=the-cube-panel,the-cesiumtest-panel
       # Enable development mode
       - GF_DEFAULT_APP_MODE=development
       # Disable plugin signature validation
@@ -19,8 +19,9 @@ services:
       # Enable logging for debugging
       - GF_LOG_LEVEL=debug
     volumes:
-      # Mount the plugin dist folder (note: relative path from grafana-server/ to grafana-plugins/)
+      # Mount the plugin dist folders (note: relative path from grafana-server/ to grafana-plugins/)
       - ../grafana-plugins/test-plugin/the-cube-panel:/var/lib/grafana/plugins/the-cube-panel
+      - ../grafana-plugins/test-plugin/the-cesiumtest-panel/dist:/var/lib/grafana/plugins/the-cesiumtest-panel
       # Persist Grafana data
       - grafana-storage:/var/lib/grafana
     restart: unless-stopped
