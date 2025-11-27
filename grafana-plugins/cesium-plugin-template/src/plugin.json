@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "panel",
+  "name": "Satellite Visualizer",
+  "id": "lucasbremond-satellitevisualizer-panel",
+  "info": {
+    "keywords": ["panel"],
+    "description": "3D satellite visualization panel.",
+    "author": {
+      "name": "Lucas Brémond"
+    },
+    "logos": {
+      "small": "img/logo.png",
+      "large": "img/logo.png"
+    },
+    "links": [],
+    "screenshots": [
+      {
+        "name": "screenshot",
+        "path": "img/screenshot.png"
+      }
+    ],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=9.3.2",
+    "plugins": []
+  }
+}
