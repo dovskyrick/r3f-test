@@ -99,22 +99,6 @@ const config = async (env: Env): Promise<Configuration> => {
             },
           },
         },
-        // Handle Cesium source files
-        {
-          test: /\.js$/,
-          include: path.resolve(process.cwd(), 'node_modules/cesium/Source'),
-          use: {
-            loader: 'swc-loader',
-            options: {
-              jsc: {
-                target: 'es2015',
-                parser: {
-                  syntax: 'ecmascript',
-                },
-              },
-            },
-          },
-        },
         {
           test: /\.css$/,
           use: ['style-loader', 'css-loader'],
@@ -170,7 +154,6 @@ const config = async (env: Env): Promise<Configuration> => {
       publicPath: `public/plugins/${pluginJson.id}/`,
       uniqueName: pluginJson.id,
       crossOriginLoading: 'anonymous',
-      sourcePrefix: '', // Needed for Cesium
     },
 
     plugins: [
@@ -232,7 +215,7 @@ const config = async (env: Env): Promise<Configuration> => {
       }),
       // Cesium configuration
       new webpack.DefinePlugin({
-        CESIUM_BASE_URL: JSON.stringify(''),
+        CESIUM_BASE_URL: JSON.stringify(`public/plugins/${pluginJson.id}/`),
       }),
       ...(env.development
         ? [
@@ -258,17 +241,13 @@ const config = async (env: Env): Promise<Configuration> => {
       // handle resolving "rootDir" paths
       modules: [path.resolve(process.cwd(), 'src'), 'node_modules'],
       unsafeCache: true,
-      mainFields: ['module', 'main', 'browser'],
+      mainFiles: ['index', 'Cesium'],
       fallback: {
         // Cesium uses some Node.js modules that aren't available in browsers
         https: false,
         zlib: false,
         http: false,
         url: false,
-      },
-      alias: {
-        // Ensure cesium resolves to its source for tree-shaking
-        cesium: path.resolve(process.cwd(), 'node_modules/cesium'),
       },
     },
   };
