@@ -1,8 +1,8 @@
 # Satellite Visualizer
 
-A satellite visualization panel plugin for Grafana based on [CesiumJS](https://cesium.com/platform/cesiumjs/).
+![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/lucasbremond-satellitevisualizer-panel&label=Marketplace&prefix=v&color=F47A20)
 
-![screenshot.png](./src/img/screenshot.png)
+A satellite visualization panel plugin for Grafana based on [CesiumJS](https://cesium.com/platform/cesiumjs/).
 
 ## Settings
 
@@ -20,32 +20,6 @@ This plugin needs a data series with 8 columns:
 | 3        | Latitude (`deg`) / y_ECI (`m`) / y_ECEF (`m`)           |
 | 4        | Altitude (`m`) / z_ECI (`m`) / z_ECEF (`m`)             |
 | 5-8      | Orientation in inertial frame (`x, y, z, s` quaternion) |
-
-![data.png](./src/img/data.png)
-
-## Development
-
-To start the development environment container:
-
-```shell
-make dev
-```
-
-Access the started Grafana instance at <http://localhost:3000>.
-
-## Release
-
-To create a new release, run the following to bump the version in `package.json`:
-
-```shell
-npm version minor
-```
-
-Then push the tagged commit, to let the CI handle it:
-
-```shell
-git push origin main --follow-tags
-```
 
 ## References
 
