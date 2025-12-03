@@ -309,6 +309,21 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         homeButton={false}
         key={viewerKey}
         creditContainer="cesium-credits"
+        ref={(ref) => {
+          if (ref?.cesiumElement) {
+            const controller = ref.cesiumElement.scene.screenSpaceCameraController;
+            console.log('=== ZOOM DEBUG ===');
+            console.log('BEFORE - maximumZoomDistance:', controller.maximumZoomDistance);
+            console.log('BEFORE - enableCollisionDetection:', controller.enableCollisionDetection);
+            
+            // Remove zoom-out limit
+            controller.maximumZoomDistance = Number.POSITIVE_INFINITY;
+            controller.enableCollisionDetection = false;
+            
+            console.log('AFTER - maximumZoomDistance:', controller.maximumZoomDistance);
+            console.log('AFTER - enableCollisionDetection:', controller.enableCollisionDetection);
+          }
+        }}
       >
         {timestamp && <Clock currentTime={timestamp} />}
         {satelliteAvailability && satellitePosition && satelliteOrientation && (
@@ -316,7 +331,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             availability={satelliteAvailability}
             position={satellitePosition}
             orientation={satelliteOrientation}
-            tracked={true}
+            tracked={false}  // DEBUG: temporarily disabled to test zoom
           >
             {options.assetMode === AssetMode.Point && (
               <PointGraphics pixelSize={options.pointSize} color={Color.fromCssColorString(options.pointColor)} />
