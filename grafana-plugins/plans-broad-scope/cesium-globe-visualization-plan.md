@@ -198,7 +198,7 @@ cesium-test/
 │   ├── module.ts
 │   └── plugin.json
 ├── package.json
-└── webpack.config.js
+└── webpack.config.js   
 ```
 
 #### Minimal React Component (CesiumPanel.tsx)
