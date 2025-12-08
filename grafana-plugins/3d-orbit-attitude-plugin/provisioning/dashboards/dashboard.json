@@ -39,7 +39,7 @@
         "accessToken": "",
         "baseLayerPicker": false,
         "modelAssetId": 0,
-        "modelAssetUri": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb",
+        "modelAssetUri": "public/plugins/lucasbremond-satellitevisualizer-panel/static/models/ACRIMSAT-A.glb",
         "modelMaximumScale": 20000,
         "modelMinimumPixelSize": 128,
         "modelScale": 1,

@@ -80,7 +80,7 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       path: 'modelAssetUri',
       name: 'Asset URI',
       description: 'The URI of the glTF asset.',
-      defaultValue: '',
+      defaultValue: 'public/plugins/lucasbremond-satellitevisualizer-panel/static/models/ACRIMSAT-A.glb',
       showIf: (config) => config.assetMode === AssetMode.Model,
     })
 
