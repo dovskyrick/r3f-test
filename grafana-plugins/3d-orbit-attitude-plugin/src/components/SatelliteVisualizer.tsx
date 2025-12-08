@@ -18,6 +18,7 @@ import {
   SampledPositionProperty,
   Color,
   PolylineDashMaterialProperty,
+  PolylineArrowMaterialProperty,
   IonResource,
   Cartesian2,
   Matrix3,
@@ -377,7 +378,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             )}
           </Entity>
         )}
-        {/* Attitude Z-axis vector (red) */}
+        {/* Attitude Z-axis vector (red arrow) */}
         {satelliteAvailability && satellitePosition && satelliteOrientation && (
           <Entity availability={satelliteAvailability}>
             <PolylineGraphics
@@ -405,8 +406,8 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 
                 return [pos, endPos];
               }, false)}
-              width={3}
-              material={Color.RED}
+              width={10}
+              material={new PolylineArrowMaterialProperty(Color.RED)}
             />
           </Entity>
         )}
