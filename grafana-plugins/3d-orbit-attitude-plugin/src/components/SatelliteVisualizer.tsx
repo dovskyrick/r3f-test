@@ -60,6 +60,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
   const [isLoaded, setLoaded] = useState<boolean>(false);
   const [viewerKey, setViewerKey] = useState<number>(0);
+  const [isTracked, setIsTracked] = useState<boolean>(true);
 
   const [timestamp, setTimestamp] = useState<JulianDate | null>(null);
   const [satelliteAvailability, setSatelliteAvailability] = useState<TimeIntervalCollection | null>(null);
@@ -295,6 +296,24 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         `
       )}
     >
+      <button
+        onClick={() => setIsTracked(!isTracked)}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          zIndex: 1000,
+          padding: '8px 12px',
+          cursor: 'pointer',
+          backgroundColor: isTracked ? '#4CAF50' : '#2196F3',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          fontSize: '12px',
+        }}
+      >
+        {isTracked ? '🎯 Tracking ON' : '🌍 Free Camera'}
+      </button>
       <Viewer
         full
         animation={options.showAnimation}
@@ -331,7 +350,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             availability={satelliteAvailability}
             position={satellitePosition}
             orientation={satelliteOrientation}
-            tracked={false}  // DEBUG: temporarily disabled to test zoom
+            tracked={isTracked}
           >
             {options.assetMode === AssetMode.Point && (
               <PointGraphics pixelSize={options.pointSize} color={Color.fromCssColorString(options.pointColor)} />
