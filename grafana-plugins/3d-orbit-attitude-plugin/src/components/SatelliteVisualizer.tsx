@@ -5,7 +5,7 @@ import { coalesceToArray } from 'utilities';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
-import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics } from 'resium';
+import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics, PolylineGraphics } from 'resium';
 import {
   Ion,
   JulianDate,
@@ -21,6 +21,7 @@ import {
   IonResource,
   Cartesian2,
   Matrix3,
+  CallbackProperty,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -301,7 +302,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         style={{
           position: 'absolute',
           top: '10px',
-          right: '10px',
+          left: '10px',
           zIndex: 1000,
           padding: '8px 12px',
           cursor: 'pointer',
@@ -374,6 +375,39 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 }
               />
             )}
+          </Entity>
+        )}
+        {/* Attitude Z-axis vector (red) */}
+        {satelliteAvailability && satellitePosition && satelliteOrientation && (
+          <Entity availability={satelliteAvailability}>
+            <PolylineGraphics
+              positions={new CallbackProperty((time) => {
+                const pos = satellitePosition.getValue(time);
+                const orient = satelliteOrientation.getValue(time);
+                if (!pos || !orient) {
+                  return [];
+                }
+                
+                // Z-axis unit vector in body frame
+                const zAxisBody = new Cartesian3(0, 0, 1);
+                
+                // Rotate Z-axis by satellite orientation to get direction in ECEF
+                const rotationMatrix = Matrix3.fromQuaternion(orient);
+                const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
+                
+                // Scale vector (100km for visibility)
+                const vectorLength = 100000;
+                const endPos = Cartesian3.add(
+                  pos,
+                  Cartesian3.multiplyByScalar(zAxisECEF, vectorLength, new Cartesian3()),
+                  new Cartesian3()
+                );
+                
+                return [pos, endPos];
+              }, false)}
+              width={3}
+              material={Color.RED}
+            />
           </Entity>
         )}
         {options.locations.map((location, index) => (
