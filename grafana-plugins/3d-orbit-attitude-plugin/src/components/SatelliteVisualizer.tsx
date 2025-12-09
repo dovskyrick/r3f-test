@@ -26,6 +26,7 @@ import {
   Ray,
   IntersectionTests,
   Ellipsoid,
+  ArcType,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -411,6 +412,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               }, false)}
               width={10}
               material={new PolylineArrowMaterialProperty(Color.RED)}
+              arcType={ArcType.NONE}
             />
           </Entity>
         )}
@@ -489,6 +491,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               }, false)}
               width={2}
               material={Color.YELLOW.withAlpha(0.7)}
+              arcType={ArcType.NONE}
             />
           </Entity>
         )}
