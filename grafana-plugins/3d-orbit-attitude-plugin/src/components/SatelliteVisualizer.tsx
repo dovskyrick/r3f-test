@@ -266,7 +266,17 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     }
   }, [options.modelAssetId, options.modelAssetUri, options.accessToken]);
 
-  useEffect(() => setViewerKey((prevKey) => prevKey + 1), [options]);
+  // Only remount Viewer when options that affect the Viewer component itself change
+  // Entity-level options (projections, trajectory, etc.) don't need a full remount
+  useEffect(() => setViewerKey((prevKey) => prevKey + 1), [
+    options.showAnimation,
+    options.showTimeline,
+    options.showInfoBox,
+    options.showBaseLayerPicker,
+    options.showSceneModePicker,
+    options.showProjectionPicker,
+    options.accessToken,
+  ]);
 
   useEffect(() => {
     if (!options.subscribeToDataHoverEvent) {
