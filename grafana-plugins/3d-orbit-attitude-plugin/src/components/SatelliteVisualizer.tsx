@@ -5,7 +5,7 @@ import { coalesceToArray } from 'utilities';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
-import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics, PolylineGraphics } from 'resium';
+import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics } from 'resium';
 import {
   Ion,
   JulianDate,
@@ -27,6 +27,7 @@ import {
   IntersectionTests,
   Ellipsoid,
   ArcType,
+  PolygonHierarchy,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -492,6 +493,101 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               width={2}
               material={Color.YELLOW.withAlpha(0.7)}
               arcType={ArcType.NONE}
+            />
+          </Entity>
+        )}
+        {/* FOV Cone Footprint (5° half-angle) */}
+        {satelliteAvailability && satellitePosition && satelliteOrientation && (
+          <Entity availability={satelliteAvailability}>
+            <PolygonGraphics
+              hierarchy={new CallbackProperty((time) => {
+                const pos = satellitePosition.getValue(time);
+                const orient = satelliteOrientation.getValue(time);
+                
+                // Return dummy triangle if no data (will be hidden)
+                if (!pos || !orient) {
+                  return new PolygonHierarchy([
+                    Cartesian3.fromDegrees(0, 0, 100),
+                    Cartesian3.fromDegrees(0.001, 0, 100),
+                    Cartesian3.fromDegrees(0, 0.001, 100)
+                  ]);
+                }
+                
+                // Z-axis (cone axis) in body frame
+                const zAxisBody = new Cartesian3(0, 0, 1);
+                const rotationMatrix = Matrix3.fromQuaternion(orient);
+                const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
+                const coneAxis = Cartesian3.normalize(zAxisECEF, new Cartesian3());
+                
+                // FOV parameters
+                const halfAngleDegrees = 5;
+                const halfAngleRad = halfAngleDegrees * Math.PI / 180;
+                const numRays = 20;
+                
+                // Find perpendicular vectors to cone axis
+                const perp1 = Cartesian3.cross(coneAxis, Cartesian3.UNIT_Z, new Cartesian3());
+                if (Cartesian3.magnitude(perp1) < 0.01) {
+                  Cartesian3.cross(coneAxis, Cartesian3.UNIT_X, perp1);
+                }
+                Cartesian3.normalize(perp1, perp1);
+                const perp2 = Cartesian3.cross(coneAxis, perp1, new Cartesian3());
+                Cartesian3.normalize(perp2, perp2);
+                
+                const footprintPoints = [];
+                
+                for (let i = 0; i < numRays; i++) {
+                  const angle = (i / numRays) * 2 * Math.PI;
+                  
+                  // Compute direction on cone surface
+                  const cosHalf = Math.cos(halfAngleRad);
+                  const sinHalf = Math.sin(halfAngleRad);
+                  
+                  const circleDir = Cartesian3.add(
+                    Cartesian3.multiplyByScalar(perp1, Math.cos(angle) * sinHalf, new Cartesian3()),
+                    Cartesian3.multiplyByScalar(perp2, Math.sin(angle) * sinHalf, new Cartesian3()),
+                    new Cartesian3()
+                  );
+                  
+                  const rayDirection = Cartesian3.add(
+                    Cartesian3.multiplyByScalar(coneAxis, cosHalf, new Cartesian3()),
+                    circleDir,
+                    new Cartesian3()
+                  );
+                  Cartesian3.normalize(rayDirection, rayDirection);
+                  
+                  // Create ray and find Earth intersection
+                  const ray = new Ray(pos, rayDirection);
+                  const intersection = IntersectionTests.rayEllipsoid(ray, Ellipsoid.WGS84);
+                  
+                  if (intersection) {
+                    const groundPoint = Ray.getPoint(ray, intersection.start);
+                    
+                    // Offset 100m above surface to avoid z-fighting
+                    const surfaceNormal = Ellipsoid.WGS84.geodeticSurfaceNormal(groundPoint, new Cartesian3());
+                    const offsetPoint = Cartesian3.add(
+                      groundPoint,
+                      Cartesian3.multiplyByScalar(surfaceNormal, 100, new Cartesian3()),
+                      new Cartesian3()
+                    );
+                    
+                    footprintPoints.push(offsetPoint);
+                  }
+                }
+                
+                // Return points, or dummy triangle if cone doesn't hit Earth
+                return new PolygonHierarchy(
+                  footprintPoints.length > 0 ? footprintPoints : [
+                    Cartesian3.fromDegrees(0, 0, 100),
+                    Cartesian3.fromDegrees(0.001, 0, 100),
+                    Cartesian3.fromDegrees(0, 0.001, 100)
+                  ]
+                );
+              }, false) as any}
+              material={Color.RED.withAlpha(0.3)}
+              height={0}
+              outline={true}
+              outlineColor={Color.RED}
+              outlineWidth={2}
             />
           </Entity>
         )}
