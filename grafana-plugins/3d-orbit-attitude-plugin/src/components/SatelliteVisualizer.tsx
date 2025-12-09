@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { PanelProps, DataHoverEvent, LegacyGraphHoverEvent } from '@grafana/data';
 import { AssetMode, SimpleOptions, CoordinatesType } from 'types';
 import { coalesceToArray } from 'utilities';
+import { computeZAxisGroundIntersection, computeFOVFootprint, createDummyPolygonHierarchy } from 'utils/projections';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
@@ -23,9 +24,6 @@ import {
   Cartesian2,
   Matrix3,
   CallbackProperty,
-  Ray,
-  IntersectionTests,
-  Ellipsoid,
   ArcType,
   PolygonHierarchy,
 } from 'cesium';
@@ -418,7 +416,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </Entity>
         )}
         {/* Ground projection of Z-axis vector */}
-        {satelliteAvailability && satellitePosition && satelliteOrientation && (
+        {options.showZAxisProjection && satelliteAvailability && satellitePosition && satelliteOrientation && (
           <Entity
             availability={satelliteAvailability}
             position={new CallbackProperty((time) => {
@@ -428,36 +426,14 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 return undefined;
               }
               
-              // Z-axis unit vector in body frame
-              const zAxisBody = new Cartesian3(0, 0, 1);
-              
-              // Rotate Z-axis by satellite orientation to get direction in ECEF
-              const rotationMatrix = Matrix3.fromQuaternion(orient);
-              const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
-              
-              // Normalize direction
-              const direction = Cartesian3.normalize(zAxisECEF, new Cartesian3());
-              
-              // Create ray from satellite position in direction of Z-axis
-              const ray = new Ray(pos, direction);
-              
-              // Find intersection with Earth's ellipsoid
-              const intersection = IntersectionTests.rayEllipsoid(ray, Ellipsoid.WGS84);
-              
-              if (intersection) {
-                // Return the ground intersection point
-                return Ray.getPoint(ray, intersection.start);
-              }
-              
-              // No intersection (vector pointing away from Earth)
-              return undefined;
+              return computeZAxisGroundIntersection(pos, orient);
             }, false) as any}
           >
             <PointGraphics pixelSize={15} color={Color.YELLOW} outlineColor={Color.BLACK} outlineWidth={2} />
           </Entity>
         )}
         {/* Line from satellite to ground point */}
-        {satelliteAvailability && satellitePosition && satelliteOrientation && (
+        {options.showZAxisProjection && satelliteAvailability && satellitePosition && satelliteOrientation && (
           <Entity availability={satelliteAvailability}>
             <PolylineGraphics
               positions={new CallbackProperty((time) => {
@@ -467,24 +443,8 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   return [];
                 }
                 
-                // Z-axis unit vector in body frame
-                const zAxisBody = new Cartesian3(0, 0, 1);
-                
-                // Rotate Z-axis by satellite orientation to get direction in ECEF
-                const rotationMatrix = Matrix3.fromQuaternion(orient);
-                const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
-                
-                // Normalize direction
-                const direction = Cartesian3.normalize(zAxisECEF, new Cartesian3());
-                
-                // Create ray
-                const ray = new Ray(pos, direction);
-                
-                // Find intersection with Earth
-                const intersection = IntersectionTests.rayEllipsoid(ray, Ellipsoid.WGS84);
-                
-                if (intersection) {
-                  const groundPoint = Ray.getPoint(ray, intersection.start);
+                const groundPoint = computeZAxisGroundIntersection(pos, orient);
+                if (groundPoint) {
                   return [pos, groundPoint];
                 }
                 
@@ -496,92 +456,26 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             />
           </Entity>
         )}
-        {/* FOV Cone Footprint (5° half-angle) */}
-        {satelliteAvailability && satellitePosition && satelliteOrientation && (
+        {/* FOV Cone Footprint */}
+        {options.showFOVFootprint && satelliteAvailability && satellitePosition && satelliteOrientation && (
           <Entity availability={satelliteAvailability}>
             <PolygonGraphics
               hierarchy={new CallbackProperty((time) => {
                 const pos = satellitePosition.getValue(time);
                 const orient = satelliteOrientation.getValue(time);
                 
-                // Return dummy triangle if no data (will be hidden)
+                // Return dummy triangle if no data
                 if (!pos || !orient) {
-                  return new PolygonHierarchy([
-                    Cartesian3.fromDegrees(0, 0, 100),
-                    Cartesian3.fromDegrees(0.001, 0, 100),
-                    Cartesian3.fromDegrees(0, 0.001, 100)
-                  ]);
+                  return createDummyPolygonHierarchy();
                 }
                 
-                // Z-axis (cone axis) in body frame
-                const zAxisBody = new Cartesian3(0, 0, 1);
-                const rotationMatrix = Matrix3.fromQuaternion(orient);
-                const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
-                const coneAxis = Cartesian3.normalize(zAxisECEF, new Cartesian3());
-                
-                // FOV parameters
-                const halfAngleDegrees = 5;
-                const halfAngleRad = halfAngleDegrees * Math.PI / 180;
-                const numRays = 20;
-                
-                // Find perpendicular vectors to cone axis
-                const perp1 = Cartesian3.cross(coneAxis, Cartesian3.UNIT_Z, new Cartesian3());
-                if (Cartesian3.magnitude(perp1) < 0.01) {
-                  Cartesian3.cross(coneAxis, Cartesian3.UNIT_X, perp1);
-                }
-                Cartesian3.normalize(perp1, perp1);
-                const perp2 = Cartesian3.cross(coneAxis, perp1, new Cartesian3());
-                Cartesian3.normalize(perp2, perp2);
-                
-                const footprintPoints = [];
-                
-                for (let i = 0; i < numRays; i++) {
-                  const angle = (i / numRays) * 2 * Math.PI;
-                  
-                  // Compute direction on cone surface
-                  const cosHalf = Math.cos(halfAngleRad);
-                  const sinHalf = Math.sin(halfAngleRad);
-                  
-                  const circleDir = Cartesian3.add(
-                    Cartesian3.multiplyByScalar(perp1, Math.cos(angle) * sinHalf, new Cartesian3()),
-                    Cartesian3.multiplyByScalar(perp2, Math.sin(angle) * sinHalf, new Cartesian3()),
-                    new Cartesian3()
-                  );
-                  
-                  const rayDirection = Cartesian3.add(
-                    Cartesian3.multiplyByScalar(coneAxis, cosHalf, new Cartesian3()),
-                    circleDir,
-                    new Cartesian3()
-                  );
-                  Cartesian3.normalize(rayDirection, rayDirection);
-                  
-                  // Create ray and find Earth intersection
-                  const ray = new Ray(pos, rayDirection);
-                  const intersection = IntersectionTests.rayEllipsoid(ray, Ellipsoid.WGS84);
-                  
-                  if (intersection) {
-                    const groundPoint = Ray.getPoint(ray, intersection.start);
-                    
-                    // Offset 100m above surface to avoid z-fighting
-                    const surfaceNormal = Ellipsoid.WGS84.geodeticSurfaceNormal(groundPoint, new Cartesian3());
-                    const offsetPoint = Cartesian3.add(
-                      groundPoint,
-                      Cartesian3.multiplyByScalar(surfaceNormal, 100, new Cartesian3()),
-                      new Cartesian3()
-                    );
-                    
-                    footprintPoints.push(offsetPoint);
-                  }
-                }
+                // Compute FOV footprint using utility function
+                const footprintPoints = computeFOVFootprint(pos, orient, options.fovHalfAngle);
                 
                 // Return points, or dummy triangle if cone doesn't hit Earth
-                return new PolygonHierarchy(
-                  footprintPoints.length > 0 ? footprintPoints : [
-                    Cartesian3.fromDegrees(0, 0, 100),
-                    Cartesian3.fromDegrees(0.001, 0, 100),
-                    Cartesian3.fromDegrees(0, 0.001, 100)
-                  ]
-                );
+                return footprintPoints.length > 0 
+                  ? new PolygonHierarchy(footprintPoints)
+                  : createDummyPolygonHierarchy();
               }, false) as any}
               material={Color.RED.withAlpha(0.3)}
               height={0}

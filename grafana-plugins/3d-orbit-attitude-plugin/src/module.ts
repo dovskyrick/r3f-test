@@ -112,6 +112,31 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       showIf: (config) => config.trajectoryShow,
     })
 
+    .addBooleanSwitch({
+      path: 'showZAxisProjection',
+      name: 'Show Z-Axis Ground Projection',
+      description: 'Display yellow line and point where the satellite Z-axis intersects Earth surface.',
+      defaultValue: true,
+    })
+    .addBooleanSwitch({
+      path: 'showFOVFootprint',
+      name: 'Show FOV Footprint',
+      description: 'Display sensor field-of-view cone projection on Earth surface.',
+      defaultValue: true,
+    })
+    .addNumberInput({
+      path: 'fovHalfAngle',
+      name: 'FOV Half-Angle (degrees)',
+      description: 'Sensor cone half-angle for footprint calculation (e.g., 5° for a 10° total cone).',
+      defaultValue: 5,
+      settings: {
+        min: 1,
+        max: 45,
+        step: 1,
+      },
+      showIf: (config) => config.showFOVFootprint,
+    })
+
     .addCustomEditor({
       id: 'locations',
       path: 'locations',

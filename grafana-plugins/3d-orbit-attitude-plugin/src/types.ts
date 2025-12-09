@@ -16,6 +16,10 @@ export interface SimpleOptions {
   trajectoryColor: string;
   trajectoryDashLength: number;
 
+  showZAxisProjection: boolean;
+  showFOVFootprint: boolean;
+  fovHalfAngle: number;
+
   locations: Location[];
   locationPointSize: number;
   locationPointColor: string;
