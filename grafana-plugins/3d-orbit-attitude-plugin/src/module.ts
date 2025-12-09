@@ -137,6 +137,44 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       showIf: (config) => config.showFOVFootprint,
     })
 
+    .addBooleanSwitch({
+      path: 'showCelestialTest',
+      name: '🧪 Show Celestial Distance Test',
+      description: 'Display 6 test circles at 100x Earth radius to verify visibility at celestial sphere distance.',
+      defaultValue: false,
+    })
+
+    .addBooleanSwitch({
+      path: 'showRADecGrid',
+      name: 'Show RA/Dec Celestial Grid',
+      description: 'Display Right Ascension and Declination reference lines (inertial frame, fixed relative to stars).',
+      defaultValue: false,
+    })
+    .addNumberInput({
+      path: 'raSpacing',
+      name: 'RA Spacing (hours)',
+      description: 'Spacing between Right Ascension meridians (1h = 15°). 1h gives 24 lines.',
+      defaultValue: 1,
+      settings: {
+        min: 1,
+        max: 6,
+        step: 1,
+      },
+      showIf: (config) => config.showRADecGrid,
+    })
+    .addNumberInput({
+      path: 'decSpacing',
+      name: 'Dec Spacing (degrees)',
+      description: 'Spacing between Declination parallels. 15° gives 12 lines.',
+      defaultValue: 15,
+      settings: {
+        min: 10,
+        max: 30,
+        step: 5,
+      },
+      showIf: (config) => config.showRADecGrid,
+    })
+
     .addCustomEditor({
       id: 'locations',
       path: 'locations',

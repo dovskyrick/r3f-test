@@ -20,6 +20,12 @@ export interface SimpleOptions {
   showFOVFootprint: boolean;
   fovHalfAngle: number;
 
+  showCelestialTest: boolean;
+  
+  showRADecGrid: boolean;
+  raSpacing: number;
+  decSpacing: number;
+
   locations: Location[];
   locationPointSize: number;
   locationPointColor: string;

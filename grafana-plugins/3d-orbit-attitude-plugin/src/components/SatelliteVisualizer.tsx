@@ -3,6 +3,8 @@ import { PanelProps, DataHoverEvent, LegacyGraphHoverEvent } from '@grafana/data
 import { AssetMode, SimpleOptions, CoordinatesType } from 'types';
 import { coalesceToArray } from 'utilities';
 import { computeZAxisGroundIntersection, computeFOVFootprint, createDummyPolygonHierarchy } from 'utils/projections';
+import { generateCelestialTestCircles } from 'utils/celestialTest';
+import { generateRADecGrid } from 'utils/celestialGrid';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
@@ -26,6 +28,7 @@ import {
   CallbackProperty,
   ArcType,
   PolygonHierarchy,
+  Ellipsoid,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -73,6 +76,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [satelliteOrientation, setSatelliteOrientation] = useState<SampledProperty | null>(null);
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
+  const [celestialTestCircles, setCelestialTestCircles] = useState<Cartesian3[][]>([]);
+  const [raLines, setRALines] = useState<Cartesian3[][]>([]);
+  const [decLines, setDecLines] = useState<Cartesian3[][]>([]);
 
   useEffect(() => {
     const timeInterval = new TimeInterval({
@@ -277,6 +283,38 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     options.showProjectionPicker,
     options.accessToken,
   ]);
+
+  // Generate celestial distance test circles
+  useEffect(() => {
+    if (!options.showCelestialTest) {
+      setCelestialTestCircles([]);
+      return;
+    }
+
+    const { circles } = generateCelestialTestCircles();
+    setCelestialTestCircles(circles);
+  }, [options.showCelestialTest]);
+
+  // Generate RA/Dec celestial grid
+  useEffect(() => {
+    if (!options.showRADecGrid || !timestamp) {
+      setRALines([]);
+      setDecLines([]);
+      return;
+    }
+
+    const celestialRadius = Ellipsoid.WGS84.maximumRadius * 100; // 100x Earth radius
+
+    const { raLines, decLines } = generateRADecGrid({
+      raSpacing: options.raSpacing,
+      decSpacing: options.decSpacing,
+      celestialRadius,
+      referenceTime: timestamp,
+    });
+
+    setRALines(raLines);
+    setDecLines(decLines);
+  }, [options.showRADecGrid, options.raSpacing, options.decSpacing, timestamp]);
 
   useEffect(() => {
     if (!options.subscribeToDataHoverEvent) {
@@ -495,6 +533,39 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             />
           </Entity>
         )}
+        {/* Celestial Distance Test Circles */}
+        {options.showCelestialTest && celestialTestCircles.map((circle, index) => (
+          <Entity name={`Celestial Test Circle ${index + 1}`} key={`celestial-test-${index}`}>
+            <PolylineGraphics
+              positions={circle}
+              width={0.5}
+              material={Color.CYAN}
+              arcType={ArcType.NONE}
+            />
+          </Entity>
+        ))}
+        {/* RA/Dec Celestial Grid - Right Ascension Lines (Meridians) */}
+        {options.showRADecGrid && raLines.map((line, index) => (
+          <Entity name={`RA Line ${index}`} key={`ra-${index}`}>
+            <PolylineGraphics
+              positions={line}
+              width={1}
+              material={Color.WHITE.withAlpha(0.5)}
+              arcType={ArcType.NONE}
+            />
+          </Entity>
+        ))}
+        {/* RA/Dec Celestial Grid - Declination Lines (Parallels) */}
+        {options.showRADecGrid && decLines.map((line, index) => (
+          <Entity name={`Dec Line ${index}`} key={`dec-${index}`}>
+            <PolylineGraphics
+              positions={line}
+              width={1}
+              material={Color.WHITE.withAlpha(0.5)}
+              arcType={ArcType.NONE}
+            />
+          </Entity>
+        ))}
         {options.locations.map((location, index) => (
           <Entity
             name={location.name}
