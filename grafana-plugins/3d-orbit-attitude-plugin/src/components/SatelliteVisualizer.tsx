@@ -119,13 +119,13 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       const startTimestamp: number | null = timeFieldValues[0] ?? null;
       const endTimestamp: number | null = timeFieldValues.at(-1) ?? null;
 
-      if (endTimestamp !== null) {
+      if (startTimestamp !== null) {
         // DEBUG: Initial timestamp set
         console.log('=== INITIAL TIMESTAMP SET ===');
-        console.log('Setting initial timestamp to:', JulianDate.fromDate(new Date(endTimestamp)));
-        console.log('This is the END of data range (last point)');
-        console.log('End timestamp ISO:', new Date(endTimestamp).toISOString());
-        setTimestamp(JulianDate.fromDate(new Date(endTimestamp)));
+        console.log('Setting initial timestamp to:', JulianDate.fromDate(new Date(startTimestamp)));
+        console.log('This is the START of data range (first point)');
+        console.log('Start timestamp ISO:', new Date(startTimestamp).toISOString());
+        setTimestamp(JulianDate.fromDate(new Date(startTimestamp)));
       } else {
         setTimestamp(null);
       }
@@ -244,7 +244,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       console.log('Total samples added:', dataFrame.fields[1].values.length);
       console.log('=================================================');
     }
-  }, [data, options, isLoaded]);
+  }, [data, options.coordinatesType, isLoaded]);
 
   useEffect(() => {
     Ion.defaultAccessToken = options.accessToken;
