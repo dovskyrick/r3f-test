@@ -63,7 +63,7 @@ export function computeFOVFootprint(
   position: Cartesian3,
   orientation: Quaternion,
   halfAngleDegrees: number,
-  numRays = 20,
+  numRays = 36,
   offsetMeters = 100
 ): Cartesian3[] {
   // Z-axis (cone axis) in body frame
