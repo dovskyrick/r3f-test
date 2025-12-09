@@ -23,6 +23,9 @@ import {
   Cartesian2,
   Matrix3,
   CallbackProperty,
+  Ray,
+  IntersectionTests,
+  Ellipsoid,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -408,6 +411,84 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               }, false)}
               width={10}
               material={new PolylineArrowMaterialProperty(Color.RED)}
+            />
+          </Entity>
+        )}
+        {/* Ground projection of Z-axis vector */}
+        {satelliteAvailability && satellitePosition && satelliteOrientation && (
+          <Entity
+            availability={satelliteAvailability}
+            position={new CallbackProperty((time) => {
+              const pos = satellitePosition.getValue(time);
+              const orient = satelliteOrientation.getValue(time);
+              if (!pos || !orient) {
+                return undefined;
+              }
+              
+              // Z-axis unit vector in body frame
+              const zAxisBody = new Cartesian3(0, 0, 1);
+              
+              // Rotate Z-axis by satellite orientation to get direction in ECEF
+              const rotationMatrix = Matrix3.fromQuaternion(orient);
+              const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
+              
+              // Normalize direction
+              const direction = Cartesian3.normalize(zAxisECEF, new Cartesian3());
+              
+              // Create ray from satellite position in direction of Z-axis
+              const ray = new Ray(pos, direction);
+              
+              // Find intersection with Earth's ellipsoid
+              const intersection = IntersectionTests.rayEllipsoid(ray, Ellipsoid.WGS84);
+              
+              if (intersection) {
+                // Return the ground intersection point
+                return Ray.getPoint(ray, intersection.start);
+              }
+              
+              // No intersection (vector pointing away from Earth)
+              return undefined;
+            }, false) as any}
+          >
+            <PointGraphics pixelSize={15} color={Color.YELLOW} outlineColor={Color.BLACK} outlineWidth={2} />
+          </Entity>
+        )}
+        {/* Line from satellite to ground point */}
+        {satelliteAvailability && satellitePosition && satelliteOrientation && (
+          <Entity availability={satelliteAvailability}>
+            <PolylineGraphics
+              positions={new CallbackProperty((time) => {
+                const pos = satellitePosition.getValue(time);
+                const orient = satelliteOrientation.getValue(time);
+                if (!pos || !orient) {
+                  return [];
+                }
+                
+                // Z-axis unit vector in body frame
+                const zAxisBody = new Cartesian3(0, 0, 1);
+                
+                // Rotate Z-axis by satellite orientation to get direction in ECEF
+                const rotationMatrix = Matrix3.fromQuaternion(orient);
+                const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
+                
+                // Normalize direction
+                const direction = Cartesian3.normalize(zAxisECEF, new Cartesian3());
+                
+                // Create ray
+                const ray = new Ray(pos, direction);
+                
+                // Find intersection with Earth
+                const intersection = IntersectionTests.rayEllipsoid(ray, Ellipsoid.WGS84);
+                
+                if (intersection) {
+                  const groundPoint = Ray.getPoint(ray, intersection.start);
+                  return [pos, groundPoint];
+                }
+                
+                return [];
+              }, false)}
+              width={2}
+              material={Color.YELLOW.withAlpha(0.7)}
             />
           </Entity>
         )}
