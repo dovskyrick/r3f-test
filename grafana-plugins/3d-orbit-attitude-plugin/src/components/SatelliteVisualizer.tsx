@@ -29,6 +29,7 @@ import {
   ArcType,
   PolygonHierarchy,
   Ellipsoid,
+  OpenStreetMapImageryProvider,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -394,6 +395,21 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             
             console.log('AFTER - maximumZoomDistance:', controller.maximumZoomDistance);
             console.log('AFTER - enableCollisionDetection:', controller.enableCollisionDetection);
+            
+            // Set default imagery to Stadia Alidade Smooth Dark
+            const viewer = ref.cesiumElement;
+            const imageryLayers = viewer.imageryLayers;
+            
+            // Remove default imagery
+            if (imageryLayers.length > 0) {
+              imageryLayers.removeAll();
+            }
+            
+            // Add Stadia Alidade Smooth Dark
+            const stadiaProvider = new OpenStreetMapImageryProvider({
+              url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/',
+            });
+            imageryLayers.addImageryProvider(stadiaProvider);
           }
         }}
       >
