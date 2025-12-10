@@ -1,278 +1,291 @@
 # Default Imagery Layer Fix
 
 **Date:** December 9, 2025  
-**Issue:** Default imagery requires payment, doesn't persist on reload  
-**Goal:** Use free Stadia Alidade Smooth Dark by default
+**Issue:** Default imagery requires payment, BaseLayerPicker UI shows wrong selection  
+**Status:** Default imagery fixed ✅, UI sync investigation in progress
 
 ---
 
 ## Problem Summary
 
-1. **Current default:** Cesium World Imagery or Bing Maps (requires API key/payment)
-2. **User workaround:** Manually select "Stadia Alidade Smooth Dark" from BaseLayerPicker every reload
-3. **Persistence issue:** Selection doesn't save with dashboard
+1. **Default imagery:** Cesium World Imagery (requires payment) - ✅ **FIXED**
+2. **BaseLayerPicker UI:** Shows paid layer as selected, even though Stadia Dark is actually loaded
+3. **User confusion:** First-time users might think they're using the wrong layer
 
 ---
 
-## Solution Approach
+## Solution Implemented
 
-### Step 1: Change Default Imagery (Quick Fix)
+### Programmatic Imagery Change
 
-**Where:** `SatelliteVisualizer.tsx` - Viewer configuration
+**File:** `SatelliteVisualizer.tsx`
 
-**Current (implicit):**
+**Implementation:**
 ```typescript
-<Viewer
-  baseLayerPicker={options.showBaseLayerPicker}
-  // Uses default Cesium imagery
-/>
-```
+// In Viewer ref callback:
+const viewer = ref.cesiumElement;
+const imageryLayers = viewer.imageryLayers;
 
-**New (explicit):**
-```typescript
-import { 
-  OpenStreetMapImageryProvider,
-  IonWorldImageryStyle,
-  createWorldImageryAsync,
-} from 'cesium';
+// Remove default imagery
+if (imageryLayers.length > 0) {
+  imageryLayers.removeAll();
+}
 
-// In component, before render:
-const defaultImagery = new OpenStreetMapImageryProvider({
+// Add Stadia Alidade Smooth Dark
+const stadiaProvider = new OpenStreetMapImageryProvider({
   url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/',
-  // Note: Stadia might require attribution
 });
-
-<Viewer
-  baseLayerPicker={options.showBaseLayerPicker}
-  imageryProvider={defaultImagery}
-/>
+imageryLayers.addImageryProvider(stadiaProvider);
 ```
 
-**OR use Cesium's built-in providers:**
-```typescript
-<Viewer
-  baseLayerPicker={options.showBaseLayerPicker}
-  imageryProvider={false} // Disable default
-  // Then manually add Stadia via terrainProvider or baseLayer
-/>
-```
-
-**Issue with this approach:**
-- Stadia tiles might require API key or have usage limits
-- Need to check if it's truly free
+**Result:**
+- ✅ Earth loads with Stadia Alidade Smooth Dark immediately
+- ✅ No payment error
+- ✅ BaseLayerPicker (if enabled) still allows changing layers
+- ⚠️ **BUT:** BaseLayerPicker UI doesn't reflect the change
 
 ---
 
-### Step 2: Make Selection Persistent (Better Solution)
+## Remaining Issue: BaseLayerPicker UI Desync
 
-**Add panel setting to store imagery choice:**
+### The Problem
 
-**In `types.ts`:**
+**What happens:**
+1. We programmatically set imagery to Stadia Dark
+2. BaseLayerPicker widget doesn't know about this change
+3. UI shows "Bing Maps Aerial with Labels" (or similar) as selected
+4. Actual imagery IS Stadia Dark (correct)
+5. User sees mismatch between UI and reality
+
+**Why it happens:**
+- BaseLayerPicker maintains its own state
+- We're changing imagery after widget initialization
+- Widget doesn't detect external imagery changes
+
+---
+
+## Solution Exploration
+
+### Approach 1: Access BaseLayerPicker Widget and Update Selection
+
+**Concept:**
 ```typescript
-export interface SimpleOptions {
-  // ... existing options
+// In ref callback, after setting imagery:
+const baseLayerPicker = viewer.baseLayerPicker;
+if (baseLayerPicker) {
+  // Find the Stadia layer in the picker's viewModel
+  const stadiaLayer = baseLayerPicker.viewModel.imageryProviderViewModels.find(
+    vm => vm.name === 'Stadia Alidade Smooth Dark'
+  );
   
-  defaultImageryProvider: string; // e.g., 'stadia-dark', 'osm', 'none'
+  if (stadiaLayer) {
+    baseLayerPicker.viewModel.selectedImagery = stadiaLayer;
+  }
 }
 ```
 
-**In `module.ts`:**
-```typescript
-.addRadio({
-  path: 'defaultImageryProvider',
-  name: 'Default Imagery',
-  description: 'Base map imagery layer',
-  settings: {
-    options: [
-      { value: 'stadia-dark', label: 'Stadia Alidade Smooth Dark' },
-      { value: 'stadia-light', label: 'Stadia Alidade Smooth' },
-      { value: 'osm', label: 'OpenStreetMap' },
-      { value: 'none', label: 'No Imagery (Black)' },
-    ],
-  },
-  defaultValue: 'stadia-dark',
-})
-```
+**Challenge:** Stadia might not be in the default list!
 
-**In `SatelliteVisualizer.tsx`:**
+---
+
+### Approach 2: Add Stadia to BaseLayerPicker Options
+
+**Concept:**
 ```typescript
-const getImageryProvider = () => {
-  switch (options.defaultImageryProvider) {
-    case 'stadia-dark':
+// Before creating viewer, configure BaseLayerPicker options
+const imageryViewModels = Cesium.createDefaultImageryProviderViewModels();
+
+// Add Stadia as an option
+imageryViewModels.push(
+  new Cesium.ProviderViewModel({
+    name: 'Stadia Alidade Smooth Dark',
+    tooltip: 'Stadia Maps - Alidade Smooth Dark theme',
+    iconUrl: 'some-icon-url',
+    creationFunction: () => {
       return new OpenStreetMapImageryProvider({
         url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/',
       });
-    case 'stadia-light':
-      return new OpenStreetMapImageryProvider({
-        url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/',
-      });
-    case 'osm':
-      return new OpenStreetMapImageryProvider({
-        url: 'https://a.tile.openstreetmap.org/',
-      });
-    case 'none':
-      return false; // No imagery
-    default:
-      return undefined; // Cesium default
-  }
-};
+    },
+  })
+);
 
-<Viewer
-  imageryProvider={getImageryProvider()}
-  baseLayerPicker={options.showBaseLayerPicker}
-/>
+// Then pass to Viewer... but Resium doesn't expose this
 ```
 
----
-
-## Research Needed
-
-**Before implementation, need to verify:**
-
-1. **Is Stadia truly free?**
-   - Check: https://stadiamaps.com/pricing/
-   - May require API key for production use
-   - Alternative: Use plain OpenStreetMap
-
-2. **Does Cesium's Viewer accept custom imageryProvider?**
-   - Check Resium's `<Viewer>` props
-   - Verify it passes through to Cesium
-
-3. **Will this override BaseLayerPicker?**
-   - If BaseLayerPicker is enabled, does it reset to default?
-   - May need to disable BaseLayerPicker to use custom imagery
+**Challenge:** Resium's `<Viewer>` doesn't expose `imageryProviderViewModels` prop!
 
 ---
 
-## Recommended Implementation Order
+### Approach 3: Directly Manipulate BaseLayerPicker After Creation
 
-### Phase 1: Quick Fix (5 minutes)
-**Set a simple free default - OpenStreetMap**
+**Most Practical Approach:**
 
 ```typescript
-<Viewer
-  imageryProvider={new OpenStreetMapImageryProvider({
-    url: 'https://a.tile.openstreetmap.org/',
-  })}
-/>
-```
+// In ref callback:
+const viewer = ref.cesiumElement;
 
-**Pros:**
-- ✅ Definitely free (OSM is open)
-- ✅ No API key needed
-- ✅ Works immediately
+// Set up imagery
+const imageryLayers = viewer.imageryLayers;
+if (imageryLayers.length > 0) {
+  imageryLayers.removeAll();
+}
 
-**Cons:**
-- ⚠️ Not "Stadia Alidade Smooth Dark" specifically
-- ⚠️ Still doesn't persist user changes
-
----
-
-### Phase 2: Add Stadia Dark (10 minutes)
-**If Stadia is free/no key needed:**
-
-```typescript
-<Viewer
-  imageryProvider={new OpenStreetMapImageryProvider({
-    url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/',
-  })}
-/>
-```
-
-**Need to test:** Does this work without API key?
-
----
-
-### Phase 3: Make It Configurable (20 minutes)
-**Add panel setting for imagery selection**
-
-- Add `defaultImageryProvider` to types
-- Add radio selection to module.ts
-- Implement switch/case in component
-- Now persists with dashboard save!
-
----
-
-## Alternative: Disable BaseLayerPicker
-
-**Simplest solution:**
-
-```typescript
-<Viewer
-  baseLayerPicker={false} // Always hide picker
-  imageryProvider={new OpenStreetMapImageryProvider({
-    url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/',
-  })}
-/>
-```
-
-**Pros:**
-- ✅ User can't change it (no confusion)
-- ✅ Always uses free imagery
-- ✅ No persistence issue
-
-**Cons:**
-- ❌ Less flexibility
-- ❌ Can't switch between map styles in UI
-
----
-
-## My Recommendation
-
-**Step 1 (Immediate):**
-Try Stadia URL directly, see if it works without API key:
-
-```typescript
-imageryProvider={new OpenStreetMapImageryProvider({
+const stadiaProvider = new OpenStreetMapImageryProvider({
   url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/',
-})}
+});
+imageryLayers.addImageryProvider(stadiaProvider);
+
+// Update BaseLayerPicker UI
+if (viewer.baseLayerPicker) {
+  const picker = viewer.baseLayerPicker;
+  const viewModel = picker.viewModel;
+  
+  // Option A: Find existing provider that matches (if any)
+  const matchingProvider = viewModel.imageryProviderViewModels.find(
+    vm => vm.name.includes('Stadia') || vm.name.includes('Dark')
+  );
+  
+  if (matchingProvider) {
+    viewModel.selectedImagery = matchingProvider;
+  } else {
+    // Option B: Add custom provider to the list
+    const customViewModel = new Cesium.ProviderViewModel({
+      name: 'Stadia Alidade Smooth Dark',
+      tooltip: 'Dark themed base map',
+      iconUrl: Cesium.buildModuleUrl('Widgets/Images/ImageryProviders/openStreetMap.png'),
+      creationFunction: () => stadiaProvider,
+    });
+    
+    viewModel.imageryProviderViewModels.unshift(customViewModel); // Add to start
+    viewModel.selectedImagery = customViewModel; // Select it
+  }
+}
 ```
 
-**If that fails (needs API key):**
-Fall back to plain OpenStreetMap:
+---
+
+### Approach 4: Check What's Actually in the Default List
+
+**Investigation needed:**
 
 ```typescript
-imageryProvider={new OpenStreetMapImageryProvider({
-  url: 'https://a.tile.openstreetmap.org/',
-})}
+// Log what providers are available
+if (viewer.baseLayerPicker) {
+  const viewModel = viewer.baseLayerPicker.viewModel;
+  console.log('Available imagery providers:');
+  viewModel.imageryProviderViewModels.forEach((vm, index) => {
+    console.log(`${index}: ${vm.name}`);
+  });
+  console.log('Currently selected:', viewModel.selectedImagery.name);
+}
 ```
 
-**Step 2 (If user wants persistence):**
-Add panel setting to choose between imagery options.
+**This will tell us:**
+1. Is Stadia already in the list?
+2. What's the exact name of each option?
+3. Which one is selected by default?
 
 ---
 
-## Questions for User
+## Recommended Implementation Steps
 
-1. **Is BaseLayerPicker important?**
-   - If no: We can disable it and hardcode Stadia
-   - If yes: Need to add persistence via panel settings
+### Step 1: Investigate (2 minutes)
+Add logging to see what's in the BaseLayerPicker:
 
-2. **Is Stadia a hard requirement?**
-   - If yes: Need to check if API key is needed
-   - If no: OpenStreetMap is simpler and guaranteed free
+```typescript
+// After setting imagery
+if (viewer.baseLayerPicker) {
+  console.log('=== BASE LAYER PICKER DEBUG ===');
+  const vm = viewer.baseLayerPicker.viewModel;
+  console.log('Available providers:', vm.imageryProviderViewModels.map(p => p.name));
+  console.log('Selected:', vm.selectedImagery?.name);
+}
+```
 
-3. **Preference:**
-   - Quick fix (hardcode Stadia/OSM, no persistence)?
-   - Or proper solution (add panel setting, full persistence)?
+### Step 2: Update Selection (5-10 minutes)
+Based on what we find:
+
+**If Stadia IS in the list:**
+```typescript
+const stadiaVM = vm.imageryProviderViewModels.find(
+  p => p.name.toLowerCase().includes('stadia')
+);
+if (stadiaVM) {
+  vm.selectedImagery = stadiaVM;
+}
+```
+
+**If Stadia is NOT in the list:**
+```typescript
+// Add it manually
+const customVM = new ProviderViewModel({
+  name: 'Stadia Alidade Smooth Dark',
+  iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/openStreetMap.png'),
+  creationFunction: () => stadiaProvider,
+});
+vm.imageryProviderViewModels.unshift(customVM);
+vm.selectedImagery = customVM;
+```
 
 ---
 
-## Estimated Time
+## Potential Issues
 
-- **Phase 1 (Quick Fix):** 5 minutes
-- **Phase 2 (Test Stadia):** 5 minutes
-- **Phase 3 (Persistence):** 20 minutes
+### Issue 1: ProviderViewModel Not Imported
+**Solution:** Add to imports:
+```typescript
+import { ProviderViewModel, buildModuleUrl } from 'cesium';
+```
 
-**Total for full solution:** ~30 minutes
+### Issue 2: BaseLayerPicker Recreates Imagery
+**Solution:** The BaseLayerPicker might recreate the provider when selected. This is fine - it will use the same URL.
+
+### Issue 3: Selection Triggers Imagery Change
+**Solution:** We set the imagery first, THEN update the UI, so it should just sync the state.
 
 ---
 
-## Next Steps
+## Testing Plan
 
-1. ✅ Create this plan
-2. ⏸️ Get user approval
-3. ⏸️ Implement Phase 1 (quick fix)
-4. ⏸️ Test if Stadia works
-5. ⏸️ Optionally add persistence
+1. **Before fix:**
+   - Check BaseLayerPicker dropdown
+   - Note which layer shows as selected
+   - Verify Earth is actually Stadia Dark
 
+2. **Add logging:**
+   - See what providers are available
+   - See what's currently selected
+
+3. **Implement sync:**
+   - Update `selectedImagery` in viewModel
+   - Verify dropdown now shows correct selection
+
+4. **Test interaction:**
+   - Change layer via UI
+   - Verify it still works
+   - Reload page
+   - Verify Stadia is selected in UI
+
+---
+
+## Decision: Not Using Panel Settings
+
+**Reasoning:**
+- BaseLayerPicker already provides UI for layer selection
+- Adding duplicate panel setting = bad UX
+- User can enable BaseLayerPicker if they want control
+- Just need to sync the default with the UI
+
+---
+
+## Next Actions
+
+1. ✅ Set Stadia as default imagery (DONE)
+2. ⏸️ Add logging to investigate BaseLayerPicker state
+3. ⏸️ Update BaseLayerPicker selection to match
+4. ⏸️ Test and verify UI shows correct selection
+
+**Estimated time for UI sync:** 10-15 minutes
+**Complexity:** Low-Medium (depends on what's in the default list)
+
+Ready to investigate and fix when you give the go-ahead! 🔍
