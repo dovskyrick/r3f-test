@@ -30,6 +30,8 @@ import {
   PolygonHierarchy,
   Ellipsoid,
   UrlTemplateImageryProvider,
+  ProviderViewModel,
+  buildModuleUrl,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -323,7 +325,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             controller.maximumZoomDistance = Number.POSITIVE_INFINITY;
             controller.enableCollisionDetection = false;
             
-            // Set default imagery to Stadia Alidade Smooth Dark
+            // Add Carto Dark Matter options to BaseLayerPicker and set default
             const imageryLayers = viewer.imageryLayers;
             
             // Remove default imagery
@@ -331,13 +333,61 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               imageryLayers.removeAll();
             }
             
-            // Add Stadia Alidade Smooth Dark
-            // Use Carto Dark Matter (no labels) - dark theme with borders but no text
-            const cartoProvider = new UrlTemplateImageryProvider({
+            // Set default to Carto Dark Matter (no labels)
+            const cartoNoLabelsProvider = new UrlTemplateImageryProvider({
               url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png',
               credit: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
             });
-            imageryLayers.addImageryProvider(cartoProvider);
+            imageryLayers.addImageryProvider(cartoNoLabelsProvider);
+            
+            // Add Carto options to BaseLayerPicker if it exists
+            if (viewer.baseLayerPicker) {
+              const vm = viewer.baseLayerPicker.viewModel;
+              
+              // Check if Carto options already exist (to avoid duplicates on remount)
+              const hasCartoNoLabels = vm.imageryProviderViewModels.some(p => p.name === 'Carto Dark Matter (No Labels)');
+              
+              if (!hasCartoNoLabels) {
+                // Create Carto Dark Matter (No Labels) option
+                const cartoNoLabelsViewModel = new ProviderViewModel({
+                  name: 'Carto Dark Matter (No Labels)',
+                  iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/openStreetMap.png'),
+                  tooltip: 'Dark theme map without city/country labels - clean view with borders only',
+                  creationFunction: () => new UrlTemplateImageryProvider({
+                    url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png',
+                    credit: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
+                  }),
+                });
+                
+                // Create Carto Dark Matter (With Labels) option
+                const cartoWithLabelsViewModel = new ProviderViewModel({
+                  name: 'Carto Dark Matter (With Labels)',
+                  iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/openStreetMap.png'),
+                  tooltip: 'Dark theme map with city/country labels',
+                  creationFunction: () => new UrlTemplateImageryProvider({
+                    url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
+                    credit: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
+                  }),
+                });
+                
+                // Add both options to the picker
+                vm.imageryProviderViewModels.push(cartoNoLabelsViewModel, cartoWithLabelsViewModel);
+              }
+              
+              // Set the selected imagery to Carto Dark Matter (No Labels)
+              const cartoNoLabelsVM = vm.imageryProviderViewModels.find(
+                p => p.name === 'Carto Dark Matter (No Labels)'
+              );
+              
+              if (cartoNoLabelsVM) {
+                vm.selectedImagery = cartoNoLabelsVM;
+              }
+            }
+            
+            // Extend camera far clipping plane for celestial grid visibility
+            const earthRadius = 6378137; // WGS84 maximum radius in meters
+            const celestialDistance = earthRadius * 100;
+            viewer.scene.camera.frustum.far = celestialDistance * 3;
           }
         }}
       >

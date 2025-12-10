@@ -7,21 +7,37 @@
 
 ---
 
-## Final Implementation (COMPLETED)
+## Final Implementation (COMPLETED) ✅
 
-**What we did:**
+**Phase 1: Test & Switch Base Layer**
 1. Tested Stadia `alidade_smooth_dark_nolabels` → 404 (doesn't exist)
-2. Switched to **Carto Dark Matter (no labels)**
+2. Switched to **Carto Dark Matter (no labels)** as default
 3. Changed from `OpenStreetMapImageryProvider` to `UrlTemplateImageryProvider`
-4. URL: `https://cartodb-basemaps-a.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png`
+4. Default URL: `https://cartodb-basemaps-a.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png`
+
+**Phase 2: Add to BaseLayerPicker Menu**
+1. Imported `ProviderViewModel` and `buildModuleUrl` from Cesium
+2. Created two new `ProviderViewModel` options:
+   - **Carto Dark Matter (No Labels)** - clean, borders only
+   - **Carto Dark Matter (With Labels)** - informative, with text
+3. Added both to `viewer.baseLayerPicker.viewModel.imageryProviderViewModels`
+4. Set "No Labels" as the default selected imagery
 
 **Result:**
-- ✅ Dark theme
-- ✅ Country borders visible
-- ✅ No city/country labels
-- ✅ Very similar look to Stadia
+- ✅ Default: Carto Dark Matter (no labels)
+- ✅ BaseLayerPicker menu includes both Carto variants
+- ✅ Users can switch between:
+  - Carto Dark (No Labels)
+  - Carto Dark (With Labels)
+  - Stadia Dark (With Labels)
+  - All other default options (Bing, etc.)
+- ✅ Selection persists until user changes it
+- ✅ No need for panel settings toggle - it's in the UI!
 
-**Next step:** If teachers want labels toggle, add panel setting to switch between `dark_nolabels` and `dark_all` URLs.
+**Code changes:**
+- `SatelliteVisualizer.tsx`: Added Carto options to BaseLayerPicker
+- Default imagery set to Carto Dark Matter (No Labels)
+- Both Carto variants available in upper-right menu
 
 ---
 
