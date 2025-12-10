@@ -384,20 +384,14 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         creditContainer="cesium-credits"
         ref={(ref) => {
           if (ref?.cesiumElement) {
-            const controller = ref.cesiumElement.scene.screenSpaceCameraController;
-            console.log('=== ZOOM DEBUG ===');
-            console.log('BEFORE - maximumZoomDistance:', controller.maximumZoomDistance);
-            console.log('BEFORE - enableCollisionDetection:', controller.enableCollisionDetection);
+            const viewer = ref.cesiumElement;
+            const controller = viewer.scene.screenSpaceCameraController;
             
             // Remove zoom-out limit
             controller.maximumZoomDistance = Number.POSITIVE_INFINITY;
             controller.enableCollisionDetection = false;
             
-            console.log('AFTER - maximumZoomDistance:', controller.maximumZoomDistance);
-            console.log('AFTER - enableCollisionDetection:', controller.enableCollisionDetection);
-            
             // Set default imagery to Stadia Alidade Smooth Dark
-            const viewer = ref.cesiumElement;
             const imageryLayers = viewer.imageryLayers;
             
             // Remove default imagery
@@ -410,6 +404,21 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/',
             });
             imageryLayers.addImageryProvider(stadiaProvider);
+            
+            // Sync BaseLayerPicker UI with our programmatic imagery change
+            if (viewer.baseLayerPicker) {
+              const vm = viewer.baseLayerPicker.viewModel;
+              
+              // Find "Stadia Alidade Smooth Dark" in the list
+              const stadiaViewModel = vm.imageryProviderViewModels.find(
+                p => p.name === 'Stadia Alidade Smooth Dark'
+              );
+              
+              if (stadiaViewModel) {
+                // Update the UI selection to match our imagery
+                vm.selectedImagery = stadiaViewModel;
+              }
+            }
           }
         }}
       >
