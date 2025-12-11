@@ -473,17 +473,21 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   return [];
                 }
                 
-                // Calculate dynamic vector length based on camera distance
+                // Calculate dynamic vector length based on tracking mode and camera distance
                 const viewer = viewerRef.current?.cesiumElement;
-                const baseLength = 250000; // 250km base length (2-3x model size)
-                let vectorLength = baseLength;
+                let vectorLength;
                 
-                if (viewer) {
-                  const cameraPosition = viewer.camera.position;
-                  const distance = Cartesian3.distance(cameraPosition, pos);
+                if (isTracked) {
+                  // Tracking mode: tiny fixed size (1-2 meters, just for reference)
+                  vectorLength = 2; // 2 meters
+                } else {
+                  // Free camera mode: scale with distance
+                  const baseLength = 50000; // 50km base length
+                  vectorLength = baseLength;
                   
-                  // Scale up when not tracking and far away
-                  if (!isTracked) {
+                  if (viewer) {
+                    const cameraPosition = viewer.camera.position;
+                    const distance = Cartesian3.distance(cameraPosition, pos);
                     const scaleFactor = Math.max(1.0, distance / 1000000); // Scale based on 1000km reference
                     vectorLength = baseLength * scaleFactor;
                   }
