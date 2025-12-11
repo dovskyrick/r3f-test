@@ -588,33 +588,39 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             />
           </Entity>
         ))}
-        {/* RA/Dec Celestial Grid - Declination Lines (Parallels) */}
+        {/* RA/Dec Celestial Grid - Declination Lines (Parallels) - Light Brown */}
         {options.showRADecGrid && decLines.map((line, index) => (
           <Entity name={`Dec Line ${index}`} key={`dec-${index}`}>
             <PolylineGraphics
               positions={line}
               width={1}
-              material={Color.WHITE.withAlpha(0.5)}
+              material={Color.fromBytes(200, 180, 160, 128)}
               arcType={ArcType.NONE}
             />
           </Entity>
         ))}
-        {/* RA/Dec Grid Labels */}
-        {options.showRADecGrid && options.showGridLabels && gridLabels.map((label, index) => (
-          <Entity position={label.position} key={`grid-label-${index}`}>
-            <LabelGraphics
-              text={label.text}
-              font={`${options.gridLabelSize}px sans-serif`}
-              fillColor={Color.WHITE}
-              outlineColor={Color.BLACK}
-              outlineWidth={2}
-              style={LabelStyle.FILL_AND_OUTLINE}
-              pixelOffset={new Cartesian2(0, -10)}
-              horizontalOrigin={HorizontalOrigin.CENTER}
-              verticalOrigin={VerticalOrigin.BOTTOM}
-            />
-          </Entity>
-        ))}
+        {/* RA/Dec Grid Labels - Color coded: White for RA (hours), Light Brown for Dec (degrees) */}
+        {options.showRADecGrid && options.showGridLabels && gridLabels.map((label, index) => {
+          // Determine if this is an RA label (ends with 'h') or Dec label (ends with '°')
+          const isRALabel = label.text.endsWith('h');
+          const labelColor = isRALabel ? Color.WHITE : Color.fromBytes(200, 180, 160, 255);
+          
+          return (
+            <Entity position={label.position} key={`grid-label-${index}`}>
+              <LabelGraphics
+                text={label.text}
+                font={`${options.gridLabelSize}px sans-serif`}
+                fillColor={labelColor}
+                outlineColor={Color.BLACK}
+                outlineWidth={2}
+                style={LabelStyle.FILL_AND_OUTLINE}
+                pixelOffset={new Cartesian2(0, -10)}
+                horizontalOrigin={HorizontalOrigin.CENTER}
+                verticalOrigin={VerticalOrigin.BOTTOM}
+              />
+            </Entity>
+          );
+        })}
         {options.locations.map((location, index) => (
           <Entity
             name={location.name}

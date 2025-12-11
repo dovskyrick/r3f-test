@@ -417,8 +417,34 @@ for (const dec of labelDeclinations) {
 - [ ] Adjust label size (8-32px) via panel settings
 - [ ] Labels update when grid spacing changes
 - [ ] Performance is acceptable (~120-144 labels)
+- [ ] Labels hide behind Earth (depth testing enabled)
+- [ ] Color coding works: RA white, Dec light brown
 
 **Implementation time:** ~20 minutes
+
+---
+
+## Color Coding Feature ✅
+
+**Added: December 11, 2025**
+
+**Problem:** Hard to distinguish which labels correspond to RA vs Dec lines, especially at vertices.
+
+**Solution:** Color-coded lines and labels:
+- **RA (Right Ascension):** White lines, white labels (meridians)
+- **Dec (Declination):** Light brown lines, light brown labels (parallels)
+
+**Color choice:**
+- Light brown: `Color.fromBytes(200, 180, 160, 255)` - desaturated tan/beige
+- Very low saturation to maintain subtle appearance
+- Warm tone distinguishes from cool white
+
+**Implementation:**
+- Dec lines: Changed from white to light brown
+- Labels: Detect label type by text suffix ('h' for RA, '°' for Dec)
+- Apply appropriate color based on label type
+
+**Result:** Clear visual distinction between the two coordinate systems while maintaining aesthetic consistency.
 
 **Ready to build and test!** 🏷️✨
 
