@@ -25,6 +25,8 @@ export interface SimpleOptions {
   showRADecGrid: boolean;
   raSpacing: number;
   decSpacing: number;
+  showGridLabels: boolean;
+  gridLabelSize: number;
 
   locations: Location[];
   locationPointSize: number;

@@ -174,6 +174,25 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       },
       showIf: (config) => config.showRADecGrid,
     })
+    .addBooleanSwitch({
+      path: 'showGridLabels',
+      name: 'Show Grid Labels',
+      description: 'Display coordinate labels on RA/Dec grid lines',
+      defaultValue: true,
+      showIf: (config) => config.showRADecGrid,
+    })
+    .addNumberInput({
+      path: 'gridLabelSize',
+      name: 'Grid Label Size (px)',
+      description: 'Font size for RA/Dec grid labels',
+      defaultValue: 14,
+      settings: {
+        min: 8,
+        max: 32,
+        step: 2,
+      },
+      showIf: (config) => config.showRADecGrid && config.showGridLabels,
+    })
 
     .addCustomEditor({
       id: 'locations',

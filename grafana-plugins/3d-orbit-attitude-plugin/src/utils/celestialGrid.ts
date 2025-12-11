@@ -25,6 +25,11 @@ export interface RADecGrid {
   decLines: Cartesian3[][];  // Declination parallels (circles parallel to equator)
 }
 
+export interface GridLabel {
+  position: Cartesian3;  // Label position in ECEF
+  text: string;          // Label text to display
+}
+
 /**
  * Generate RA/Dec celestial grid in ECEF frame for rendering.
  */
@@ -123,5 +128,80 @@ function transformLineToECEF(
   return lineECI.map(point =>
     Matrix3.multiplyByVector(icrfToFixed, point, new Cartesian3())
   );
+}
+
+/**
+ * Generate labels for RA/Dec grid lines.
+ * Places multiple labels per line at celestial distance for visibility from all angles.
+ */
+export function generateRADecGridLabels(options: RADecGridOptions): GridLabel[] {
+  const {
+    raSpacing,
+    decSpacing,
+    celestialRadius,
+    referenceTime,
+  } = options;
+
+  const icrfToFixed = Transforms.computeIcrfToFixedMatrix(referenceTime);
+  const labels: GridLabel[] = [];
+
+  // RA labels: Place at multiple declinations (-60°, 0°, +60°) for each RA line
+  const raSpacingDegrees = raSpacing * 15; // Convert hours to degrees
+  const labelDeclinations = [-60, 0, 60]; // Sparse placement
+
+  for (let ra = 0; ra < 360; ra += raSpacingDegrees) {
+    const raHours = ra / 15; // Convert back to hours for label text
+    const raRad = CesiumMath.toRadians(ra);
+
+    for (const dec of labelDeclinations) {
+      const decRad = CesiumMath.toRadians(dec);
+
+      // Calculate position in ECI
+      const positionECI = new Cartesian3(
+        celestialRadius * Math.cos(decRad) * Math.cos(raRad),
+        celestialRadius * Math.cos(decRad) * Math.sin(raRad),
+        celestialRadius * Math.sin(decRad)
+      );
+
+      // Transform to ECEF
+      const positionECEF = Matrix3.multiplyByVector(icrfToFixed, positionECI, new Cartesian3());
+
+      labels.push({
+        position: positionECEF,
+        text: `${raHours}h`,
+      });
+    }
+  }
+
+  // Dec labels: Place at multiple right ascensions (0°, 90°, 180°, 270°) for each Dec line
+  const labelRightAscensions = [0, 90, 180, 270]; // Sparse placement
+
+  // Skip poles (-90° and +90°) as they're degenerate
+  for (let dec = -90 + decSpacing; dec < 90; dec += decSpacing) {
+    const decRad = CesiumMath.toRadians(dec);
+
+    for (const ra of labelRightAscensions) {
+      const raRad = CesiumMath.toRadians(ra);
+
+      // Calculate position in ECI
+      const positionECI = new Cartesian3(
+        celestialRadius * Math.cos(decRad) * Math.cos(raRad),
+        celestialRadius * Math.cos(decRad) * Math.sin(raRad),
+        celestialRadius * Math.sin(decRad)
+      );
+
+      // Transform to ECEF
+      const positionECEF = Matrix3.multiplyByVector(icrfToFixed, positionECI, new Cartesian3());
+
+      // Format declination with sign
+      const decSign = dec >= 0 ? '+' : '';
+      labels.push({
+        position: positionECEF,
+        text: `${decSign}${dec}°`,
+      });
+    }
+  }
+
+  return labels;
 }
 

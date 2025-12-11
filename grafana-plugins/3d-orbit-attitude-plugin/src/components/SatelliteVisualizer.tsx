@@ -4,7 +4,7 @@ import { AssetMode, SimpleOptions, CoordinatesType } from 'types';
 import { coalesceToArray } from 'utilities';
 import { computeZAxisGroundIntersection, computeFOVFootprint, createDummyPolygonHierarchy } from 'utils/projections';
 import { generateCelestialTestCircles } from 'utils/celestialTest';
-import { generateRADecGrid } from 'utils/celestialGrid';
+import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
@@ -32,6 +32,9 @@ import {
   UrlTemplateImageryProvider,
   ProviderViewModel,
   buildModuleUrl,
+  LabelStyle,
+  HorizontalOrigin,
+  VerticalOrigin,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -82,6 +85,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [celestialTestCircles, setCelestialTestCircles] = useState<Cartesian3[][]>([]);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
   const [decLines, setDecLines] = useState<Cartesian3[][]>([]);
+  const [gridLabels, setGridLabels] = useState<Array<{ position: Cartesian3; text: string }>>([]);
   
   // Store viewer reference for imagery setup in useEffect
   const viewerRef = React.useRef<any>(null);
@@ -238,6 +242,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     if (!options.showRADecGrid || !timestamp) {
       setRALines([]);
       setDecLines([]);
+      setGridLabels([]);
       return;
     }
 
@@ -252,7 +257,20 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
     setRALines(raLines);
     setDecLines(decLines);
-  }, [options.showRADecGrid, options.raSpacing, options.decSpacing, timestamp]);
+
+    // Generate labels if enabled
+    if (options.showGridLabels) {
+      const labels = generateRADecGridLabels({
+        raSpacing: options.raSpacing,
+        decSpacing: options.decSpacing,
+        celestialRadius,
+        referenceTime: timestamp,
+      });
+      setGridLabels(labels);
+    } else {
+      setGridLabels([]);
+    }
+  }, [options.showRADecGrid, options.raSpacing, options.decSpacing, options.showGridLabels, timestamp]);
 
   // Setup default imagery once when Viewer is created (for persistence)
   useEffect(() => {
@@ -578,6 +596,23 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               width={1}
               material={Color.WHITE.withAlpha(0.5)}
               arcType={ArcType.NONE}
+            />
+          </Entity>
+        ))}
+        {/* RA/Dec Grid Labels */}
+        {options.showRADecGrid && options.showGridLabels && gridLabels.map((label, index) => (
+          <Entity position={label.position} key={`grid-label-${index}`}>
+            <LabelGraphics
+              text={label.text}
+              font={`${options.gridLabelSize}px sans-serif`}
+              fillColor={Color.WHITE}
+              outlineColor={Color.BLACK}
+              outlineWidth={2}
+              style={LabelStyle.FILL_AND_OUTLINE}
+              pixelOffset={new Cartesian2(0, -10)}
+              horizontalOrigin={HorizontalOrigin.CENTER}
+              verticalOrigin={VerticalOrigin.BOTTOM}
+              disableDepthTestDistance={Number.POSITIVE_INFINITY}
             />
           </Entity>
         ))}
