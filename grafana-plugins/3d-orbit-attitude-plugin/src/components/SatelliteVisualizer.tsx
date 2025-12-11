@@ -462,7 +462,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             )}
           </Entity>
         )}
-        {/* Attitude Z-axis vector (red arrow) */}
+        {/* Attitude Z-axis vector (red arrow) with dynamic scaling */}
         {satelliteAvailability && satellitePosition && satelliteOrientation && (
           <Entity availability={satelliteAvailability}>
             <PolylineGraphics
@@ -473,6 +473,22 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   return [];
                 }
                 
+                // Calculate dynamic vector length based on camera distance
+                const viewer = viewerRef.current?.cesiumElement;
+                const baseLength = 250000; // 250km base length (2-3x model size)
+                let vectorLength = baseLength;
+                
+                if (viewer) {
+                  const cameraPosition = viewer.camera.position;
+                  const distance = Cartesian3.distance(cameraPosition, pos);
+                  
+                  // Scale up when not tracking and far away
+                  if (!isTracked) {
+                    const scaleFactor = Math.max(1.0, distance / 1000000); // Scale based on 1000km reference
+                    vectorLength = baseLength * scaleFactor;
+                  }
+                }
+                
                 // Z-axis unit vector in body frame
                 const zAxisBody = new Cartesian3(0, 0, 1);
                 
@@ -480,8 +496,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 const rotationMatrix = Matrix3.fromQuaternion(orient);
                 const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
                 
-                // Scale vector (100km for visibility)
-                const vectorLength = 100000;
+                // Calculate endpoint with dynamic length
                 const endPos = Cartesian3.add(
                   pos,
                   Cartesian3.multiplyByScalar(zAxisECEF, vectorLength, new Cartesian3()),
