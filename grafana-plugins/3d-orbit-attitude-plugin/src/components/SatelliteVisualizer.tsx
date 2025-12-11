@@ -82,9 +82,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [celestialTestCircles, setCelestialTestCircles] = useState<Cartesian3[][]>([]);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
   const [decLines, setDecLines] = useState<Cartesian3[][]>([]);
-
-  // Track if we've initialized imagery to prevent reset on re-renders
-  const imageryInitialized = React.useRef<boolean>(false);
+  
+  // Store viewer reference for imagery setup in useEffect
+  const viewerRef = React.useRef<any>(null);
 
   useEffect(() => {
     const timeInterval = new TimeInterval({
@@ -222,11 +222,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     options.accessToken,
   ]);
 
-  // Reset imagery initialization flag when Viewer remounts
-  useEffect(() => {
-    imageryInitialized.current = false;
-  }, [viewerKey]);
-
   // Generate celestial distance test circles
   useEffect(() => {
     if (!options.showCelestialTest) {
@@ -258,6 +253,29 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     setRALines(raLines);
     setDecLines(decLines);
   }, [options.showRADecGrid, options.raSpacing, options.decSpacing, timestamp]);
+
+  // Setup default imagery once when Viewer is created (for persistence)
+  useEffect(() => {
+    // Only run if viewer exists (guard against race conditions)
+    if (!viewerRef.current?.cesiumElement) {
+      return;
+    }
+    
+    const viewer = viewerRef.current.cesiumElement;
+    const imageryLayers = viewer.imageryLayers;
+    
+    // Remove default imagery
+    if (imageryLayers.length > 0) {
+      imageryLayers.removeAll();
+    }
+    
+    // Set default to Carto Dark Matter (no labels)
+    const cartoNoLabelsProvider = new UrlTemplateImageryProvider({
+      url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png',
+      credit: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
+    });
+    imageryLayers.addImageryProvider(cartoNoLabelsProvider);
+  }, [viewerKey]); // Run when Viewer is created/remounted
 
   useEffect(() => {
     if (!options.subscribeToDataHoverEvent) {
@@ -325,6 +343,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         key={viewerKey}
         creditContainer="cesium-credits"
         ref={(ref) => {
+          // Store ref for use in useEffect (imagery setup)
+          viewerRef.current = ref;
+          
           if (ref?.cesiumElement) {
             const viewer = ref.cesiumElement;
             const controller = viewer.scene.screenSpaceCameraController;
@@ -333,37 +354,23 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             controller.maximumZoomDistance = Number.POSITIVE_INFINITY;
             controller.enableCollisionDetection = false;
             
-            // Add Carto Dark Matter options to BaseLayerPicker and set default
-            // Only initialize imagery once to prevent reset on re-renders (e.g., when toggling camera tracking)
-            if (!imageryInitialized.current) {
-              const imageryLayers = viewer.imageryLayers;
-              
-              // Remove default imagery
-              if (imageryLayers.length > 0) {
-                imageryLayers.removeAll();
-              }
-              
-              // Set default to Carto Dark Matter (no labels)
-              const cartoNoLabelsProvider = new UrlTemplateImageryProvider({
-                url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png',
-                credit: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
-              });
-              imageryLayers.addImageryProvider(cartoNoLabelsProvider);
-              
-              imageryInitialized.current = true;
-            }
+            // Extend camera far clipping plane for celestial grid visibility
+            const earthRadius = 6378137; // WGS84 maximum radius in meters
+            const celestialDistance = earthRadius * 100;
+            viewer.scene.camera.frustum.far = celestialDistance * 3;
             
-            // Add Carto options to BaseLayerPicker if it exists
+            // Add Carto options to BaseLayerPicker (runs in ref callback for guaranteed timing)
+            // Note: Default imagery setup is in useEffect to prevent reset on re-renders
             if (viewer.baseLayerPicker) {
               const vm = viewer.baseLayerPicker.viewModel;
               
-              // Check if Carto options already exist (to avoid duplicates on remount)
-              const hasCartoNoLabels = vm.imageryProviderViewModels.some(p => p.name === 'Carto Dark Matter (No Labels)');
+              // Check if already added (avoid duplicates)
+              const hasCartoNoLabels = vm.imageryProviderViewModels.some((p: any) => p.name === 'Carto Dark Matter (No Labels)');
               
               if (!hasCartoNoLabels) {
-                // Find Stadia Dark icon to reuse for Carto options
+                // Find Stadia Dark icon to reuse
                 const stadiaViewModel = vm.imageryProviderViewModels.find(
-                  p => p.name === 'Stadia Alidade Smooth Dark'
+                  (p: any) => p.name === 'Stadia Alidade Smooth Dark'
                 );
                 const darkIconUrl = stadiaViewModel?.iconUrl || buildModuleUrl('Widgets/Images/ImageryProviders/openStreetMap.png');
                 
@@ -391,22 +398,17 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 
                 // Add both options to the picker
                 vm.imageryProviderViewModels.push(cartoNoLabelsViewModel, cartoWithLabelsViewModel);
-              }
-              
-              // Set the selected imagery to Carto Dark Matter (No Labels)
-              const cartoNoLabelsVM = vm.imageryProviderViewModels.find(
-                p => p.name === 'Carto Dark Matter (No Labels)'
-              );
-              
-              if (cartoNoLabelsVM) {
-                vm.selectedImagery = cartoNoLabelsVM;
+                
+                // Set the selected imagery to Carto Dark Matter (No Labels) - only on first add
+                const cartoNoLabelsVM = vm.imageryProviderViewModels.find(
+                  (p: any) => p.name === 'Carto Dark Matter (No Labels)'
+                );
+                
+                if (cartoNoLabelsVM) {
+                  vm.selectedImagery = cartoNoLabelsVM;
+                }
               }
             }
-            
-            // Extend camera far clipping plane for celestial grid visibility
-            const earthRadius = 6378137; // WGS84 maximum radius in meters
-            const celestialDistance = earthRadius * 100;
-            viewer.scene.camera.frustum.far = celestialDistance * 3;
           }
         }}
       >
