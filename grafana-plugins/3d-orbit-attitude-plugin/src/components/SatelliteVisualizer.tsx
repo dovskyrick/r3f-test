@@ -83,6 +83,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
   const [decLines, setDecLines] = useState<Cartesian3[][]>([]);
 
+  // Track if we've initialized imagery to prevent reset on re-renders
+  const imageryInitialized = React.useRef<boolean>(false);
+
   useEffect(() => {
     const timeInterval = new TimeInterval({
       start: JulianDate.fromDate(timeRange.from.toDate()),
@@ -219,6 +222,11 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     options.accessToken,
   ]);
 
+  // Reset imagery initialization flag when Viewer remounts
+  useEffect(() => {
+    imageryInitialized.current = false;
+  }, [viewerKey]);
+
   // Generate celestial distance test circles
   useEffect(() => {
     if (!options.showCelestialTest) {
@@ -326,19 +334,24 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             controller.enableCollisionDetection = false;
             
             // Add Carto Dark Matter options to BaseLayerPicker and set default
-            const imageryLayers = viewer.imageryLayers;
-            
-            // Remove default imagery
-            if (imageryLayers.length > 0) {
-              imageryLayers.removeAll();
+            // Only initialize imagery once to prevent reset on re-renders (e.g., when toggling camera tracking)
+            if (!imageryInitialized.current) {
+              const imageryLayers = viewer.imageryLayers;
+              
+              // Remove default imagery
+              if (imageryLayers.length > 0) {
+                imageryLayers.removeAll();
+              }
+              
+              // Set default to Carto Dark Matter (no labels)
+              const cartoNoLabelsProvider = new UrlTemplateImageryProvider({
+                url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png',
+                credit: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
+              });
+              imageryLayers.addImageryProvider(cartoNoLabelsProvider);
+              
+              imageryInitialized.current = true;
             }
-            
-            // Set default to Carto Dark Matter (no labels)
-            const cartoNoLabelsProvider = new UrlTemplateImageryProvider({
-              url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png',
-              credit: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
-            });
-            imageryLayers.addImageryProvider(cartoNoLabelsProvider);
             
             // Add Carto options to BaseLayerPicker if it exists
             if (viewer.baseLayerPicker) {
@@ -348,10 +361,16 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               const hasCartoNoLabels = vm.imageryProviderViewModels.some(p => p.name === 'Carto Dark Matter (No Labels)');
               
               if (!hasCartoNoLabels) {
+                // Find Stadia Dark icon to reuse for Carto options
+                const stadiaViewModel = vm.imageryProviderViewModels.find(
+                  p => p.name === 'Stadia Alidade Smooth Dark'
+                );
+                const darkIconUrl = stadiaViewModel?.iconUrl || buildModuleUrl('Widgets/Images/ImageryProviders/openStreetMap.png');
+                
                 // Create Carto Dark Matter (No Labels) option
                 const cartoNoLabelsViewModel = new ProviderViewModel({
                   name: 'Carto Dark Matter (No Labels)',
-                  iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/openStreetMap.png'),
+                  iconUrl: darkIconUrl,
                   tooltip: 'Dark theme map without city/country labels - clean view with borders only',
                   creationFunction: () => new UrlTemplateImageryProvider({
                     url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png',
@@ -362,7 +381,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 // Create Carto Dark Matter (With Labels) option
                 const cartoWithLabelsViewModel = new ProviderViewModel({
                   name: 'Carto Dark Matter (With Labels)',
-                  iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/openStreetMap.png'),
+                  iconUrl: darkIconUrl,
                   tooltip: 'Dark theme map with city/country labels',
                   creationFunction: () => new UrlTemplateImageryProvider({
                     url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',

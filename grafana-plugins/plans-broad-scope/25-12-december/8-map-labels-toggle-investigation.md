@@ -39,6 +39,17 @@
 - Default imagery set to Carto Dark Matter (No Labels)
 - Both Carto variants available in upper-right menu
 
+**Bug Fixes:**
+1. **Icon Issue:** Carto options now use Stadia Dark's icon (instead of OpenStreetMap icon)
+   - Finds Stadia's iconUrl from existing view models
+   - Applies same dark theme icon to both Carto options
+   
+2. **Base Layer Reset Issue:** Base layer no longer resets when toggling camera tracking
+   - Added `imageryInitialized` ref to track if imagery has been set up
+   - Only initialize imagery once (not on every re-render)
+   - Reset flag when Viewer actually remounts (viewerKey changes)
+   - User's manual base layer selection now persists across camera toggle
+
 ---
 
 ## Major Discovery: Stadia Uses Vector Tiles!
