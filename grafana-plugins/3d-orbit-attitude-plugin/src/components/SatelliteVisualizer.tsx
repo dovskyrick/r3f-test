@@ -612,7 +612,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               pixelOffset={new Cartesian2(0, -10)}
               horizontalOrigin={HorizontalOrigin.CENTER}
               verticalOrigin={VerticalOrigin.BOTTOM}
-              disableDepthTestDistance={Number.POSITIVE_INFINITY}
             />
           </Entity>
         ))}
