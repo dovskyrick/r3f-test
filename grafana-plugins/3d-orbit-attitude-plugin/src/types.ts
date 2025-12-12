@@ -19,8 +19,6 @@ export interface SimpleOptions {
   showZAxisProjection: boolean;
   showFOVFootprint: boolean;
   fovHalfAngle: number;
-
-  showCelestialTest: boolean;
   
   showRADecGrid: boolean;
   raSpacing: number;

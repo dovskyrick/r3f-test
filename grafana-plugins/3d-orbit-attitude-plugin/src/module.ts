@@ -138,13 +138,6 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
     })
 
     .addBooleanSwitch({
-      path: 'showCelestialTest',
-      name: '🧪 Show Celestial Distance Test',
-      description: 'Display 6 test circles at 100x Earth radius to verify visibility at celestial sphere distance.',
-      defaultValue: false,
-    })
-
-    .addBooleanSwitch({
       path: 'showRADecGrid',
       name: 'Show RA/Dec Celestial Grid',
       description: 'Display Right Ascension and Declination reference lines (inertial frame, fixed relative to stars).',

@@ -3,7 +3,6 @@ import { PanelProps, DataHoverEvent, LegacyGraphHoverEvent } from '@grafana/data
 import { AssetMode, SimpleOptions, CoordinatesType } from 'types';
 import { coalesceToArray } from 'utilities';
 import { computeZAxisGroundIntersection, computeFOVFootprint, createDummyPolygonHierarchy } from 'utils/projections';
-import { generateCelestialTestCircles } from 'utils/celestialTest';
 import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
@@ -82,7 +81,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [satelliteOrientation, setSatelliteOrientation] = useState<SampledProperty | null>(null);
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
-  const [celestialTestCircles, setCelestialTestCircles] = useState<Cartesian3[][]>([]);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
   const [decLines, setDecLines] = useState<Cartesian3[][]>([]);
   const [gridLabels, setGridLabels] = useState<Array<{ position: Cartesian3; text: string }>>([]);
@@ -232,17 +230,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     options.showProjectionPicker,
     options.accessToken,
   ]);
-
-  // Generate celestial distance test circles
-  useEffect(() => {
-    if (!options.showCelestialTest) {
-      setCelestialTestCircles([]);
-      return;
-    }
-
-    const { circles } = generateCelestialTestCircles();
-    setCelestialTestCircles(circles);
-  }, [options.showCelestialTest]);
 
   // Generate RA/Dec celestial grid
   useEffect(() => {
@@ -588,17 +575,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             />
           </Entity>
         )}
-        {/* Celestial Distance Test Circles */}
-        {options.showCelestialTest && celestialTestCircles.map((circle, index) => (
-          <Entity name={`Celestial Test Circle ${index + 1}`} key={`celestial-test-${index}`}>
-            <PolylineGraphics
-              positions={circle}
-              width={0.5}
-              material={Color.CYAN}
-              arcType={ArcType.NONE}
-            />
-          </Entity>
-        ))}
         {/* RA/Dec Celestial Grid - Right Ascension Lines (Meridians) */}
         {options.showRADecGrid && raLines.map((line, index) => (
           <Entity name={`RA Line ${index}`} key={`ra-${index}`}>
