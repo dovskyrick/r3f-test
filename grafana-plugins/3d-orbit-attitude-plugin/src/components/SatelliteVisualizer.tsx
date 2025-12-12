@@ -66,6 +66,43 @@ const getStyles = () => {
   };
 };
 
+// Grafana color label to hex mapping (for preset swatches that return labels instead of hex)
+const grafanaColorMap: Record<string, string> = {
+  // Reds
+  'dark-red': '#8B0000', 'semi-dark-red': '#B22222', 'red': '#FF0000', 'light-red': '#FF6B6B', 'super-light-red': '#FFB3B3',
+  // Oranges
+  'dark-orange': '#CC5500', 'semi-dark-orange': '#E56717', 'orange': '#FFA500', 'light-orange': '#FFB84D', 'super-light-orange': '#FFD699',
+  // Yellows
+  'dark-yellow': '#B8860B', 'semi-dark-yellow': '#DAA520', 'yellow': '#FFFF00', 'light-yellow': '#FFFF66', 'super-light-yellow': '#FFFFB3',
+  // Greens
+  'dark-green': '#006400', 'semi-dark-green': '#228B22', 'green': '#00FF00', 'light-green': '#90EE90', 'super-light-green': '#C1FFC1',
+  // Blues
+  'dark-blue': '#00008B', 'semi-dark-blue': '#0000CD', 'blue': '#0000FF', 'light-blue': '#6B6BFF', 'super-light-blue': '#B3B3FF',
+  // Purples
+  'dark-purple': '#4B0082', 'semi-dark-purple': '#6A0DAD', 'purple': '#800080', 'light-purple': '#DA70D6', 'super-light-purple': '#E6B3E6',
+};
+
+// Safe color parser - handles hex, CSS names, AND Grafana's custom labels
+const safeColor = (colorString: string | undefined, fallback: Color): Color => {
+  if (!colorString) {
+    return fallback;
+  }
+  
+  // Check if it's a Grafana preset label (e.g., "dark-red", "light-yellow")
+  const lowerColor = colorString.toLowerCase().trim();
+  if (grafanaColorMap[lowerColor]) {
+    return Color.fromCssColorString(grafanaColorMap[lowerColor]);
+  }
+  
+  // Try standard CSS parsing (hex, rgb, named colors)
+  try {
+    const parsed = Color.fromCssColorString(colorString);
+    return parsed || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange, width, height, eventBus }) => {
   Ion.defaultAccessToken = options.accessToken;
 
@@ -90,9 +127,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
   // Attitude vector configurations (can be moved to settings later)
   const attitudeVectors = React.useMemo(() => [
-    { axis: new Cartesian3(1, 0, 0), color: Color.fromCssColorString(options.xAxisColor || '#FF0000'), name: 'X-axis' },
-    { axis: new Cartesian3(0, 1, 0), color: Color.fromCssColorString(options.yAxisColor || '#00FF00'), name: 'Y-axis' },
-    { axis: new Cartesian3(0, 0, 1), color: Color.fromCssColorString(options.zAxisColor || '#0000FF'), name: 'Z-axis' },
+    { axis: new Cartesian3(1, 0, 0), color: safeColor(options.xAxisColor, Color.RED), name: 'X-axis' },
+    { axis: new Cartesian3(0, 1, 0), color: safeColor(options.yAxisColor, Color.GREEN), name: 'Y-axis' },
+    { axis: new Cartesian3(0, 0, 1), color: safeColor(options.zAxisColor, Color.BLUE), name: 'Z-axis' },
   ], [options.xAxisColor, options.yAxisColor, options.zAxisColor]);
 
   useEffect(() => {
