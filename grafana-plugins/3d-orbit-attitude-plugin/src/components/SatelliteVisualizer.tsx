@@ -90,6 +90,13 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   // Store viewer reference for imagery setup in useEffect
   const viewerRef = React.useRef<any>(null);
 
+  // Attitude vector configurations (can be moved to settings later)
+  const attitudeVectors = React.useMemo(() => [
+    { axis: new Cartesian3(1, 0, 0), color: Color.RED, name: 'X-axis' },
+    { axis: new Cartesian3(0, 1, 0), color: Color.GREEN, name: 'Y-axis' },
+    { axis: new Cartesian3(0, 0, 1), color: Color.BLUE, name: 'Z-axis' },
+  ], []);
+
   useEffect(() => {
     const timeInterval = new TimeInterval({
       start: JulianDate.fromDate(timeRange.from.toDate()),
@@ -462,9 +469,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             )}
           </Entity>
         )}
-        {/* Attitude Z-axis vector (red arrow) with dynamic scaling */}
-        {satelliteAvailability && satellitePosition && satelliteOrientation && (
-          <Entity availability={satelliteAvailability}>
+        {/* Attitude vectors (X/Y/Z with RGB colors) - DRY implementation */}
+        {satelliteAvailability && satellitePosition && satelliteOrientation && attitudeVectors.map((vector, index) => (
+          <Entity availability={satelliteAvailability} key={`attitude-vector-${index}`}>
             <PolylineGraphics
               positions={new CallbackProperty((time) => {
                 const pos = satellitePosition.getValue(time);
@@ -478,23 +485,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 let vectorLength;
                 
                 if (isTracked) {
-                  // Tracking mode: fixed when close, scaled when far
-                  const thresholdDistance = 50000; // 50km threshold
-                  vectorLength = 2; // Default 2m
-                  
-                  if (viewer) {
-                    const cameraPosition = viewer.camera.position;
-                    const distance = Cartesian3.distance(cameraPosition, pos);
-                    
-                    if (distance >= thresholdDistance) {
-                      // Close range: fixed 2m
-                      vectorLength = 2;
-                    } else {
-                      // Far range: scale proportionally from threshold
-                      const scaleFactor = distance / thresholdDistance;
-                      vectorLength = 2 * scaleFactor;
-                    }
-                  }
+                  vectorLength = 2; // Fixed 2m in tracked mode
                 } else {
                   // Free camera mode: scale with distance
                   const baseLength = 50000; // 50km base length
@@ -508,28 +499,25 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   }
                 }
                 
-                // Z-axis unit vector in body frame
-                const zAxisBody = new Cartesian3(0, 0, 1);
-                
-                // Rotate Z-axis by satellite orientation to get direction in ECEF
+                // Rotate axis by satellite orientation to get direction in ECEF
                 const rotationMatrix = Matrix3.fromQuaternion(orient);
-                const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
+                const axisECEF = Matrix3.multiplyByVector(rotationMatrix, vector.axis, new Cartesian3());
                 
                 // Calculate endpoint with dynamic length
                 const endPos = Cartesian3.add(
                   pos,
-                  Cartesian3.multiplyByScalar(zAxisECEF, vectorLength, new Cartesian3()),
+                  Cartesian3.multiplyByScalar(axisECEF, vectorLength, new Cartesian3()),
                   new Cartesian3()
                 );
                 
                 return [pos, endPos];
               }, false)}
               width={10}
-              material={new PolylineArrowMaterialProperty(Color.RED)}
+              material={new PolylineArrowMaterialProperty(vector.color)}
               arcType={ArcType.NONE}
             />
           </Entity>
-        )}
+        ))}
         {/* Ground projection of Z-axis vector */}
         {options.showZAxisProjection && satelliteAvailability && satellitePosition && satelliteOrientation && (
           <Entity
