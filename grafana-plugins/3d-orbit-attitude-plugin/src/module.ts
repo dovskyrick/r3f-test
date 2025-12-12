@@ -112,21 +112,24 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       showIf: (config) => config.trajectoryShow,
     })
 
+    // ============================================================
+    // 📍 SENSOR PROJECTIONS (custom features)
+    // ============================================================
     .addBooleanSwitch({
       path: 'showZAxisProjection',
-      name: 'Show Z-Axis Ground Projection',
+      name: '📍 Show Z-Axis Ground Projection',
       description: 'Display yellow line and point where the satellite Z-axis intersects Earth surface.',
       defaultValue: true,
     })
     .addBooleanSwitch({
       path: 'showFOVFootprint',
-      name: 'Show FOV Footprint',
+      name: '📍 Show FOV Footprint',
       description: 'Display sensor field-of-view cone projection on Earth surface.',
       defaultValue: true,
     })
     .addNumberInput({
       path: 'fovHalfAngle',
-      name: 'FOV Half-Angle (degrees)',
+      name: '📍 FOV Half-Angle (degrees)',
       description: 'Sensor cone half-angle for footprint calculation (e.g., 5° for a 10° total cone).',
       defaultValue: 5,
       settings: {
@@ -134,18 +137,21 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
         max: 45,
         step: 1,
       },
-      showIf: (config) => config.showFOVFootprint,
+      showIf: (config: any) => config.showFOVFootprint,
     })
 
+    // ============================================================
+    // 🌌 CELESTIAL REFERENCE GRID (custom features)
+    // ============================================================
     .addBooleanSwitch({
       path: 'showRADecGrid',
-      name: 'Show RA/Dec Celestial Grid',
+      name: '🌌 Show RA/Dec Celestial Grid',
       description: 'Display Right Ascension and Declination reference lines (inertial frame, fixed relative to stars).',
       defaultValue: false,
     })
     .addNumberInput({
       path: 'raSpacing',
-      name: 'RA Spacing (hours)',
+      name: '🌌 RA Spacing (hours)',
       description: 'Spacing between Right Ascension meridians (1h = 15°). 1h gives 24 lines.',
       defaultValue: 1,
       settings: {
@@ -153,11 +159,11 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
         max: 6,
         step: 1,
       },
-      showIf: (config) => config.showRADecGrid,
+      showIf: (config: any) => config.showRADecGrid,
     })
     .addNumberInput({
       path: 'decSpacing',
-      name: 'Dec Spacing (degrees)',
+      name: '🌌 Dec Spacing (degrees)',
       description: 'Spacing between Declination parallels. 15° gives 12 lines.',
       defaultValue: 15,
       settings: {
@@ -165,18 +171,18 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
         max: 30,
         step: 5,
       },
-      showIf: (config) => config.showRADecGrid,
+      showIf: (config: any) => config.showRADecGrid,
     })
     .addBooleanSwitch({
       path: 'showGridLabels',
-      name: 'Show Grid Labels',
+      name: '🌌 Show Grid Labels',
       description: 'Display coordinate labels on RA/Dec grid lines',
       defaultValue: true,
-      showIf: (config) => config.showRADecGrid,
+      showIf: (config: any) => config.showRADecGrid,
     })
     .addNumberInput({
       path: 'gridLabelSize',
-      name: 'Grid Label Size (px)',
+      name: '🌌 Grid Label Size (px)',
       description: 'Font size for RA/Dec grid labels',
       defaultValue: 14,
       settings: {
@@ -184,7 +190,7 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
         max: 32,
         step: 2,
       },
-      showIf: (config) => config.showRADecGrid && config.showGridLabels,
+      showIf: (config: any) => config.showRADecGrid && config.showGridLabels,
     })
 
     .addCustomEditor({
@@ -200,14 +206,14 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       name: 'Location point size',
       description: 'The size (in pixels) of the Location point.',
       defaultValue: 10,
-      showIf: (config) => config.locations.length > 0,
+      showIf: (config: any) => config.locations.length > 0,
     })
     .addColorPicker({
       path: 'locationPointColor',
       name: 'Location point color',
       description: 'The color of the Location point.',
       defaultValue: 'white',
-      showIf: (config) => config.locations.length > 0,
+      showIf: (config: any) => config.locations.length > 0,
     })
 
     .addTextInput({
