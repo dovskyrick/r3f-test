@@ -90,10 +90,10 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
   // Attitude vector configurations (can be moved to settings later)
   const attitudeVectors = React.useMemo(() => [
-    { axis: new Cartesian3(1, 0, 0), color: Color.RED, name: 'X-axis' },
-    { axis: new Cartesian3(0, 1, 0), color: Color.GREEN, name: 'Y-axis' },
-    { axis: new Cartesian3(0, 0, 1), color: Color.BLUE, name: 'Z-axis' },
-  ], []);
+    { axis: new Cartesian3(1, 0, 0), color: Color.fromCssColorString(options.xAxisColor || '#FF0000'), name: 'X-axis' },
+    { axis: new Cartesian3(0, 1, 0), color: Color.fromCssColorString(options.yAxisColor || '#00FF00'), name: 'Y-axis' },
+    { axis: new Cartesian3(0, 0, 1), color: Color.fromCssColorString(options.zAxisColor || '#0000FF'), name: 'Z-axis' },
+  ], [options.xAxisColor, options.yAxisColor, options.zAxisColor]);
 
   useEffect(() => {
     const timeInterval = new TimeInterval({
@@ -456,8 +456,8 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             )}
           </Entity>
         )}
-        {/* Attitude vectors (X/Y/Z with RGB colors) - DRY implementation */}
-        {satelliteAvailability && satellitePosition && satelliteOrientation && attitudeVectors.map((vector, index) => (
+        {/* Body Axes (X/Y/Z attitude vectors) - toggleable via settings */}
+        {options.showBodyAxes && satelliteAvailability && satellitePosition && satelliteOrientation && attitudeVectors.map((vector, index) => (
           <Entity availability={satelliteAvailability} key={`attitude-vector-${index}`}>
             <PolylineGraphics
               positions={new CallbackProperty((time) => {

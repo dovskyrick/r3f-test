@@ -19,6 +19,11 @@ export interface SimpleOptions {
   showZAxisProjection: boolean;
   showFOVFootprint: boolean;
   fovHalfAngle: number;
+
+  showBodyAxes: boolean;
+  xAxisColor: string;
+  yAxisColor: string;
+  zAxisColor: string;
   
   showRADecGrid: boolean;
   raSpacing: number;
