@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { PanelProps, DataHoverEvent, LegacyGraphHoverEvent } from '@grafana/data';
 import { AssetMode, SimpleOptions, CoordinatesType } from 'types';
+import { SensorDefinition } from 'types/sensorTypes';
 import { coalesceToArray } from 'utilities';
 import { computeZAxisGroundIntersection, computeFOVFootprint, createDummyPolygonHierarchy } from 'utils/projections';
 import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
+import { parseSensors } from 'parsers/sensorParser';
+import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
@@ -122,6 +125,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [decLines, setDecLines] = useState<Cartesian3[][]>([]);
   const [gridLabels, setGridLabels] = useState<Array<{ position: Cartesian3; text: string }>>([]);
   const [customMessages, setCustomMessages] = useState<string[]>([]);
+  const [sensors, setSensors] = useState<SensorDefinition[]>([]);
   
   // Store viewer reference for imagery setup in useEffect
   const viewerRef = React.useRef<any>(null);
@@ -168,6 +172,16 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       } catch (error) {
         console.warn('❌ Failed to parse custom messages:', error);
         setCustomMessages([]);
+      }
+
+      // Parse sensors (Phase 2A: Sensor Cone Visualization)
+      // Safe parsing - won't break if sensors don't exist
+      try {
+        const parsedSensors = parseSensors(dataFrame);
+        setSensors(parsedSensors);
+      } catch (error) {
+        console.warn('❌ Sensor parsing failed:', error);
+        setSensors([]);
       }
 
       if (dataFrame.fields.length !== 8) {
@@ -594,6 +608,63 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             />
           </Entity>
         ))}
+        
+        {/* Sensor FOV Cones - Phase 2A: Sensor Visualization */}
+        {satelliteAvailability && sensors.map((sensor, idx) => (
+          <Entity 
+            key={`sensor-cone-${sensor.id}`}
+            name={`${sensor.name} (FOV: ${sensor.fov}°)`}
+            availability={satelliteAvailability}
+          >
+            <PolylineGraphics
+              positions={new CallbackProperty((time) => {
+                const satPos = satellitePosition?.getValue(time);
+                const satOrient = satelliteOrientation?.getValue(time);
+                if (!satPos || !satOrient) {
+                  return [];
+                }
+                
+                // Sensor body frame orientation (constant, relative to satellite)
+                const sensorBodyQuat = new Quaternion(
+                  sensor.orientation.qx,
+                  sensor.orientation.qy,
+                  sensor.orientation.qz,
+                  sensor.orientation.qw
+                );
+                
+                // Compute sensor world orientation: q_world = q_satellite × q_sensor_body
+                const sensorWorldQuat = Quaternion.multiply(
+                  satOrient,
+                  sensorBodyQuat,
+                  new Quaternion()
+                );
+                
+                // Get sensor pointing direction (Z-axis in sensor frame)
+                const rotMatrix = Matrix3.fromQuaternion(sensorWorldQuat);
+                const sensorDir = Matrix3.multiplyByVector(
+                  rotMatrix,
+                  new Cartesian3(0, 0, 1),  // Z-axis
+                  new Cartesian3()
+                );
+                Cartesian3.normalize(sensorDir, sensorDir);
+                
+                // Generate cone mesh
+                const coneLength = 50000;  // 50km
+                return generateConeMesh(satPos, sensorDir, sensor.fov, coneLength, 16);
+                
+              }, false)}
+              width={1.5}
+              material={Color.fromBytes(
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                Math.floor(SENSOR_COLORS[idx % SENSOR_COLORS.length].a * 255)
+              )}
+              arcType={ArcType.NONE}
+            />
+          </Entity>
+        ))}
+        
         {/* Ground projection of Z-axis vector */}
         {options.showZAxisProjection && satelliteAvailability && satellitePosition && satelliteOrientation && (
           <Entity
