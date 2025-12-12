@@ -121,6 +121,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
   const [decLines, setDecLines] = useState<Cartesian3[][]>([]);
   const [gridLabels, setGridLabels] = useState<Array<{ position: Cartesian3; text: string }>>([]);
+  const [customMessages, setCustomMessages] = useState<string[]>([]);
   
   // Store viewer reference for imagery setup in useEffect
   const viewerRef = React.useRef<any>(null);
@@ -149,6 +150,25 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
     if (data.series.length === 1) {
       const dataFrame = data.series[0];
+
+      // Parse custom messages (Phase 1: Extensible Data Architecture)
+      // Safe parsing - won't break if meta.custom doesn't exist
+      try {
+        console.log('📊 DataFrame meta:', dataFrame.meta);
+        console.log('📊 DataFrame meta.custom:', dataFrame.meta?.custom);
+        
+        const customData = dataFrame.meta?.custom;
+        if (customData?.messages && Array.isArray(customData.messages)) {
+          console.log('✅ Custom messages found:', customData.messages);
+          setCustomMessages(customData.messages);
+        } else {
+          console.log('ℹ️ No custom messages in data');
+          setCustomMessages([]);
+        }
+      } catch (error) {
+        console.warn('❌ Failed to parse custom messages:', error);
+        setCustomMessages([]);
+      }
 
       if (dataFrame.fields.length !== 8) {
         throw new Error(`Invalid number of fields [${dataFrame.fields.length}] in data frame.`);
@@ -377,6 +397,38 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       >
         {isTracked ? '🎯 Tracking ON' : '🌍 Free Camera'}
       </button>
+      
+      {/* Custom Messages Banner - Extensible Data Architecture Phase 1 */}
+      {customMessages.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50px',
+            left: '10px',
+            right: '10px',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            color: '#00ff00',
+            padding: '10px 14px',
+            borderRadius: '4px',
+            fontSize: '13px',
+            fontFamily: 'monospace',
+            zIndex: 1000,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '16px',
+            border: '1px solid rgba(0, 255, 0, 0.3)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          {customMessages.map((msg, idx) => (
+            <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ opacity: 0.7 }}>📡</span>
+              {msg}
+              {idx < customMessages.length - 1 && <span style={{ opacity: 0.5, marginLeft: '8px' }}>|</span>}
+            </span>
+          ))}
+        </div>
+      )}
       <Viewer
         full
         animation={options.showAnimation}
