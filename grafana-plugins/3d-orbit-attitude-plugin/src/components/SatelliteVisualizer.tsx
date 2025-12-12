@@ -478,8 +478,23 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 let vectorLength;
                 
                 if (isTracked) {
-                  // Tracking mode: tiny fixed size (1-2 meters, just for reference)
-                  vectorLength = 2; // 2 meters
+                  // Tracking mode: fixed when close, scaled when far
+                  const thresholdDistance = 50000; // 50km threshold
+                  vectorLength = 2; // Default 2m
+                  
+                  if (viewer) {
+                    const cameraPosition = viewer.camera.position;
+                    const distance = Cartesian3.distance(cameraPosition, pos);
+                    
+                    if (distance >= thresholdDistance) {
+                      // Close range: fixed 2m
+                      vectorLength = 2;
+                    } else {
+                      // Far range: scale proportionally from threshold
+                      const scaleFactor = distance / thresholdDistance;
+                      vectorLength = 2 * scaleFactor;
+                    }
+                  }
                 } else {
                   // Free camera mode: scale with distance
                   const baseLength = 50000; // 50km base length
