@@ -596,7 +596,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         ))}
         
         {/* Sensor FOV Cones - Phase 2A: Sensor Visualization */}
-        {options.showAttitudeVisualization && satelliteAvailability && sensors.map((sensor, idx) => (
+        {options.showAttitudeVisualization && options.showSensorCones && satelliteAvailability && sensors.map((sensor, idx) => (
           <Entity 
             key={`sensor-cone-${sensor.id}`}
             name={`${sensor.name} (FOV: ${sensor.fov}°)`}

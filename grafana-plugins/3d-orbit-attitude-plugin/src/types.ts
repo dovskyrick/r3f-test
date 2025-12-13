@@ -18,6 +18,8 @@ export interface SimpleOptions {
 
   showAttitudeVisualization: boolean;
 
+  showSensorCones: boolean;
+
   showZAxisProjection: boolean;
   showFOVFootprint: boolean;
   fovHalfAngle: number;

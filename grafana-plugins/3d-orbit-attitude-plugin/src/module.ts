@@ -123,6 +123,17 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
     })
 
     // ============================================================
+    // 🛰️ SENSOR CONES
+    // ============================================================
+    .addBooleanSwitch({
+      path: 'showSensorCones',
+      name: '🛰️ Show Sensor Cones',
+      description: 'Display 3D FOV cones for all sensors attached to satellite',
+      defaultValue: true,
+      showIf: (config: any) => config.showAttitudeVisualization,
+    })
+
+    // ============================================================
     // 📍 SENSOR PROJECTIONS (custom features)
     // ============================================================
     .addBooleanSwitch({
