@@ -7,6 +7,7 @@ import { computeZAxisGroundIntersection, computeFOVFootprint, createDummyPolygon
 import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
 import { parseSensors } from 'parsers/sensorParser';
 import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
+import { getScaledLength } from 'utils/cameraScaling';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 
@@ -572,22 +573,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 
                 // Calculate dynamic vector length based on tracking mode and camera distance
                 const viewer = viewerRef.current?.cesiumElement;
-                let vectorLength;
-                
-                if (isTracked) {
-                  vectorLength = 2; // Fixed 2m in tracked mode
-                } else {
-                  // Free camera mode: scale with distance
-                  const baseLength = 50000; // 50km base length
-                  vectorLength = baseLength;
-                  
-                  if (viewer) {
-                    const cameraPosition = viewer.camera.position;
-                    const distance = Cartesian3.distance(cameraPosition, pos);
-                    const scaleFactor = Math.max(1.0, distance / 1000000); // Scale based on 1000km reference
-                    vectorLength = baseLength * scaleFactor;
-                  }
-                }
+                const vectorLength = getScaledLength(50000, isTracked, viewer, pos);
                 
                 // Rotate axis by satellite orientation to get direction in ECEF
                 const rotationMatrix = Matrix3.fromQuaternion(orient);
@@ -648,8 +634,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 );
                 Cartesian3.normalize(sensorDir, sensorDir);
                 
-                // Generate cone mesh
-                const coneLength = 50000;  // 50km
+                // Generate cone mesh with camera-scaled length
+                const viewer = viewerRef.current?.cesiumElement;
+                const coneLength = getScaledLength(50000, isTracked, viewer, satPos);
                 return generateConeMesh(satPos, sensorDir, sensor.fov, coneLength, 16);
                 
               }, false)}

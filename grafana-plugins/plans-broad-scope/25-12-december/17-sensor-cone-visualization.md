@@ -552,10 +552,11 @@ function getSensorColor(index: number): Color {
 1. ✅ `src/types/sensorTypes.ts` - TypeScript interfaces
 2. ✅ `src/parsers/sensorParser.ts` - Safe sensor parser
 3. ✅ `src/utils/sensorCone.ts` - Cone mesh generator + colors
-4. ✅ `test-plugin/test-plans/satellite-with-sensors-TEST.json` - Test data
+4. ✅ `src/utils/cameraScaling.ts` - Shared scaling logic (DRY)
+5. ✅ `test-plugin/test-plans/satellite-with-sensors-TEST.json` - Test data
 
 ### **Files Modified:**
-1. ✅ `src/components/SatelliteVisualizer.tsx` - Added sensor state, parsing, rendering
+1. ✅ `src/components/SatelliteVisualizer.tsx` - Added sensor state, parsing, rendering, scaling
 
 ### **What Works:**
 - ✅ Parse infinite sensors from JSON
@@ -563,6 +564,10 @@ function getSensorColor(index: number): Color {
 - ✅ Render 3D cones with distinct colors
 - ✅ Safe fallback (invalid sensors skipped)
 - ✅ No impact on satellite rendering
+- ✅ **Camera-distance scaling** (same logic as attitude vectors):
+  - Tracked mode: Fixed 2m length (tiny)
+  - Untracked mode: 50km base, scales with distance
+  - Shared `getScaledLength()` utility (no code duplication)
 
 ### **Test JSON:**
 `satellite-with-sensors-TEST.json` contains 3 sensors:
