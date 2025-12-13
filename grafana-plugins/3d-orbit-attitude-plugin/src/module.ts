@@ -113,6 +113,16 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
     })
 
     // ============================================================
+    // 🎯 MASTER ATTITUDE VISUALIZATION TOGGLE
+    // ============================================================
+    .addBooleanSwitch({
+      path: 'showAttitudeVisualization',
+      name: '🎯 Attitude Visualization',
+      description: 'Enable all attitude-related visualizations (sensors, body axes, celestial grid, projections)',
+      defaultValue: true,
+    })
+
+    // ============================================================
     // 📍 SENSOR PROJECTIONS (custom features)
     // ============================================================
     .addBooleanSwitch({
@@ -120,12 +130,14 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       name: '📍 Show Z-Axis Ground Projection',
       description: 'Display yellow line and point where the satellite Z-axis intersects Earth surface.',
       defaultValue: true,
+      showIf: (config: any) => config.showAttitudeVisualization,
     })
     .addBooleanSwitch({
       path: 'showFOVFootprint',
       name: '📍 Show FOV Footprint',
       description: 'Display sensor field-of-view cone projection on Earth surface.',
       defaultValue: true,
+      showIf: (config: any) => config.showAttitudeVisualization,
     })
     .addNumberInput({
       path: 'fovHalfAngle',
@@ -137,7 +149,7 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
         max: 45,
         step: 1,
       },
-      showIf: (config: any) => config.showFOVFootprint,
+      showIf: (config: any) => config.showAttitudeVisualization && config.showFOVFootprint,
     })
 
     // ============================================================
@@ -148,27 +160,28 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       name: '🎯 Show Body Axes',
       description: 'Display the satellite body-fixed coordinate frame (X, Y, Z axes showing orientation).',
       defaultValue: true,
+      showIf: (config: any) => config.showAttitudeVisualization,
     })
     .addColorPicker({
       path: 'xAxisColor',
       name: '🎯 X-Axis Color',
       description: 'Color for the X-axis (typically red).',
       defaultValue: '#FF0000',
-      showIf: (config: any) => config.showBodyAxes,
+      showIf: (config: any) => config.showAttitudeVisualization && config.showBodyAxes,
     })
     .addColorPicker({
       path: 'yAxisColor',
       name: '🎯 Y-Axis Color',
       description: 'Color for the Y-axis (typically green).',
       defaultValue: '#00FF00',
-      showIf: (config: any) => config.showBodyAxes,
+      showIf: (config: any) => config.showAttitudeVisualization && config.showBodyAxes,
     })
     .addColorPicker({
       path: 'zAxisColor',
       name: '🎯 Z-Axis Color',
       description: 'Color for the Z-axis (typically blue).',
       defaultValue: '#0000FF',
-      showIf: (config: any) => config.showBodyAxes,
+      showIf: (config: any) => config.showAttitudeVisualization && config.showBodyAxes,
     })
 
     // ============================================================
@@ -179,6 +192,7 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       name: '🌌 Show RA/Dec Celestial Grid',
       description: 'Display Right Ascension and Declination reference lines (inertial frame, fixed relative to stars).',
       defaultValue: false,
+      showIf: (config: any) => config.showAttitudeVisualization,
     })
     .addNumberInput({
       path: 'raSpacing',
@@ -190,7 +204,7 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
         max: 6,
         step: 1,
       },
-      showIf: (config: any) => config.showRADecGrid,
+      showIf: (config: any) => config.showAttitudeVisualization && config.showRADecGrid,
     })
     .addNumberInput({
       path: 'decSpacing',
@@ -202,14 +216,14 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
         max: 30,
         step: 5,
       },
-      showIf: (config: any) => config.showRADecGrid,
+      showIf: (config: any) => config.showAttitudeVisualization && config.showRADecGrid,
     })
     .addBooleanSwitch({
       path: 'showGridLabels',
       name: '🌌 Show Grid Labels',
       description: 'Display coordinate labels on RA/Dec grid lines',
       defaultValue: true,
-      showIf: (config: any) => config.showRADecGrid,
+      showIf: (config: any) => config.showAttitudeVisualization && config.showRADecGrid,
     })
     .addNumberInput({
       path: 'gridLabelSize',
@@ -221,7 +235,7 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
         max: 32,
         step: 2,
       },
-      showIf: (config: any) => config.showRADecGrid && config.showGridLabels,
+      showIf: (config: any) => config.showAttitudeVisualization && config.showRADecGrid && config.showGridLabels,
     })
 
     .addCustomEditor({

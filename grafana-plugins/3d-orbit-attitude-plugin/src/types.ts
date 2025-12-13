@@ -16,6 +16,8 @@ export interface SimpleOptions {
   trajectoryColor: string;
   trajectoryDashLength: number;
 
+  showAttitudeVisualization: boolean;
+
   showZAxisProjection: boolean;
   showFOVFootprint: boolean;
   fovHalfAngle: number;

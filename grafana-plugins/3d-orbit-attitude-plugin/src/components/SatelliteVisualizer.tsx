@@ -561,7 +561,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </Entity>
         )}
         {/* Body Axes (X/Y/Z attitude vectors) - toggleable via settings */}
-        {options.showBodyAxes && satelliteAvailability && satellitePosition && satelliteOrientation && attitudeVectors.map((vector, index) => (
+        {options.showAttitudeVisualization && options.showBodyAxes && satelliteAvailability && satellitePosition && satelliteOrientation && attitudeVectors.map((vector, index) => (
           <Entity availability={satelliteAvailability} key={`attitude-vector-${index}`}>
             <PolylineGraphics
               positions={new CallbackProperty((time) => {
@@ -596,7 +596,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         ))}
         
         {/* Sensor FOV Cones - Phase 2A: Sensor Visualization */}
-        {satelliteAvailability && sensors.map((sensor, idx) => (
+        {options.showAttitudeVisualization && satelliteAvailability && sensors.map((sensor, idx) => (
           <Entity 
             key={`sensor-cone-${sensor.id}`}
             name={`${sensor.name} (FOV: ${sensor.fov}°)`}
@@ -653,7 +653,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         ))}
         
         {/* Ground projection of Z-axis vector */}
-        {options.showZAxisProjection && satelliteAvailability && satellitePosition && satelliteOrientation && (
+        {options.showAttitudeVisualization && options.showZAxisProjection && satelliteAvailability && satellitePosition && satelliteOrientation && (
           <Entity
             availability={satelliteAvailability}
             position={new CallbackProperty((time) => {
@@ -694,7 +694,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </Entity>
         )}
         {/* FOV Cone Footprint */}
-        {options.showFOVFootprint && satelliteAvailability && satellitePosition && satelliteOrientation && (
+        {options.showAttitudeVisualization && options.showFOVFootprint && satelliteAvailability && satellitePosition && satelliteOrientation && (
           <Entity availability={satelliteAvailability}>
             <PolygonGraphics
               hierarchy={new CallbackProperty((time) => {
@@ -723,7 +723,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </Entity>
         )}
         {/* RA/Dec Celestial Grid - Right Ascension Lines (Meridians) */}
-        {options.showRADecGrid && raLines.map((line, index) => (
+        {options.showAttitudeVisualization && options.showRADecGrid && raLines.map((line, index) => (
           <Entity name={`RA Line ${index}`} key={`ra-${index}`}>
             <PolylineGraphics
               positions={line}
@@ -734,7 +734,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </Entity>
         ))}
         {/* RA/Dec Celestial Grid - Declination Lines (Parallels) - Light Brown */}
-        {options.showRADecGrid && decLines.map((line, index) => (
+        {options.showAttitudeVisualization && options.showRADecGrid && decLines.map((line, index) => (
           <Entity name={`Dec Line ${index}`} key={`dec-${index}`}>
             <PolylineGraphics
               positions={line}
@@ -745,7 +745,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </Entity>
         ))}
         {/* RA/Dec Grid Labels - Color coded: White for RA (hours), Light Brown for Dec (degrees) */}
-        {options.showRADecGrid && options.showGridLabels && gridLabels.map((label, index) => {
+        {options.showAttitudeVisualization && options.showRADecGrid && options.showGridLabels && gridLabels.map((label, index) => {
           // Determine if this is an RA label (ends with 'h') or Dec label (ends with '°')
           const isRALabel = label.text.endsWith('h');
           const labelColor = isRALabel ? Color.WHITE : Color.fromBytes(200, 180, 160, 255);
