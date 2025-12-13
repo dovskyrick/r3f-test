@@ -51,12 +51,14 @@ export function computeZAxisGroundIntersection(
 
 /**
  * Compute the FOV cone footprint on the Earth's surface.
+ * Uses adaptive ray subdivision for smooth horizon curves.
  * 
  * @param position - Satellite position in ECEF (Cartesian3)
  * @param orientation - Satellite orientation (Quaternion)
  * @param halfAngleDegrees - FOV cone half-angle in degrees (e.g., 5 for a 10° total cone)
- * @param numRays - Number of rays to sample around the cone (more = smoother polygon)
+ * @param numRays - Number of initial rays to sample around the cone (default: 36)
  * @param offsetMeters - Offset above surface to avoid z-fighting (default: 100m)
+ * @param subdivisionRays - Number of extra rays to add at horizon transitions (default: 10)
  * @returns Array of ground points forming the footprint polygon
  */
 export function computeFOVFootprint(
@@ -64,7 +66,8 @@ export function computeFOVFootprint(
   orientation: Quaternion,
   halfAngleDegrees: number,
   numRays = 36,
-  offsetMeters = 100
+  offsetMeters = 100,
+  subdivisionRays = 10
 ): Cartesian3[] {
   // Z-axis (cone axis) in body frame
   const zAxisBody = new Cartesian3(0, 0, 1);
@@ -85,12 +88,8 @@ export function computeFOVFootprint(
   const perp2 = Cartesian3.cross(coneAxis, perp1, new Cartesian3());
   Cartesian3.normalize(perp2, perp2);
   
-  const footprintPoints: Cartesian3[] = [];
-  
-  // Sample rays around the cone
-  for (let i = 0; i < numRays; i++) {
-    const angle = (i / numRays) * 2 * Math.PI;
-    
+  // Helper function to cast a ray at a specific angle
+  const castRayAtAngle = (angle: number): Cartesian3 | null => {
     // Compute direction on cone surface
     const cosHalf = Math.cos(halfAngleRad);
     const sinHalf = Math.sin(halfAngleRad);
@@ -125,11 +124,80 @@ export function computeFOVFootprint(
         new Cartesian3()
       );
       
-      footprintPoints.push(offsetPoint);
+      return offsetPoint;
+    }
+    
+    return null;
+  };
+  
+  // First pass: sample initial rays and detect transitions
+  interface RayResult {
+    angle: number;
+    point: Cartesian3 | null;
+    hit: boolean;
+  }
+  
+  const initialResults: RayResult[] = [];
+  for (let i = 0; i < numRays; i++) {
+    const angle = (i / numRays) * 2 * Math.PI;
+    const point = castRayAtAngle(angle);
+    initialResults.push({ angle, point, hit: point !== null });
+  }
+  
+  // Count hits
+  const hitCount = initialResults.filter(r => r.hit).length;
+  
+  // If all hit or all miss, no subdivision needed
+  if (hitCount === 0 || hitCount === numRays) {
+    return initialResults.filter(r => r.point !== null).map(r => r.point!);
+  }
+  
+  // Partial footprint detected! Find transitions (hit→miss or miss→hit)
+  const allResults: RayResult[] = [];
+  
+  for (let i = 0; i < numRays; i++) {
+    const current = initialResults[i];
+    const next = initialResults[(i + 1) % numRays];
+    
+    // Add current point if it hit
+    if (current.hit && current.point) {
+      allResults.push(current);
+    }
+    
+    // Check for transition
+    const isTransition = current.hit !== next.hit;
+    
+    if (isTransition) {
+      // Add subdivision rays between current and next
+      const angle1 = current.angle;
+      const angle2 = next.angle;
+      
+      // Handle angle wrap-around at 2π
+      let angleDelta = angle2 - angle1;
+      if (angleDelta < 0) {
+        angleDelta += 2 * Math.PI;
+      }
+      
+      // Cast additional rays in the transition region
+      for (let j = 1; j <= subdivisionRays; j++) {
+        const t = j / (subdivisionRays + 1);
+        const subdivAngle = angle1 + t * angleDelta;
+        const subdivPoint = castRayAtAngle(subdivAngle);
+        
+        if (subdivPoint) {
+          allResults.push({ angle: subdivAngle, point: subdivPoint, hit: true });
+        }
+      }
     }
   }
   
-  return footprintPoints;
+  // Extract points and sort by angle for proper polygon ordering
+  const finalPoints = allResults
+    .filter(r => r.point !== null)
+    .sort((a, b) => a.angle - b.angle)
+    .map(r => r.point!);
+  
+  return finalPoints;
 }
 
 /**
