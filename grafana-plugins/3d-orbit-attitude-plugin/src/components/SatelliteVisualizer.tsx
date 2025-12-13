@@ -722,6 +722,67 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             />
           </Entity>
         )}
+        
+        {/* Sensor FOV Footprints - Per-sensor ground projections (color-coded) */}
+        {options.showAttitudeVisualization && options.showFOVFootprint && satelliteAvailability && sensors.map((sensor, idx) => (
+          <Entity 
+            key={`sensor-footprint-${sensor.id}`}
+            name={`${sensor.name} Footprint`}
+            availability={satelliteAvailability}
+          >
+            <PolygonGraphics
+              hierarchy={new CallbackProperty((time) => {
+                const satPos = satellitePosition?.getValue(time);
+                const satOrient = satelliteOrientation?.getValue(time);
+                if (!satPos || !satOrient) {
+                  return createDummyPolygonHierarchy();
+                }
+
+                // Sensor body frame orientation (constant, relative to satellite)
+                const sensorBodyQuat = new Quaternion(
+                  sensor.orientation.qx,
+                  sensor.orientation.qy,
+                  sensor.orientation.qz,
+                  sensor.orientation.qw
+                );
+                
+                // Compute sensor world orientation: q_world = q_satellite × q_sensor_body
+                const sensorWorldQuat = Quaternion.multiply(
+                  satOrient,
+                  sensorBodyQuat,
+                  new Quaternion()
+                );
+                
+                // Compute FOV footprint using sensor's FOV angle and orientation
+                const footprintPoints = computeFOVFootprint(
+                  satPos,
+                  sensorWorldQuat,
+                  sensor.fov / 2  // computeFOVFootprint expects half-angle
+                );
+
+                // Return points, or dummy triangle if cone doesn't hit Earth
+                return footprintPoints.length > 0 
+                  ? new PolygonHierarchy(footprintPoints)
+                  : createDummyPolygonHierarchy();
+              }, false) as any}
+              material={Color.fromBytes(
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                Math.floor(0.3 * 255)  // 30% alpha for footprint
+              )}
+              outline={true}
+              outlineColor={Color.fromBytes(
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                255
+              )}
+              outlineWidth={2}
+              height={0}
+            />
+          </Entity>
+        ))}
         {/* RA/Dec Celestial Grid - Right Ascension Lines (Meridians) */}
         {options.showAttitudeVisualization && options.showRADecGrid && raLines.map((line, index) => (
           <Entity name={`RA Line ${index}`} key={`ra-${index}`}>
