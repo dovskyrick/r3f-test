@@ -137,13 +137,6 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
     // 📍 SENSOR PROJECTIONS (custom features)
     // ============================================================
     .addBooleanSwitch({
-      path: 'showZAxisProjection',
-      name: '📍 Show Z-Axis Ground Projection',
-      description: 'Display yellow line and point where the satellite Z-axis intersects Earth surface.',
-      defaultValue: true,
-      showIf: (config: any) => config.showAttitudeVisualization,
-    })
-    .addBooleanSwitch({
       path: 'showFOVFootprint',
       name: '📍 Show FOV Footprint',
       description: 'Display sensor field-of-view cone projection on Earth surface.',

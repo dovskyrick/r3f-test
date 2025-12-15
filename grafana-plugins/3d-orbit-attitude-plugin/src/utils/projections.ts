@@ -14,42 +14,6 @@ import {
 } from 'cesium';
 
 /**
- * Compute the ground intersection point for the satellite's Z-axis vector.
- * 
- * @param position - Satellite position in ECEF (Cartesian3)
- * @param orientation - Satellite orientation (Quaternion)
- * @returns Ground intersection point (Cartesian3) or null if no intersection
- */
-export function computeZAxisGroundIntersection(
-  position: Cartesian3,
-  orientation: Quaternion
-): Cartesian3 | null {
-  // Z-axis unit vector in body frame
-  const zAxisBody = new Cartesian3(0, 0, 1);
-  
-  // Rotate Z-axis by satellite orientation to get direction in ECEF
-  const rotationMatrix = Matrix3.fromQuaternion(orientation);
-  const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
-  
-  // Normalize direction
-  const direction = Cartesian3.normalize(zAxisECEF, new Cartesian3());
-  
-  // Create ray from satellite position along Z-axis direction
-  const ray = new Ray(position, direction);
-  
-  // Find intersection with Earth's ellipsoid
-  const intersection = IntersectionTests.rayEllipsoid(ray, Ellipsoid.WGS84);
-  
-  if (intersection) {
-    // Return the ground intersection point
-    return Ray.getPoint(ray, intersection.start);
-  }
-  
-  // No intersection (vector pointing away from Earth)
-  return null;
-}
-
-/**
  * Compute the FOV cone footprint on the Earth's surface.
  * Uses adaptive ray subdivision for smooth horizon curves.
  * 

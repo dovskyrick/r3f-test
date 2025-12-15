@@ -20,7 +20,6 @@ export interface SimpleOptions {
 
   showSensorCones: boolean;
 
-  showZAxisProjection: boolean;
   showFOVFootprint: boolean;
   showCelestialFOV: boolean;
   fovHalfAngle: number;

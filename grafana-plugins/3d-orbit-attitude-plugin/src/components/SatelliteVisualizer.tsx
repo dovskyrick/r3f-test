@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { PanelProps, DataHoverEvent, LegacyGraphHoverEvent } from '@grafana/data';
 import { AssetMode, SimpleOptions } from 'types';
-import { computeZAxisGroundIntersection, computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonHierarchy } from 'utils/projections';
+import { computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonHierarchy } from 'utils/projections';
 import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
 import { parseSatellites } from 'parsers/satelliteParser';
 import { ParsedSatellite } from 'types/satelliteTypes';
@@ -543,47 +543,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           ))
         )}
         
-        {/* Ground projection of Z-axis vector - Per-satellite */}
-        {options.showAttitudeVisualization && options.showZAxisProjection && satellites.map((satellite) => (
-          <React.Fragment key={`${satellite.id}-zaxis-proj`}>
-            <Entity
-              availability={satellite.availability}
-              position={new CallbackProperty((time) => {
-                const pos = satellite.position.getValue(time);
-                const orient = satellite.orientation.getValue(time);
-                if (!pos || !orient) {
-                  return undefined;
-                }
-                
-                return computeZAxisGroundIntersection(pos, orient);
-              }, false) as any}
-            >
-              <PointGraphics pixelSize={15} color={Color.YELLOW} outlineColor={Color.BLACK} outlineWidth={2} />
-            </Entity>
-            {/* Line from satellite to ground point */}
-            <Entity availability={satellite.availability}>
-              <PolylineGraphics
-                positions={new CallbackProperty((time) => {
-                  const pos = satellite.position.getValue(time);
-                  const orient = satellite.orientation.getValue(time);
-                  if (!pos || !orient) {
-                    return [];
-                  }
-                  
-                  const groundPoint = computeZAxisGroundIntersection(pos, orient);
-                  if (groundPoint) {
-                    return [pos, groundPoint];
-                  }
-                  
-                  return [];
-                }, false)}
-                width={2}
-                material={Color.YELLOW.withAlpha(0.7)}
-                arcType={ArcType.NONE}
-              />
-            </Entity>
-          </React.Fragment>
-        ))}
         {/* Sensor FOV Footprints - Per-satellite, per-sensor ground projections */}
         {options.showAttitudeVisualization && options.showFOVFootprint && satellites.map((satellite) =>
           satellite.sensors.map((sensor, idx) => (
