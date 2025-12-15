@@ -1,0 +1,20 @@
+{
+  "name": "satellite-data-generator",
+  "version": "1.0.0",
+  "description": "Generate test JSON data for satellite visualization plugins",
+  "main": "src/generate-trajectories.ts",
+  "scripts": {
+    "generate": "ts-node src/generate-trajectories.ts",
+    "generate:single": "ts-node src/generate-trajectories.ts --single",
+    "generate:multi": "ts-node src/generate-trajectories.ts --multi"
+  },
+  "keywords": ["satellite", "orbit", "test-data", "grafana"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.6"
+  }
+}
+
