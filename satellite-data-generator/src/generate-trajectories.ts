@@ -64,13 +64,37 @@ function generateSatelliteJSON(
 }
 
 /**
- * Generate example sensors for a satellite.
+ * Generate example sensors for a satellite with unique orientations per satellite.
  */
 function generateSensors(satelliteIdx: number): SensorDefinition[] {
+  // Different sensor orientations for each satellite (rotations around different axes)
+  const satelliteOrientations = [
+    // Satellite 0: Standard orientations (nadir, zenith, side)
+    [
+      { qx: 0, qy: 0, qz: 0, qw: 1 },           // Identity (body +Z)
+      { qx: 1, qy: 0, qz: 0, qw: 0 },           // 180° around X (nadir)
+      { qx: 0, qy: 0.7071, qz: 0, qw: 0.7071 }, // 90° around Y (side)
+    ],
+    // Satellite 1: Rotated 45° differently
+    [
+      { qx: 0.3827, qy: 0, qz: 0, qw: 0.9239 },     // 45° around X
+      { qx: 0, qy: 0.3827, qz: 0, qw: 0.9239 },     // 45° around Y
+      { qx: 0, qy: 0, qz: 0.3827, qw: 0.9239 },     // 45° around Z
+    ],
+    // Satellite 2: Rotated 120° differently
+    [
+      { qx: 0.866, qy: 0, qz: 0, qw: 0.5 },         // 120° around X
+      { qx: 0, qy: 0.866, qz: 0, qw: 0.5 },         // 120° around Y
+      { qx: 0, qy: 0, qz: 0.866, qw: 0.5 },         // 120° around Z
+    ],
+  ];
+
+  const orientations = satelliteOrientations[satelliteIdx % satelliteOrientations.length];
+
   const sensorConfigs = [
-    { name: 'Main Camera', fov: 10, orientation: { qx: 0, qy: 0, qz: 0, qw: 1 } },
-    { name: 'Nadir Camera', fov: 15, orientation: { qx: 1, qy: 0, qz: 0, qw: 0 } },
-    { name: 'Star Tracker', fov: 20, orientation: { qx: 0, qy: 1, qz: 0, qw: 0 } },
+    { name: 'Main Camera', fov: 10, orientation: orientations[0] },
+    { name: 'Nadir Camera', fov: 15, orientation: orientations[1] },
+    { name: 'Star Tracker', fov: 20, orientation: orientations[2] },
   ];
 
   return sensorConfigs.map((config, idx) => ({
