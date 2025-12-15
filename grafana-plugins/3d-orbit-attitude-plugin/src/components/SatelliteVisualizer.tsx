@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { PanelProps, DataHoverEvent, LegacyGraphHoverEvent } from '@grafana/data';
-import { AssetMode, SimpleOptions, CoordinatesType } from 'types';
-import { SensorDefinition } from 'types/sensorTypes';
-import { coalesceToArray } from 'utilities';
+import { AssetMode, SimpleOptions } from 'types';
 import { computeZAxisGroundIntersection, computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonHierarchy } from 'utils/projections';
 import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
-import { parseSensors } from 'parsers/sensorParser';
+import { parseSatellites } from 'parsers/satelliteParser';
+import { ParsedSatellite } from 'types/satelliteTypes';
 import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import { getScaledLength } from 'utils/cameraScaling';
 import { css, cx } from '@emotion/css';
@@ -16,12 +15,9 @@ import {
   Ion,
   JulianDate,
   TimeInterval,
-  TimeIntervalCollection,
   Cartesian3,
   Quaternion,
   Transforms,
-  SampledProperty,
-  SampledPositionProperty,
   Color,
   PolylineDashMaterialProperty,
   PolylineArrowMaterialProperty,
@@ -117,15 +113,13 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [isTracked, setIsTracked] = useState<boolean>(true);
 
   const [timestamp, setTimestamp] = useState<JulianDate | null>(null);
-  const [satelliteAvailability, setSatelliteAvailability] = useState<TimeIntervalCollection | null>(null);
-  const [satellitePosition, setSatellitePosition] = useState<SampledPositionProperty | null>(null);
-  const [satelliteOrientation, setSatelliteOrientation] = useState<SampledProperty | null>(null);
+  const [satellites, setSatellites] = useState<ParsedSatellite[]>([]);
+  const [trackedSatelliteId, setTrackedSatelliteId] = useState<string | null>(null);
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
   const [decLines, setDecLines] = useState<Cartesian3[][]>([]);
   const [gridLabels, setGridLabels] = useState<Array<{ position: Cartesian3; text: string }>>([]);
-  const [sensors, setSensors] = useState<SensorDefinition[]>([]);
   
   // Store viewer reference for imagery setup in useEffect
   const viewerRef = React.useRef<any>(null);
@@ -147,109 +141,43 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     Transforms.preloadIcrfFixed(timeInterval).then(() => setLoaded(true));
   }, [timeRange]);
 
+  // Parse satellite data from DataFrames
   useEffect(() => {
     if (!isLoaded) {
       return;
     }
 
-    if (data.series.length === 1) {
-      const dataFrame = data.series[0];
-
-      // Parse sensors (Phase 2A: Sensor Cone Visualization)
-      // Safe parsing - won't break if sensors don't exist
+    if (data.series.length > 0) {
+      console.log(`🛰️ Parsing ${data.series.length} satellite(s)...`);
+      
       try {
-        const parsedSensors = parseSensors(dataFrame);
-        setSensors(parsedSensors);
-      } catch (error) {
-        console.warn('❌ Sensor parsing failed:', error);
-        setSensors([]);
-      }
-
-      if (dataFrame.fields.length !== 8) {
-        throw new Error(`Invalid number of fields [${dataFrame.fields.length}] in data frame.`);
-      }
-
-      let timeFieldValues = coalesceToArray(dataFrame.fields[0].values);
-
-      const startTimestamp: number | null = timeFieldValues[0] ?? null;
-      const endTimestamp: number | null = timeFieldValues.at(-1) ?? null;
-
-      if (startTimestamp !== null) {
-        setTimestamp(JulianDate.fromDate(new Date(startTimestamp)));
-      } else {
-        setTimestamp(null);
-      }
-
-      if (startTimestamp && endTimestamp) {
-        setSatelliteAvailability(
-          new TimeIntervalCollection([
-            new TimeInterval({
-              start: JulianDate.fromDate(new Date(startTimestamp)),
-              stop: JulianDate.fromDate(new Date(endTimestamp)),
-            }),
-          ])
-        );
-      } else {
-        setSatelliteAvailability(null);
-      }
-
-      const positionProperty = new SampledPositionProperty();
-      const orientationProperty = new SampledProperty(Quaternion);
-
-      for (let i = 0; i < dataFrame.fields[1].values.length; i++) {
-        const time = JulianDate.fromDate(new Date(coalesceToArray(dataFrame.fields[0].values)[i]));
-
-        const DCM_ECI_ECEF = Transforms.computeFixedToIcrfMatrix(time);
-
-        let x_ECEF: Cartesian3;
-        switch (options.coordinatesType) {
-          case CoordinatesType.CartesianFixed:
-            x_ECEF = new Cartesian3(
-              coalesceToArray(dataFrame.fields[1].values)[i],
-              coalesceToArray(dataFrame.fields[2].values)[i],
-              coalesceToArray(dataFrame.fields[3].values)[i]
-            );
-            break;
-          case CoordinatesType.CartesianInertial:
-            x_ECEF = Matrix3.multiplyByVector(
-              Matrix3.transpose(DCM_ECI_ECEF, new Matrix3()),
-              new Cartesian3(
-                coalesceToArray(dataFrame.fields[1].values)[i],
-                coalesceToArray(dataFrame.fields[2].values)[i],
-                coalesceToArray(dataFrame.fields[3].values)[i]
-              ),
-              new Cartesian3()
-            );
-            break;
-          default:
-            x_ECEF = Cartesian3.fromDegrees(
-              coalesceToArray(dataFrame.fields[1].values)[i],
-              coalesceToArray(dataFrame.fields[2].values)[i],
-              coalesceToArray(dataFrame.fields[3].values)[i]
-            );
-            break;
+        const parsedSatellites = parseSatellites(data.series, options);
+        setSatellites(parsedSatellites);
+        
+        // Set timestamp from first satellite's first data point
+        if (parsedSatellites.length > 0) {
+          const firstSatellite = parsedSatellites[0];
+          const firstInterval = firstSatellite.availability.get(0);
+          if (firstInterval) {
+            setTimestamp(firstInterval.start);
+          }
         }
-
-        const q_B_ECI = new Quaternion(
-          coalesceToArray(dataFrame.fields[4].values)[i],
-          coalesceToArray(dataFrame.fields[5].values)[i],
-          coalesceToArray(dataFrame.fields[6].values)[i],
-          coalesceToArray(dataFrame.fields[7].values)[i]
-        );
-
-        positionProperty.addSample(time, x_ECEF);
-
-        const q_ECI_ECEF = Quaternion.fromRotationMatrix(DCM_ECI_ECEF);
-        const q_ECEF_ECI = Quaternion.conjugate(q_ECI_ECEF, new Quaternion());
-        const q_B_ECEF = Quaternion.multiply(q_ECEF_ECI, q_B_ECI, new Quaternion());
-
-        orientationProperty.addSample(time, q_B_ECEF);
+      } catch (error) {
+        console.error('❌ Failed to parse satellites:', error);
+        setSatellites([]);
       }
-
-      setSatellitePosition(positionProperty);
-      setSatelliteOrientation(orientationProperty);
+    } else {
+      setSatellites([]);
     }
-  }, [data, options.coordinatesType, isLoaded]);
+  }, [data, options, isLoaded]);
+  
+  // Default to tracking first satellite
+  useEffect(() => {
+    if (satellites.length > 0 && !trackedSatelliteId) {
+      setTrackedSatelliteId(satellites[0].id);
+      console.log(`🎯 Defaulting to track: ${satellites[0].name}`);
+    }
+  }, [satellites, trackedSatelliteId]);
 
   useEffect(() => {
     Ion.defaultAccessToken = options.accessToken;
@@ -478,12 +406,17 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         }}
       >
         {timestamp && <Clock currentTime={timestamp} />}
-        {satelliteAvailability && satellitePosition && satelliteOrientation && (
+        
+        {/* Main Satellite Entities - Multiple satellites support */}
+        {satellites.map((satellite) => (
           <Entity
-            availability={satelliteAvailability}
-            position={satellitePosition}
-            orientation={satelliteOrientation}
-            tracked={isTracked}
+            key={satellite.id}
+            id={satellite.id}
+            name={satellite.name}
+            availability={satellite.availability}
+            position={satellite.position}
+            orientation={satellite.orientation}
+            tracked={isTracked && trackedSatelliteId === satellite.id}
           >
             {options.assetMode === AssetMode.Point && (
               <PointGraphics pixelSize={options.pointSize} color={Color.fromCssColorString(options.pointColor)} />
@@ -508,294 +441,277 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               />
             )}
           </Entity>
+        ))}
+        {/* Body Axes (X/Y/Z attitude vectors) - Per-satellite */}
+        {options.showAttitudeVisualization && options.showBodyAxes && satellites.map((satellite) =>
+          attitudeVectors.map((vector, index) => (
+            <Entity 
+              availability={satellite.availability} 
+              key={`${satellite.id}-attitude-vector-${index}`}
+            >
+              <PolylineGraphics
+                positions={new CallbackProperty((time) => {
+                  const pos = satellite.position.getValue(time);
+                  const orient = satellite.orientation.getValue(time);
+                  if (!pos || !orient) {
+                    return [];
+                  }
+                  
+                  // Calculate dynamic vector length based on tracking mode and camera distance
+                  const viewer = viewerRef.current?.cesiumElement;
+                  const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
+                  const vectorLength = getScaledLength(50000, isThisSatelliteTracked, viewer, pos);
+                  
+                  // Rotate axis by satellite orientation to get direction in ECEF
+                  const rotationMatrix = Matrix3.fromQuaternion(orient);
+                  const axisECEF = Matrix3.multiplyByVector(rotationMatrix, vector.axis, new Cartesian3());
+                  
+                  // Calculate endpoint with dynamic length
+                  const endPos = Cartesian3.add(
+                    pos,
+                    Cartesian3.multiplyByScalar(axisECEF, vectorLength, new Cartesian3()),
+                    new Cartesian3()
+                  );
+                  
+                  return [pos, endPos];
+                }, false)}
+                width={10}
+                material={new PolylineArrowMaterialProperty(vector.color)}
+                arcType={ArcType.NONE}
+              />
+            </Entity>
+          ))
         )}
-        {/* Body Axes (X/Y/Z attitude vectors) - toggleable via settings */}
-        {options.showAttitudeVisualization && options.showBodyAxes && satelliteAvailability && satellitePosition && satelliteOrientation && attitudeVectors.map((vector, index) => (
-          <Entity availability={satelliteAvailability} key={`attitude-vector-${index}`}>
-            <PolylineGraphics
-              positions={new CallbackProperty((time) => {
-                const pos = satellitePosition.getValue(time);
-                const orient = satelliteOrientation.getValue(time);
+        
+        {/* Sensor FOV Cones - Per-satellite sensors */}
+        {options.showAttitudeVisualization && options.showSensorCones && satellites.map((satellite) =>
+          satellite.sensors.map((sensor, idx) => (
+            <Entity 
+              key={`${satellite.id}-sensor-cone-${sensor.id}`}
+              name={`${satellite.name} - ${sensor.name} (FOV: ${sensor.fov}°)`}
+              availability={satellite.availability}
+            >
+              <PolylineGraphics
+                positions={new CallbackProperty((time) => {
+                  const satPos = satellite.position.getValue(time);
+                  const satOrient = satellite.orientation.getValue(time);
+                  if (!satPos || !satOrient) {
+                    return [];
+                  }
+                  
+                  // Sensor body frame orientation (constant, relative to satellite)
+                  const sensorBodyQuat = new Quaternion(
+                    sensor.orientation.qx,
+                    sensor.orientation.qy,
+                    sensor.orientation.qz,
+                    sensor.orientation.qw
+                  );
+                  
+                  // Compute sensor world orientation: q_world = q_satellite × q_sensor_body
+                  const sensorWorldQuat = Quaternion.multiply(
+                    satOrient,
+                    sensorBodyQuat,
+                    new Quaternion()
+                  );
+                  
+                  // Get sensor pointing direction (Z-axis in sensor frame)
+                  const rotMatrix = Matrix3.fromQuaternion(sensorWorldQuat);
+                  const sensorDir = Matrix3.multiplyByVector(
+                    rotMatrix,
+                    new Cartesian3(0, 0, 1),  // Z-axis
+                    new Cartesian3()
+                  );
+                  Cartesian3.normalize(sensorDir, sensorDir);
+                  
+                  // Generate cone mesh with camera-scaled length
+                  const viewer = viewerRef.current?.cesiumElement;
+                  const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
+                  const coneLength = getScaledLength(50000, isThisSatelliteTracked, viewer, satPos);
+                  return generateConeMesh(satPos, sensorDir, sensor.fov, coneLength, 16);
+                  
+                }, false)}
+                width={1.5}
+                material={Color.fromBytes(
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                  Math.floor(SENSOR_COLORS[idx % SENSOR_COLORS.length].a * 255)
+                )}
+                arcType={ArcType.NONE}
+              />
+            </Entity>
+          ))
+        )}
+        
+        {/* Ground projection of Z-axis vector - Per-satellite */}
+        {options.showAttitudeVisualization && options.showZAxisProjection && satellites.map((satellite) => (
+          <React.Fragment key={`${satellite.id}-zaxis-proj`}>
+            <Entity
+              availability={satellite.availability}
+              position={new CallbackProperty((time) => {
+                const pos = satellite.position.getValue(time);
+                const orient = satellite.orientation.getValue(time);
                 if (!pos || !orient) {
-                  return [];
+                  return undefined;
                 }
                 
-                // Calculate dynamic vector length based on tracking mode and camera distance
-                const viewer = viewerRef.current?.cesiumElement;
-                const vectorLength = getScaledLength(50000, isTracked, viewer, pos);
-                
-                // Rotate axis by satellite orientation to get direction in ECEF
-                const rotationMatrix = Matrix3.fromQuaternion(orient);
-                const axisECEF = Matrix3.multiplyByVector(rotationMatrix, vector.axis, new Cartesian3());
-                
-                // Calculate endpoint with dynamic length
-                const endPos = Cartesian3.add(
-                  pos,
-                  Cartesian3.multiplyByScalar(axisECEF, vectorLength, new Cartesian3()),
-                  new Cartesian3()
-                );
-                
-                return [pos, endPos];
-              }, false)}
-              width={10}
-              material={new PolylineArrowMaterialProperty(vector.color)}
-              arcType={ArcType.NONE}
-            />
-          </Entity>
-        ))}
-        
-        {/* Sensor FOV Cones - Phase 2A: Sensor Visualization */}
-        {options.showAttitudeVisualization && options.showSensorCones && satelliteAvailability && sensors.map((sensor, idx) => (
-          <Entity 
-            key={`sensor-cone-${sensor.id}`}
-            name={`${sensor.name} (FOV: ${sensor.fov}°)`}
-            availability={satelliteAvailability}
-          >
-            <PolylineGraphics
-              positions={new CallbackProperty((time) => {
-                const satPos = satellitePosition?.getValue(time);
-                const satOrient = satelliteOrientation?.getValue(time);
-                if (!satPos || !satOrient) {
-                  return [];
-                }
-                
-                // Sensor body frame orientation (constant, relative to satellite)
-                const sensorBodyQuat = new Quaternion(
-                  sensor.orientation.qx,
-                  sensor.orientation.qy,
-                  sensor.orientation.qz,
-                  sensor.orientation.qw
-                );
-                
-                // Compute sensor world orientation: q_world = q_satellite × q_sensor_body
-                const sensorWorldQuat = Quaternion.multiply(
-                  satOrient,
-                  sensorBodyQuat,
-                  new Quaternion()
-                );
-                
-                // Get sensor pointing direction (Z-axis in sensor frame)
-                const rotMatrix = Matrix3.fromQuaternion(sensorWorldQuat);
-                const sensorDir = Matrix3.multiplyByVector(
-                  rotMatrix,
-                  new Cartesian3(0, 0, 1),  // Z-axis
-                  new Cartesian3()
-                );
-                Cartesian3.normalize(sensorDir, sensorDir);
-                
-                // Generate cone mesh with camera-scaled length
-                const viewer = viewerRef.current?.cesiumElement;
-                const coneLength = getScaledLength(50000, isTracked, viewer, satPos);
-                return generateConeMesh(satPos, sensorDir, sensor.fov, coneLength, 16);
-                
-              }, false)}
-              width={1.5}
-              material={Color.fromBytes(
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
-                Math.floor(SENSOR_COLORS[idx % SENSOR_COLORS.length].a * 255)
-              )}
-              arcType={ArcType.NONE}
-            />
-          </Entity>
-        ))}
-        
-        {/* Ground projection of Z-axis vector */}
-        {options.showAttitudeVisualization && options.showZAxisProjection && satelliteAvailability && satellitePosition && satelliteOrientation && (
-          <Entity
-            availability={satelliteAvailability}
-            position={new CallbackProperty((time) => {
-              const pos = satellitePosition.getValue(time);
-              const orient = satelliteOrientation.getValue(time);
-              if (!pos || !orient) {
-                return undefined;
-              }
-              
-              return computeZAxisGroundIntersection(pos, orient);
-            }, false) as any}
-          >
-            <PointGraphics pixelSize={15} color={Color.YELLOW} outlineColor={Color.BLACK} outlineWidth={2} />
-          </Entity>
-        )}
-        {/* Line from satellite to ground point */}
-        {options.showZAxisProjection && satelliteAvailability && satellitePosition && satelliteOrientation && (
-          <Entity availability={satelliteAvailability}>
-            <PolylineGraphics
-              positions={new CallbackProperty((time) => {
-                const pos = satellitePosition.getValue(time);
-                const orient = satelliteOrientation.getValue(time);
-                if (!pos || !orient) {
-                  return [];
-                }
-                
-                const groundPoint = computeZAxisGroundIntersection(pos, orient);
-                if (groundPoint) {
-                  return [pos, groundPoint];
-                }
-                
-                return [];
-              }, false)}
-              width={2}
-              material={Color.YELLOW.withAlpha(0.7)}
-              arcType={ArcType.NONE}
-            />
-          </Entity>
-        )}
-        {/* FOV Cone Footprint */}
-        {options.showAttitudeVisualization && options.showFOVFootprint && satelliteAvailability && satellitePosition && satelliteOrientation && (
-          <Entity availability={satelliteAvailability}>
-            <PolygonGraphics
-              hierarchy={new CallbackProperty((time) => {
-                const pos = satellitePosition.getValue(time);
-                const orient = satelliteOrientation.getValue(time);
-                
-                // Return dummy triangle if no data
-                if (!pos || !orient) {
-                  return createDummyPolygonHierarchy();
-                }
-                
-                // Compute FOV footprint using utility function
-                const footprintPoints = computeFOVFootprint(pos, orient, options.fovHalfAngle);
-                
-                // Return points, or dummy triangle if cone doesn't hit Earth
-                return footprintPoints.length > 0 
-                  ? new PolygonHierarchy(footprintPoints)
-                  : createDummyPolygonHierarchy();
+                return computeZAxisGroundIntersection(pos, orient);
               }, false) as any}
-              material={Color.RED.withAlpha(0.3)}
-              height={0}
-              outline={true}
-              outlineColor={Color.RED}
-              outlineWidth={2}
-            />
-          </Entity>
+            >
+              <PointGraphics pixelSize={15} color={Color.YELLOW} outlineColor={Color.BLACK} outlineWidth={2} />
+            </Entity>
+            {/* Line from satellite to ground point */}
+            <Entity availability={satellite.availability}>
+              <PolylineGraphics
+                positions={new CallbackProperty((time) => {
+                  const pos = satellite.position.getValue(time);
+                  const orient = satellite.orientation.getValue(time);
+                  if (!pos || !orient) {
+                    return [];
+                  }
+                  
+                  const groundPoint = computeZAxisGroundIntersection(pos, orient);
+                  if (groundPoint) {
+                    return [pos, groundPoint];
+                  }
+                  
+                  return [];
+                }, false)}
+                width={2}
+                material={Color.YELLOW.withAlpha(0.7)}
+                arcType={ArcType.NONE}
+              />
+            </Entity>
+          </React.Fragment>
+        ))}
+        {/* Sensor FOV Footprints - Per-satellite, per-sensor ground projections */}
+        {options.showAttitudeVisualization && options.showFOVFootprint && satellites.map((satellite) =>
+          satellite.sensors.map((sensor, idx) => (
+            <Entity 
+              key={`${satellite.id}-sensor-footprint-${sensor.id}`}
+              name={`${satellite.name} - ${sensor.name} Footprint`}
+              availability={satellite.availability}
+            >
+              <PolygonGraphics
+                hierarchy={new CallbackProperty((time) => {
+                  const satPos = satellite.position.getValue(time);
+                  const satOrient = satellite.orientation.getValue(time);
+                  if (!satPos || !satOrient) {
+                    return createDummyPolygonHierarchy();
+                  }
+
+                  // Sensor body frame orientation (constant, relative to satellite)
+                  const sensorBodyQuat = new Quaternion(
+                    sensor.orientation.qx,
+                    sensor.orientation.qy,
+                    sensor.orientation.qz,
+                    sensor.orientation.qw
+                  );
+                  
+                  // Compute sensor world orientation: q_world = q_satellite × q_sensor_body
+                  const sensorWorldQuat = Quaternion.multiply(
+                    satOrient,
+                    sensorBodyQuat,
+                    new Quaternion()
+                  );
+                  
+                  // Compute FOV footprint using sensor's FOV angle and orientation
+                  const footprintPoints = computeFOVFootprint(
+                    satPos,
+                    sensorWorldQuat,
+                    sensor.fov / 2  // computeFOVFootprint expects half-angle
+                  );
+
+                  // Return points, or dummy triangle if cone doesn't hit Earth
+                  return footprintPoints.length > 0 
+                    ? new PolygonHierarchy(footprintPoints)
+                    : createDummyPolygonHierarchy();
+                }, false) as any}
+                material={Color.fromBytes(
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                  Math.floor(0.3 * 255)  // 30% alpha for footprint
+                )}
+                outline={true}
+                outlineColor={Color.fromBytes(
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                  255
+                )}
+                outlineWidth={2}
+                height={0}
+              />
+            </Entity>
+          ))
         )}
         
-        {/* Sensor FOV Footprints - Per-sensor ground projections (color-coded) */}
-        {options.showAttitudeVisualization && options.showFOVFootprint && satelliteAvailability && sensors.map((sensor, idx) => (
-          <Entity 
-            key={`sensor-footprint-${sensor.id}`}
-            name={`${sensor.name} Footprint`}
-            availability={satelliteAvailability}
-          >
-            <PolygonGraphics
-              hierarchy={new CallbackProperty((time) => {
-                const satPos = satellitePosition?.getValue(time);
-                const satOrient = satelliteOrientation?.getValue(time);
-                if (!satPos || !satOrient) {
-                  return createDummyPolygonHierarchy();
-                }
+        {/* Sensor FOV Celestial Projections - Per-satellite sky region visualization */}
+        {options.showAttitudeVisualization && options.showCelestialFOV && satellites.map((satellite) =>
+          satellite.sensors.map((sensor, idx) => (
+            <Entity 
+              key={`${satellite.id}-sensor-celestial-${sensor.id}`}
+              name={`${satellite.name} - ${sensor.name} Celestial FOV`}
+              availability={satellite.availability}
+            >
+              <PolygonGraphics
+                hierarchy={new CallbackProperty((time) => {
+                  const satPos = satellite.position.getValue(time);
+                  const satOrient = satellite.orientation.getValue(time);
+                  if (!satPos || !satOrient) {
+                    return createDummyPolygonHierarchy();
+                  }
 
-                // Sensor body frame orientation (constant, relative to satellite)
-                const sensorBodyQuat = new Quaternion(
-                  sensor.orientation.qx,
-                  sensor.orientation.qy,
-                  sensor.orientation.qz,
-                  sensor.orientation.qw
-                );
-                
-                // Compute sensor world orientation: q_world = q_satellite × q_sensor_body
-                const sensorWorldQuat = Quaternion.multiply(
-                  satOrient,
-                  sensorBodyQuat,
-                  new Quaternion()
-                );
-                
-                // Compute FOV footprint using sensor's FOV angle and orientation
-                const footprintPoints = computeFOVFootprint(
-                  satPos,
-                  sensorWorldQuat,
-                  sensor.fov / 2  // computeFOVFootprint expects half-angle
-                );
+                  // Sensor body frame orientation
+                  const sensorBodyQuat = new Quaternion(
+                    sensor.orientation.qx,
+                    sensor.orientation.qy,
+                    sensor.orientation.qz,
+                    sensor.orientation.qw
+                  );
+                  
+                  // Compute sensor world orientation
+                  const sensorWorldQuat = Quaternion.multiply(
+                    satOrient,
+                    sensorBodyQuat,
+                    new Quaternion()
+                  );
+                  
+                  // Celestial sphere radius (same as RA/Dec grid)
+                  const celestialRadius = Ellipsoid.WGS84.maximumRadius * 100;
+                  
+                  // Compute celestial projection
+                  const celestialPoints = computeFOVCelestialProjection(
+                    satPos,
+                    sensorWorldQuat,
+                    sensor.fov / 2,  // Half-angle
+                    celestialRadius
+                  );
 
-                // Return points, or dummy triangle if cone doesn't hit Earth
-                return footprintPoints.length > 0 
-                  ? new PolygonHierarchy(footprintPoints)
-                  : createDummyPolygonHierarchy();
-              }, false) as any}
-              material={Color.fromBytes(
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
-                Math.floor(0.3 * 255)  // 30% alpha for footprint
-              )}
-              outline={true}
-              outlineColor={Color.fromBytes(
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
-                255
-              )}
-              outlineWidth={2}
-              height={0}
-            />
-          </Entity>
-        ))}
-        
-        {/* Sensor FOV Celestial Projections - Sky region visualization */}
-        {options.showAttitudeVisualization && options.showCelestialFOV && satelliteAvailability && sensors.map((sensor, idx) => (
-          <Entity 
-            key={`sensor-celestial-${sensor.id}`}
-            name={`${sensor.name} Celestial FOV`}
-            availability={satelliteAvailability}
-          >
-            <PolygonGraphics
-              hierarchy={new CallbackProperty((time) => {
-                const satPos = satellitePosition?.getValue(time);
-                const satOrient = satelliteOrientation?.getValue(time);
-                if (!satPos || !satOrient) {
-                  return createDummyPolygonHierarchy();
-                }
-
-                // Sensor body frame orientation
-                const sensorBodyQuat = new Quaternion(
-                  sensor.orientation.qx,
-                  sensor.orientation.qy,
-                  sensor.orientation.qz,
-                  sensor.orientation.qw
-                );
-                
-                // Compute sensor world orientation
-                const sensorWorldQuat = Quaternion.multiply(
-                  satOrient,
-                  sensorBodyQuat,
-                  new Quaternion()
-                );
-                
-                // Celestial sphere radius (same as RA/Dec grid)
-                const celestialRadius = Ellipsoid.WGS84.maximumRadius * 100;
-                
-                // Compute celestial projection
-                const celestialPoints = computeFOVCelestialProjection(
-                  satPos,
-                  sensorWorldQuat,
-                  sensor.fov / 2,  // Half-angle
-                  celestialRadius
-                );
-
-                return celestialPoints.length > 0 
-                  ? new PolygonHierarchy(celestialPoints)
-                  : createDummyPolygonHierarchy();
-              }, false) as any}
-              material={Color.fromBytes(
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
-                Math.floor(0.3 * 255)  // 30% alpha for transparency
-              )}
-              outline={true}
-              outlineColor={Color.fromBytes(
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
-                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
-                255
-              )}
-              outlineWidth={1}  // Match celestial grid line width
-              perPositionHeight={true}
-            />
-          </Entity>
-        ))}
+                  return celestialPoints.length > 0 
+                    ? new PolygonHierarchy(celestialPoints)
+                    : createDummyPolygonHierarchy();
+                }, false) as any}
+                material={Color.fromBytes(
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                  Math.floor(0.3 * 255)  // 30% alpha for transparency
+                )}
+                outline={true}
+                outlineColor={Color.fromBytes(
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                  SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                  255
+                )}
+                outlineWidth={1}  // Match celestial grid line width
+                perPositionHeight={true}
+              />
+            </Entity>
+          ))
+        )}
         
         {/* RA/Dec Celestial Grid - Right Ascension Lines (Meridians) */}
         {options.showAttitudeVisualization && options.showRADecGrid && raLines.map((line, index) => (
