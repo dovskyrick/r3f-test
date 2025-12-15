@@ -22,7 +22,6 @@ export interface SimpleOptions {
 
   showFOVFootprint: boolean;
   showCelestialFOV: boolean;
-  fovHalfAngle: number;
 
   showBodyAxes: boolean;
   xAxisColor: string;

@@ -150,18 +150,6 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       defaultValue: true,
       showIf: (config: any) => config.showAttitudeVisualization,
     })
-    .addNumberInput({
-      path: 'fovHalfAngle',
-      name: '📍 FOV Half-Angle (degrees)',
-      description: 'Sensor cone half-angle for footprint calculation (e.g., 5° for a 10° total cone).',
-      defaultValue: 5,
-      settings: {
-        min: 1,
-        max: 45,
-        step: 1,
-      },
-      showIf: (config: any) => config.showAttitudeVisualization && config.showFOVFootprint,
-    })
 
     // ============================================================
     // 🎯 BODY AXES (satellite reference frame)
