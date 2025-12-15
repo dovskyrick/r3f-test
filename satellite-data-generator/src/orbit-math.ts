@@ -10,6 +10,7 @@ export interface OrbitParams {
   startTime: Date;            // Orbit start time
   numPoints: number;          // Number of data points
   duration: number;           // Total duration in seconds
+  startAnomaly?: number;      // Starting position in orbit (degrees), default 0
 }
 
 export interface TrajectoryPoint {
@@ -49,10 +50,12 @@ export function generateCircularOrbit(params: OrbitParams): TrajectoryPoint[] {
     startTime,
     numPoints,
     duration,
+    startAnomaly = 0,
   } = params;
 
   const inclinationRad = (inclination * Math.PI) / 180;
   const loanRad = (longitudeOfAN * Math.PI) / 180;
+  const startAnomalyRad = (startAnomaly * Math.PI) / 180;
   const period = calculateOrbitalPeriod(altitude);
   
   const points: TrajectoryPoint[] = [];
@@ -62,8 +65,8 @@ export function generateCircularOrbit(params: OrbitParams): TrajectoryPoint[] {
     const t = (i / (numPoints - 1)) * duration; // Time in seconds since start
     const timeMs = startTimeMs + t * 1000;
     
-    // Mean anomaly (angle around orbit)
-    const meanAnomaly = (t / period) * TWO_PI;
+    // Mean anomaly (angle around orbit) with starting offset
+    const meanAnomaly = startAnomalyRad + (t / period) * TWO_PI;
     
     // Simplified position calculation (circular orbit)
     // In orbital plane: x = r*cos(θ), y = r*sin(θ), z = 0

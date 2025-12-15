@@ -4,6 +4,7 @@ import {
   generateCircularOrbit,
   generateTumblingOrbit,
   randomOrbitParams,
+  OrbitParams,
   TrajectoryPoint,
 } from './orbit-math';
 
@@ -120,17 +121,49 @@ function main() {
     // Generate multiple satellites
     console.log('Mode: Multiple Satellites\n');
     
+    // Explicitly different orbits for visual distinction
     const satelliteConfigs = [
-      { id: 'sat-1', name: 'Starlink-4021', seed: 12345, type: 'circular' },
-      { id: 'sat-2', name: 'Hubble Space Telescope', seed: 67890, type: 'tumbling' },
-      { id: 'sat-3', name: 'ISS', seed: 11111, type: 'circular' },
+      { 
+        id: 'sat-1', 
+        name: 'Starlink-4021', 
+        type: 'circular',
+        altitude: 550,        // Low LEO
+        inclination: 53,      // Typical Starlink
+        longitudeOfAN: 0,
+        startAnomaly: 0,      // Start at 0°
+      },
+      { 
+        id: 'sat-2', 
+        name: 'Hubble Space Telescope', 
+        type: 'tumbling',
+        altitude: 540,        // Slightly lower
+        inclination: 28.5,    // Low inclination
+        longitudeOfAN: 90,    // 90° offset
+        startAnomaly: 120,    // Start at 120°
+      },
+      { 
+        id: 'sat-3', 
+        name: 'ISS', 
+        type: 'circular',
+        altitude: 420,        // ISS altitude
+        inclination: 51.6,    // ISS inclination
+        longitudeOfAN: 180,   // 180° offset
+        startAnomaly: 240,    // Start at 240°
+      },
     ];
 
+    const commonStartTime = new Date();  // All satellites start at same time
+
     const satellitesData = satelliteConfigs.map((config, idx) => {
-      const params = randomOrbitParams(config.seed);
-      
-      // Offset start times so they don't overlap (2 hours apart)
-      params.startTime = new Date(Date.now() + idx * 2 * 60 * 60 * 1000);
+      // Create explicit orbit parameters (not random)
+      const params: OrbitParams = {
+        altitude: config.altitude,
+        inclination: config.inclination,
+        longitudeOfAN: config.longitudeOfAN,
+        startTime: commonStartTime,
+        numPoints: 15 + idx * 5,  // 15, 20, 25 points
+        duration: 60 * 60,  // 1 hour
+      };
       
       const trajectory = config.type === 'tumbling'
         ? generateTumblingOrbit(params)
