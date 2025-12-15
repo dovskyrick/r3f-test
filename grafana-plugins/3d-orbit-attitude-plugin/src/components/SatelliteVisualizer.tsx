@@ -3,7 +3,7 @@ import { PanelProps, DataHoverEvent, LegacyGraphHoverEvent } from '@grafana/data
 import { AssetMode, SimpleOptions, CoordinatesType } from 'types';
 import { SensorDefinition } from 'types/sensorTypes';
 import { coalesceToArray } from 'utilities';
-import { computeZAxisGroundIntersection, computeFOVFootprint, createDummyPolygonHierarchy } from 'utils/projections';
+import { computeZAxisGroundIntersection, computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonHierarchy } from 'utils/projections';
 import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
 import { parseSensors } from 'parsers/sensorParser';
 import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
@@ -732,6 +732,71 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             />
           </Entity>
         ))}
+        
+        {/* Sensor FOV Celestial Projections - Sky region visualization */}
+        {options.showAttitudeVisualization && options.showCelestialFOV && satelliteAvailability && sensors.map((sensor, idx) => (
+          <Entity 
+            key={`sensor-celestial-${sensor.id}`}
+            name={`${sensor.name} Celestial FOV`}
+            availability={satelliteAvailability}
+          >
+            <PolygonGraphics
+              hierarchy={new CallbackProperty((time) => {
+                const satPos = satellitePosition?.getValue(time);
+                const satOrient = satelliteOrientation?.getValue(time);
+                if (!satPos || !satOrient) {
+                  return createDummyPolygonHierarchy();
+                }
+
+                // Sensor body frame orientation
+                const sensorBodyQuat = new Quaternion(
+                  sensor.orientation.qx,
+                  sensor.orientation.qy,
+                  sensor.orientation.qz,
+                  sensor.orientation.qw
+                );
+                
+                // Compute sensor world orientation
+                const sensorWorldQuat = Quaternion.multiply(
+                  satOrient,
+                  sensorBodyQuat,
+                  new Quaternion()
+                );
+                
+                // Celestial sphere radius (same as RA/Dec grid)
+                const celestialRadius = Ellipsoid.WGS84.maximumRadius * 100;
+                
+                // Compute celestial projection
+                const celestialPoints = computeFOVCelestialProjection(
+                  satPos,
+                  sensorWorldQuat,
+                  sensor.fov / 2,  // Half-angle
+                  celestialRadius
+                );
+
+                return celestialPoints.length > 0 
+                  ? new PolygonHierarchy(celestialPoints)
+                  : createDummyPolygonHierarchy();
+              }, false) as any}
+              material={Color.fromBytes(
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                Math.floor(0.3 * 255)  // 30% alpha for transparency
+              )}
+              outline={true}
+              outlineColor={Color.fromBytes(
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].r,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].g,
+                SENSOR_COLORS[idx % SENSOR_COLORS.length].b,
+                255
+              )}
+              outlineWidth={1}  // Match celestial grid line width
+              perPositionHeight={true}
+            />
+          </Entity>
+        ))}
+        
         {/* RA/Dec Celestial Grid - Right Ascension Lines (Meridians) */}
         {options.showAttitudeVisualization && options.showRADecGrid && raLines.map((line, index) => (
           <Entity name={`RA Line ${index}`} key={`ra-${index}`}>

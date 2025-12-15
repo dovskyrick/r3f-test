@@ -201,6 +201,81 @@ export function computeFOVFootprint(
 }
 
 /**
+ * Compute the FOV cone projection onto the celestial sphere.
+ * Projects the sensor FOV outward to show what portion of the sky is being observed.
+ * 
+ * @param position - Satellite position in ECEF (Cartesian3)
+ * @param orientation - Satellite orientation (Quaternion)
+ * @param halfAngleDegrees - FOV cone half-angle in degrees
+ * @param celestialRadius - Radius of celestial sphere in meters (typically 100× Earth radius)
+ * @param numSamples - Number of points to sample around the cone (default: 36)
+ * @returns Array of Cartesian3 points forming a polygon on the celestial sphere
+ */
+export function computeFOVCelestialProjection(
+  position: Cartesian3,
+  orientation: Quaternion,
+  halfAngleDegrees: number,
+  celestialRadius: number,
+  numSamples = 36
+): Cartesian3[] {
+  // Z-axis (cone axis) in body frame
+  const zAxisBody = new Cartesian3(0, 0, 1);
+  const rotationMatrix = Matrix3.fromQuaternion(orientation);
+  const zAxisECEF = Matrix3.multiplyByVector(rotationMatrix, zAxisBody, new Cartesian3());
+  const coneAxis = Cartesian3.normalize(zAxisECEF, new Cartesian3());
+  
+  // Convert half-angle to radians
+  const halfAngleRad = (halfAngleDegrees * Math.PI) / 180;
+  
+  // Find two perpendicular vectors to the cone axis
+  const perp1 = Cartesian3.cross(coneAxis, Cartesian3.UNIT_Z, new Cartesian3());
+  if (Cartesian3.magnitude(perp1) < 0.01) {
+    // Cone axis is parallel to Z, use X instead
+    Cartesian3.cross(coneAxis, Cartesian3.UNIT_X, perp1);
+  }
+  Cartesian3.normalize(perp1, perp1);
+  const perp2 = Cartesian3.cross(coneAxis, perp1, new Cartesian3());
+  Cartesian3.normalize(perp2, perp2);
+  
+  const projectionPoints: Cartesian3[] = [];
+  
+  // Sample points around the cone
+  for (let i = 0; i < numSamples; i++) {
+    const angle = (i / numSamples) * 2 * Math.PI;
+    
+    // Compute direction on cone surface
+    const cosHalf = Math.cos(halfAngleRad);
+    const sinHalf = Math.sin(halfAngleRad);
+    
+    // Direction in the perpendicular plane
+    const circleDir = Cartesian3.add(
+      Cartesian3.multiplyByScalar(perp1, Math.cos(angle) * sinHalf, new Cartesian3()),
+      Cartesian3.multiplyByScalar(perp2, Math.sin(angle) * sinHalf, new Cartesian3()),
+      new Cartesian3()
+    );
+    
+    // Combine cone axis component and circle component
+    const rayDirection = Cartesian3.add(
+      Cartesian3.multiplyByScalar(coneAxis, cosHalf, new Cartesian3()),
+      circleDir,
+      new Cartesian3()
+    );
+    Cartesian3.normalize(rayDirection, rayDirection);
+    
+    // Project onto celestial sphere (simple scalar multiplication from satellite position)
+    const projectedPoint = Cartesian3.add(
+      position,
+      Cartesian3.multiplyByScalar(rayDirection, celestialRadius, new Cartesian3()),
+      new Cartesian3()
+    );
+    
+    projectionPoints.push(projectedPoint);
+  }
+  
+  return projectionPoints;
+}
+
+/**
  * Create a dummy triangle PolygonHierarchy for use when data is unavailable.
  * This prevents Cesium rendering errors when no valid data exists.
  * 

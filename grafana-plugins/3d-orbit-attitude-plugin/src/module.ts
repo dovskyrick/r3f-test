@@ -150,6 +150,13 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       defaultValue: true,
       showIf: (config: any) => config.showAttitudeVisualization,
     })
+    .addBooleanSwitch({
+      path: 'showCelestialFOV',
+      name: '🔭 Show Celestial FOV',
+      description: 'Project sensor field-of-view onto celestial sphere to show observed sky region.',
+      defaultValue: true,
+      showIf: (config: any) => config.showAttitudeVisualization,
+    })
     .addNumberInput({
       path: 'fovHalfAngle',
       name: '📍 FOV Half-Angle (degrees)',
