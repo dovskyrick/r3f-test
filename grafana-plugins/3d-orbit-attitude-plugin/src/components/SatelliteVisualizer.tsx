@@ -63,6 +63,59 @@ const getStyles = () => {
     hideCesiumCredits: css`
       display: none;
     `,
+    panelContainer: css`
+      display: flex;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+    `,
+    mainContent: css`
+      flex: 1;
+      position: relative;
+      min-width: 0;
+      transition: flex 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    `,
+    sidebar: css`
+      width: 0;
+      height: 100%;
+      background: rgba(30, 30, 30, 0.95);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      transition: width 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+      z-index: 999;
+      
+      &.open {
+        width: 320px;
+      }
+    `,
+    sidebarToggle: css`
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1001;
+      padding: 8px 12px;
+      background: rgba(50, 50, 50, 0.9);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      
+      &:hover {
+        background: rgba(70, 70, 70, 0.9);
+      }
+    `,
+    trackingButton: css`
+      position: absolute;
+      top: 10px;
+      right: 60px;
+      z-index: 1000;
+      padding: 8px 12px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    `,
   };
 };
 
@@ -111,6 +164,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [isLoaded, setLoaded] = useState<boolean>(false);
   const [viewerKey, setViewerKey] = useState<number>(0);
   const [isTracked, setIsTracked] = useState<boolean>(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   const [timestamp, setTimestamp] = useState<JulianDate | null>(null);
   const [satellites, setSatellites] = useState<ParsedSatellite[]>([]);
@@ -302,26 +356,31 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         `
       )}
     >
-      <button
-        onClick={() => setIsTracked(!isTracked)}
-        style={{
-          position: 'absolute',
-          top: '10px',
-          left: '10px',
-          zIndex: 1000,
-          padding: '8px 12px',
-          cursor: 'pointer',
-          backgroundColor: isTracked ? '#4CAF50' : '#2196F3',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          fontSize: '12px',
-        }}
-      >
-        {isTracked ? '🎯 Tracking ON' : '🌍 Free Camera'}
-      </button>
+      <div className={styles.panelContainer}>
+        {/* Main content area - shrinks when sidebar opens */}
+        <div className={styles.mainContent}>
+          {/* Tracking Mode Toggle Button */}
+          <button
+            className={styles.trackingButton}
+            onClick={() => setIsTracked(!isTracked)}
+            style={{
+              backgroundColor: isTracked ? '#4CAF50' : '#2196F3',
+              color: 'white',
+            }}
+          >
+            {isTracked ? '🎯 Tracking ON' : '🌍 Free Camera'}
+          </button>
+          
+          {/* Sidebar Toggle Button */}
+          <button
+            className={styles.sidebarToggle}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+          >
+            {isSidebarOpen ? '✕' : '☰'}
+          </button>
       
-      <Viewer
+          <Viewer
         full
         animation={options.showAnimation}
         timeline={options.showTimeline}
@@ -731,10 +790,17 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         ))}
       </Viewer>
 
-      <div
-        id="cesium-credits"
-        className={options.showCredits ? styles.showCesiumCredits : styles.hideCesiumCredits}
-      ></div>
+          <div
+            id="cesium-credits"
+            className={options.showCredits ? styles.showCesiumCredits : styles.hideCesiumCredits}
+          ></div>
+        </div>
+
+        {/* Sidebar - Empty for now */}
+        <div className={cx(styles.sidebar, isSidebarOpen && 'open')}>
+          {/* Satellite/sensor controls will go here later */}
+        </div>
+      </div>
     </div>
   );
 };
