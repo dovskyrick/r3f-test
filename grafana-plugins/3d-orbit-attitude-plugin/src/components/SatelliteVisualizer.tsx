@@ -141,6 +141,108 @@ const getStyles = () => {
         cursor: not-allowed;
       }
     `,
+    sidebarContent: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    `,
+    sidebarTitle: css`
+      flex-shrink: 0;
+      padding: 16px;
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.2);
+    `,
+    satelliteList: css`
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px;
+      
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.5);
+        }
+      }
+    `,
+    satelliteItem: css`
+      display: flex;
+      align-items: flex-start;
+      padding: 10px 8px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      background: rgba(255, 255, 255, 0.02);
+      transition: background 0.2s ease;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+    `,
+    visibilityToggle: css`
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      margin-right: 10px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 0;
+      transition: color 0.2s ease, transform 0.1s ease;
+      
+      &:hover {
+        color: rgba(255, 255, 255, 1);
+        transform: scale(1.1);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+    `,
+    satelliteInfo: css`
+      flex: 1;
+      min-width: 0;
+    `,
+    satelliteName: css`
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    `,
+    satelliteId: css`
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    `,
+    emptyState: css`
+      padding: 32px 16px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 14px;
+    `,
     cesiumControls: css`
       /* Move Cesium's built-in controls to the left of our custom buttons */
       .cesium-viewer-toolbar {
@@ -937,28 +1039,34 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
         {/* Sidebar - Satellite List */}
         <div className={cx(styles.sidebar, isSidebarOpen && 'open')}>
-          <h3>Satellites</h3>
-          
-          {satellites.length === 0 ? (
-            <div>No satellites available</div>
-          ) : (
-            <div>
-              {satellites.map((satellite) => (
-                <div key={satellite.id}>
-                  <button
-                    onClick={() => toggleSatelliteVisibility(satellite.id)}
-                  >
-                    {isSatelliteVisible(satellite.id) ? '◉' : '○'}
-                  </button>
-                  
-                  <div>
-                    <div>{satellite.name}</div>
-                    <div>{satellite.id}</div>
+          <div className={styles.sidebarContent}>
+            {satellites.length === 0 ? (
+              <div className={styles.emptyState}>No satellites available</div>
+            ) : (
+              <div className={styles.satelliteList}>
+                {satellites.map((satellite) => (
+                  <div key={satellite.id} className={styles.satelliteItem}>
+                    <button
+                      className={styles.visibilityToggle}
+                      onClick={() => toggleSatelliteVisibility(satellite.id)}
+                      title={isSatelliteVisible(satellite.id) ? 'Hide satellite' : 'Show satellite'}
+                    >
+                      {isSatelliteVisible(satellite.id) ? '◉' : '○'}
+                    </button>
+                    
+                    <div className={styles.satelliteInfo}>
+                      <div className={styles.satelliteName} title={satellite.name}>
+                        {satellite.name}
+                      </div>
+                      <div className={styles.satelliteId} title={satellite.id}>
+                        {satellite.id}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
