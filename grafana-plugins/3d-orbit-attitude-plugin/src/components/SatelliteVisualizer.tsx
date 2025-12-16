@@ -280,7 +280,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   }, [options.accessToken]);
 
   // Fly camera to satellite with "from above" nadir view
-  const flyToSatelliteNadirView = (satelliteId: string, duration = 0.5) => {
+  const flyToSatelliteNadirView = (satelliteId: string, duration = 0.5, distance = 4) => {
     const viewer = viewerRef.current?.cesiumElement;
     if (!viewer || !timestamp) {
       return;
@@ -300,11 +300,10 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     const radialDirection = Cartesian3.subtract(satPos, Cartesian3.ZERO, new Cartesian3());
     Cartesian3.normalize(radialDirection, radialDirection);
 
-    // Position camera at fixed distance (4 meters) above satellite along radial line
-    const fixedDistance = 4; // meters
+    // Position camera at specified distance above satellite along radial line
     const cameraPosition = Cartesian3.add(
       satPos,
-      Cartesian3.multiplyByScalar(radialDirection, fixedDistance, new Cartesian3()),
+      Cartesian3.multiplyByScalar(radialDirection, distance, new Cartesian3()),
       new Cartesian3()
     );
 
@@ -318,14 +317,14 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       duration: duration,
     });
 
-    console.log(`🚀 Flying to ${satellite.name} - Nadir View (4m above, ${duration}s)`);
+    console.log(`🚀 Flying to ${satellite.name} - Nadir View (${distance}m above, ${duration}s)`);
   };
 
   // Handle tracking mode toggle with nadir transition
   const handleTrackingToggle = () => {
     if (isTracked && trackedSatelliteId) {
-      // Going from tracked → free: fly to nadir first, then activate free camera
-      flyToSatelliteNadirView(trackedSatelliteId, 0.2);
+      // Going from tracked → free: fly to nadir first (100m for better Earth view), then activate free camera
+      flyToSatelliteNadirView(trackedSatelliteId, 0.2, 6000000);
       
       // Wait for animation + buffer time before activating free camera
       setTimeout(() => {
