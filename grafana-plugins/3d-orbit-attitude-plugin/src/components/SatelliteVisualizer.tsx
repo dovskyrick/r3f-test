@@ -111,25 +111,27 @@ const getStyles = () => {
       top: 10px;
       right: 60px;
       z-index: 1000;
-      padding: 8px 12px;
+      padding: 8px 10px;
       cursor: pointer;
       border: none;
       border-radius: 4px;
+      font-size: 16px;
+      line-height: 1;
     `,
     cesiumControls: css`
       /* Move Cesium's built-in controls to the left of our custom buttons */
       .cesium-viewer-toolbar {
-        right: 150px !important; /* Push to left of our buttons */
+        right: 120px !important; /* Push to left of our buttons */
         top: 10px !important;
       }
       
       .cesium-baseLayerPickerContainer {
-        right: 150px !important; /* Push to left of our buttons */
+        right: 120px !important; /* Push to left of our buttons */
         top: 10px !important;
       }
       
       .cesium-projectionPickerContainer {
-        right: 180px !important; /* Stack to the left */
+        right: 120px !important; /* Stack to the left */
         top: 10px !important;
       }
     `,
@@ -380,12 +382,13 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           <button
             className={styles.trackingButton}
             onClick={() => setIsTracked(!isTracked)}
+            title={isTracked ? 'Tracking ON' : 'Free Camera'}
             style={{
               backgroundColor: isTracked ? '#4CAF50' : '#2196F3',
               color: 'white',
             }}
           >
-            {isTracked ? '🎯 Tracking ON' : '🌍 Free Camera'}
+            {isTracked ? '🎯' : '🌍'}
           </button>
           
           {/* Sidebar Toggle Button */}
