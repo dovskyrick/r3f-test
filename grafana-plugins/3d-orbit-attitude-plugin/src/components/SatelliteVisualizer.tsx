@@ -116,6 +116,23 @@ const getStyles = () => {
       border: none;
       border-radius: 4px;
     `,
+    cesiumControls: css`
+      /* Move Cesium's built-in controls to the left of our custom buttons */
+      .cesium-viewer-toolbar {
+        right: 150px !important; /* Push to left of our buttons */
+        top: 10px !important;
+      }
+      
+      .cesium-baseLayerPickerContainer {
+        right: 150px !important; /* Push to left of our buttons */
+        top: 10px !important;
+      }
+      
+      .cesium-projectionPickerContainer {
+        right: 180px !important; /* Stack to the left */
+        top: 10px !important;
+      }
+    `,
   };
 };
 
@@ -358,7 +375,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     >
       <div className={styles.panelContainer}>
         {/* Main content area - shrinks when sidebar opens */}
-        <div className={styles.mainContent}>
+        <div className={cx(styles.mainContent, styles.cesiumControls)}>
           {/* Tracking Mode Toggle Button */}
           <button
             className={styles.trackingButton}
