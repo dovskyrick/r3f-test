@@ -118,20 +118,43 @@ const getStyles = () => {
       font-size: 16px;
       line-height: 1;
     `,
+    nadirViewButton: css`
+      position: absolute;
+      top: 10px;
+      right: 110px;
+      z-index: 1000;
+      padding: 8px 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      line-height: 1;
+      background: rgba(50, 50, 50, 0.9);
+      color: white;
+      
+      &:hover {
+        background: rgba(70, 70, 70, 0.9);
+      }
+      
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    `,
     cesiumControls: css`
       /* Move Cesium's built-in controls to the left of our custom buttons */
       .cesium-viewer-toolbar {
-        right: 120px !important; /* Push to left of our buttons */
+        right: 170px !important; /* Push to left of our buttons */
         top: 10px !important;
       }
       
       .cesium-baseLayerPickerContainer {
-        right: 120px !important; /* Push to left of our buttons */
+        right: 170px !important; /* Push to left of our buttons */
         top: 10px !important;
       }
       
       .cesium-projectionPickerContainer {
-        right: 120px !important; /* Stack to the left */
+        right: 170px !important; /* Stack to the left */
         top: 10px !important;
       }
     `,
@@ -255,6 +278,49 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   useEffect(() => {
     Ion.defaultAccessToken = options.accessToken;
   }, [options.accessToken]);
+
+  // Fly camera to satellite with "from above" nadir view
+  const flyToSatelliteNadirView = (satelliteId: string, distanceMultiplier = 2) => {
+    const viewer = viewerRef.current?.cesiumElement;
+    if (!viewer || !timestamp) {
+      return;
+    }
+
+    const satellite = satellites.find(s => s.id === satelliteId);
+    if (!satellite) {
+      return;
+    }
+
+    const satPos = satellite.position.getValue(timestamp);
+    if (!satPos) {
+      return;
+    }
+
+    // Calculate radial direction (Earth center → Satellite)
+    const radialDirection = Cartesian3.subtract(satPos, Cartesian3.ZERO, new Cartesian3());
+    const radialDistance = Cartesian3.magnitude(radialDirection);
+    Cartesian3.normalize(radialDirection, radialDirection);
+
+    // Position camera "above" satellite along radial line
+    const cameraDistance = radialDistance * 0.3; // 30% of satellite altitude above it
+    const cameraPosition = Cartesian3.add(
+      satPos,
+      Cartesian3.multiplyByScalar(radialDirection, cameraDistance, new Cartesian3()),
+      new Cartesian3()
+    );
+
+    // Camera looks at satellite (down toward Earth)
+    viewer.camera.flyTo({
+      destination: cameraPosition,
+      orientation: {
+        direction: Cartesian3.negate(radialDirection, new Cartesian3()), // Point toward Earth
+        up: Cartesian3.UNIT_Z, // Keep "up" aligned with Earth's axis
+      },
+      duration: 2.5,
+    });
+
+    console.log(`🚀 Flying to ${satellite.name} - Nadir View`);
+  };
 
   useEffect(() => {
     if (options.modelAssetId) {
@@ -389,6 +455,20 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             }}
           >
             {isTracked ? '🎯' : '🌍'}
+          </button>
+          
+          {/* Nadir View Button - Fly to satellite from above */}
+          <button
+            className={styles.nadirViewButton}
+            onClick={() => {
+              if (trackedSatelliteId) {
+                flyToSatelliteNadirView(trackedSatelliteId);
+              }
+            }}
+            disabled={!trackedSatelliteId}
+            title={trackedSatelliteId ? 'Fly to satellite (nadir view)' : 'No satellite selected'}
+          >
+            🛰️
           </button>
           
           {/* Sidebar Toggle Button */}
