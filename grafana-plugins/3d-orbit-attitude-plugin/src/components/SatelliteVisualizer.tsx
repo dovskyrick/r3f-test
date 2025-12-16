@@ -282,7 +282,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   // Fly camera to satellite with "from above" nadir view
   const flyToSatelliteNadirView = (satelliteId: string, duration = 0.5, distance = 4) => {
     const viewer = viewerRef.current?.cesiumElement;
-    if (!viewer || !timestamp) {
+    if (!viewer) {
       return;
     }
 
@@ -291,7 +291,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       return;
     }
 
-    const satPos = satellite.position.getValue(timestamp);
+    // Use current viewer clock time (not the timestamp state which may be stale)
+    const currentTime = viewer.clock.currentTime;
+    const satPos = satellite.position.getValue(currentTime);
     if (!satPos) {
       return;
     }
