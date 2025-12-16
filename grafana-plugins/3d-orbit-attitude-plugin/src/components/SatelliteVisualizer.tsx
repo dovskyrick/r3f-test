@@ -121,7 +121,7 @@ const getStyles = () => {
     nadirViewButton: css`
       position: absolute;
       top: 10px;
-      right: 110px;
+      left: 10px;
       z-index: 1000;
       padding: 8px 10px;
       cursor: pointer;
@@ -144,17 +144,17 @@ const getStyles = () => {
     cesiumControls: css`
       /* Move Cesium's built-in controls to the left of our custom buttons */
       .cesium-viewer-toolbar {
-        right: 170px !important; /* Push to left of our buttons */
+        right: 120px !important; /* Push to left of our buttons */
         top: 10px !important;
       }
       
       .cesium-baseLayerPickerContainer {
-        right: 170px !important; /* Push to left of our buttons */
+        right: 120px !important; /* Push to left of our buttons */
         top: 10px !important;
       }
       
       .cesium-projectionPickerContainer {
-        right: 170px !important; /* Stack to the left */
+        right: 120px !important; /* Stack to the left */
         top: 10px !important;
       }
     `,
@@ -475,18 +475,20 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </button>
           
           {/* Nadir View Button - Fly to satellite from above */}
-          <button
-            className={styles.nadirViewButton}
-            onClick={() => {
-              if (trackedSatelliteId) {
-                flyToSatelliteNadirView(trackedSatelliteId);
-              }
-            }}
-            disabled={!trackedSatelliteId}
-            title={trackedSatelliteId ? 'Fly to satellite (nadir view)' : 'No satellite selected'}
-          >
-            🛰️
-          </button>
+          {options.showNadirViewButton && (
+            <button
+              className={styles.nadirViewButton}
+              onClick={() => {
+                if (trackedSatelliteId) {
+                  flyToSatelliteNadirView(trackedSatelliteId);
+                }
+              }}
+              disabled={!trackedSatelliteId}
+              title={trackedSatelliteId ? 'Fly to satellite (nadir view)' : 'No satellite selected'}
+            >
+              🛰️
+            </button>
+          )}
           
           {/* Sidebar Toggle Button */}
           <button

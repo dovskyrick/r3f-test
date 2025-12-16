@@ -315,5 +315,11 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       name: 'Show credits',
       description: 'Show Cesium credits.',
       defaultValue: true,
+    })
+    .addBooleanSwitch({
+      path: 'showNadirViewButton',
+      name: '🛰️ Show Nadir View Button',
+      description: 'Show the nadir view button (🛰️) that flies camera to satellite from above.',
+      defaultValue: true,
     });
 });
