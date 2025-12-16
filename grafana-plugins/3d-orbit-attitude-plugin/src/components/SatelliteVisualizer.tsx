@@ -211,6 +211,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [timestamp, setTimestamp] = useState<JulianDate | null>(null);
   const [satellites, setSatellites] = useState<ParsedSatellite[]>([]);
   const [trackedSatelliteId, setTrackedSatelliteId] = useState<string | null>(null);
+  const [hiddenSatellites, setHiddenSatellites] = useState<Set<string>>(new Set());
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
@@ -337,6 +338,25 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       // Going from free → tracked: immediate toggle
       setIsTracked(true);
     }
+  };
+
+  // Satellite visibility toggle functions
+  const toggleSatelliteVisibility = (satelliteId: string) => {
+    setHiddenSatellites(prev => {
+      const next = new Set(prev);
+      if (next.has(satelliteId)) {
+        next.delete(satelliteId);
+        console.log(`👁️ Showing satellite: ${satelliteId}`);
+      } else {
+        next.add(satelliteId);
+        console.log(`🙈 Hiding satellite: ${satelliteId}`);
+      }
+      return next;
+    });
+  };
+
+  const isSatelliteVisible = (satelliteId: string) => {
+    return !hiddenSatellites.has(satelliteId);
   };
 
   useEffect(() => {
@@ -915,9 +935,30 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           ></div>
         </div>
 
-        {/* Sidebar - Empty for now */}
+        {/* Sidebar - Satellite List */}
         <div className={cx(styles.sidebar, isSidebarOpen && 'open')}>
-          {/* Satellite/sensor controls will go here later */}
+          <h3>Satellites</h3>
+          
+          {satellites.length === 0 ? (
+            <div>No satellites available</div>
+          ) : (
+            <div>
+              {satellites.map((satellite) => (
+                <div key={satellite.id}>
+                  <button
+                    onClick={() => toggleSatelliteVisibility(satellite.id)}
+                  >
+                    {isSatelliteVisible(satellite.id) ? '◉' : '○'}
+                  </button>
+                  
+                  <div>
+                    <div>{satellite.name}</div>
+                    <div>{satellite.id}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
