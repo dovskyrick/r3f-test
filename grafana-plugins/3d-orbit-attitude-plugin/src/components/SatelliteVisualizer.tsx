@@ -187,10 +187,18 @@ const getStyles = () => {
       border-radius: 4px;
       margin-bottom: 4px;
       background: rgba(255, 255, 255, 0.02);
-      transition: background 0.2s ease;
+      transition: background 0.2s ease, border-left 0.2s ease, padding-left 0.2s ease;
+      cursor: pointer;
+      border-left: 3px solid transparent;
       
       &:hover {
         background: rgba(255, 255, 255, 0.08);
+      }
+      
+      &.tracked {
+        background: rgba(255, 152, 0, 0.1);
+        border-left: 3px solid #FF9800;
+        padding-left: 5px;
       }
     `,
     visibilityToggle: css`
@@ -459,6 +467,20 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
   const isSatelliteVisible = (satelliteId: string) => {
     return !hiddenSatellites.has(satelliteId);
+  };
+
+  // Handle satellite selection for tracking
+  const handleSatelliteClick = (satelliteId: string) => {
+    if (isTracked) {
+      // Tracked mode: just change the tracked satellite
+      setTrackedSatelliteId(satelliteId);
+      console.log(`🎯 Tracking switched to: ${satelliteId}`);
+    } else {
+      // Free mode: update tracked satellite, fly to nadir, but stay in free mode
+      setTrackedSatelliteId(satelliteId);
+      flyToSatelliteNadirView(satelliteId, 0.5, 6000000);
+      console.log(`🌍 Free camera flying to: ${satelliteId}`);
+    }
   };
 
   useEffect(() => {
@@ -1055,10 +1077,20 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             ) : (
               <div className={styles.satelliteList}>
                 {satellites.map((satellite) => (
-                  <div key={satellite.id} className={styles.satelliteItem}>
+                  <div 
+                    key={satellite.id} 
+                    className={cx(
+                      styles.satelliteItem,
+                      trackedSatelliteId === satellite.id && 'tracked'
+                    )}
+                    onClick={() => handleSatelliteClick(satellite.id)}
+                  >
                     <button
                       className={styles.visibilityToggle}
-                      onClick={() => toggleSatelliteVisibility(satellite.id)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Don't trigger satellite selection
+                        toggleSatelliteVisibility(satellite.id);
+                      }}
                       title={isSatelliteVisible(satellite.id) ? 'Hide satellite' : 'Show satellite'}
                     >
                       {isSatelliteVisible(satellite.id) ? '◉' : '○'}
