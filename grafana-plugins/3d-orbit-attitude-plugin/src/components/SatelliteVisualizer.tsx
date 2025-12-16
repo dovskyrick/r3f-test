@@ -280,7 +280,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   }, [options.accessToken]);
 
   // Fly camera to satellite with "from above" nadir view
-  const flyToSatelliteNadirView = (satelliteId: string, distanceMultiplier = 2) => {
+  const flyToSatelliteNadirView = (satelliteId: string, duration = 0.5) => {
     const viewer = viewerRef.current?.cesiumElement;
     if (!viewer || !timestamp) {
       return;
@@ -298,14 +298,13 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
     // Calculate radial direction (Earth center → Satellite)
     const radialDirection = Cartesian3.subtract(satPos, Cartesian3.ZERO, new Cartesian3());
-    const radialDistance = Cartesian3.magnitude(radialDirection);
     Cartesian3.normalize(radialDirection, radialDirection);
 
-    // Position camera "above" satellite along radial line
-    const cameraDistance = radialDistance * 0.3; // 30% of satellite altitude above it
+    // Position camera at fixed distance (4 meters) above satellite along radial line
+    const fixedDistance = 4; // meters
     const cameraPosition = Cartesian3.add(
       satPos,
-      Cartesian3.multiplyByScalar(radialDirection, cameraDistance, new Cartesian3()),
+      Cartesian3.multiplyByScalar(radialDirection, fixedDistance, new Cartesian3()),
       new Cartesian3()
     );
 
@@ -316,10 +315,27 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         direction: Cartesian3.negate(radialDirection, new Cartesian3()), // Point toward Earth
         up: Cartesian3.UNIT_Z, // Keep "up" aligned with Earth's axis
       },
-      duration: 2.5,
+      duration: duration,
     });
 
-    console.log(`🚀 Flying to ${satellite.name} - Nadir View`);
+    console.log(`🚀 Flying to ${satellite.name} - Nadir View (4m above, ${duration}s)`);
+  };
+
+  // Handle tracking mode toggle with nadir transition
+  const handleTrackingToggle = () => {
+    if (isTracked && trackedSatelliteId) {
+      // Going from tracked → free: fly to nadir first, then activate free camera
+      flyToSatelliteNadirView(trackedSatelliteId, 0.2);
+      
+      // Wait for animation + buffer time before activating free camera
+      setTimeout(() => {
+        setIsTracked(false);
+        console.log('🌍 Free camera mode activated');
+      }, 500); // 0.5 second wait
+    } else {
+      // Going from free → tracked: immediate toggle
+      setIsTracked(true);
+    }
   };
 
   useEffect(() => {
@@ -447,7 +463,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           {/* Tracking Mode Toggle Button */}
           <button
             className={styles.trackingButton}
-            onClick={() => setIsTracked(!isTracked)}
+            onClick={handleTrackingToggle}
             title={isTracked ? 'Tracking ON' : 'Free Camera'}
             style={{
               backgroundColor: isTracked ? '#4CAF50' : '#2196F3',
