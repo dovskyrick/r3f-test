@@ -708,7 +708,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         {timestamp && <Clock currentTime={timestamp} />}
         
         {/* Main Satellite Entities - Multiple satellites support */}
-        {satellites.map((satellite) => (
+        {satellites
+          .filter(sat => !hiddenSatellites.has(sat.id))
+          .map((satellite) => (
           <Entity
             key={satellite.id}
             id={satellite.id}
@@ -743,7 +745,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </Entity>
         ))}
         {/* Body Axes (X/Y/Z attitude vectors) - Per-satellite */}
-        {options.showAttitudeVisualization && options.showBodyAxes && satellites.map((satellite) =>
+        {options.showAttitudeVisualization && options.showBodyAxes && satellites
+          .filter(sat => !hiddenSatellites.has(sat.id))
+          .map((satellite) =>
           attitudeVectors.map((vector, index) => (
             <Entity 
               availability={satellite.availability} 
@@ -784,7 +788,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         )}
         
         {/* Sensor FOV Cones - Per-satellite sensors */}
-        {options.showAttitudeVisualization && options.showSensorCones && satellites.map((satellite) =>
+        {options.showAttitudeVisualization && options.showSensorCones && satellites
+          .filter(sat => !hiddenSatellites.has(sat.id))
+          .map((satellite) =>
           satellite.sensors.map((sensor, idx) => (
             <Entity 
               key={`${satellite.id}-sensor-cone-${sensor.id}`}
@@ -844,7 +850,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         )}
         
         {/* Sensor FOV Footprints - Per-satellite, per-sensor ground projections */}
-        {options.showAttitudeVisualization && options.showFOVFootprint && satellites.map((satellite) =>
+        {options.showAttitudeVisualization && options.showFOVFootprint && satellites
+          .filter(sat => !hiddenSatellites.has(sat.id))
+          .map((satellite) =>
           satellite.sensors.map((sensor, idx) => (
             <Entity 
               key={`${satellite.id}-sensor-footprint-${sensor.id}`}
@@ -907,7 +915,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         )}
         
         {/* Sensor FOV Celestial Projections - Per-satellite sky region visualization */}
-        {options.showAttitudeVisualization && options.showCelestialFOV && satellites.map((satellite) =>
+        {options.showAttitudeVisualization && options.showCelestialFOV && satellites
+          .filter(sat => !hiddenSatellites.has(sat.id))
+          .map((satellite) =>
           satellite.sensors.map((sensor, idx) => (
             <Entity 
               key={`${satellite.id}-sensor-celestial-${sensor.id}`}
