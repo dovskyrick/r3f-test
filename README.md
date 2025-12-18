@@ -6,7 +6,7 @@ A comprehensive suite for **real-time 3D visualization of satellite orbits, atti
 [![CesiumJS](https://img.shields.io/badge/CesiumJS-Powered-blue?logo=cesium)](https://cesium.com/platform/cesiumjs/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-![3D Satellite Visualization Demo](./grafana-plugins/3d-orbit-attitude-plugin/src/img/screenshot.png)
+![3D Satellite Visualization Demo](./grafana-plugins/3d-orbit-attitude-plugin/src/img/Grafana_Vis_Example.png)
 
 > **⚡ Built Upon**: This project extends and enhances the original [Satellite Visualizer Plugin](https://github.com/lucas-bremond/satellite-visualizer) by **Lucas Brémond** (Apache 2.0 License). We've added multi-satellite tracking, sensor FOV visualization, attitude displays, and advanced camera controls for aerospace research applications.
 
