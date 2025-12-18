@@ -1,0 +1,158 @@
+3D Orbit & Attitude Visualization Plugin for Grafana
+Copyright 2024 Lucas Brémond (Original Work)
+Copyright 2025 Ricardo Santos, Instituto Superior Técnico (Derivative Work)
+
+This product is a derivative work based on the Satellite Visualizer Plugin
+created by Lucas Brémond, available at:
+https://github.com/lucas-bremond/satellite-visualizer
+
+================================================================================
+
+ORIGINAL WORK
+================================================================================
+
+Satellite Visualizer Plugin
+Copyright 2024 Lucas Brémond
+Licensed under the Apache License, Version 2.0
+
+The original plugin provided:
+- 3D satellite visualization using CesiumJS
+- Grafana panel integration
+- Basic trajectory display
+- Single satellite support
+- Quaternion-based orientation rendering
+
+================================================================================
+
+DERIVATIVE WORK - ENHANCEMENTS AND MODIFICATIONS
+================================================================================
+
+The following features and modifications were added to create this derivative work:
+
+1. MULTI-SATELLITE SUPPORT (December 2025)
+   - Support for visualizing multiple satellites simultaneously
+   - Individual satellite tracking and selection
+   - Sidebar menu with satellite list
+   - Per-satellite visibility toggles
+   - Independent trajectories and time intervals
+
+2. SENSOR VISUALIZATION (December 2025)
+   - 3D sensor cone rendering with quaternion-based orientation
+   - Ground footprint projection with horizon detection
+   - Celestial sphere FOV projection with RA/Dec coordinates
+   - Support for unlimited sensors per satellite
+   - Configurable FOV, colors, and transparency
+   - Adaptive subdivision for smooth horizon curves
+
+3. ATTITUDE VISUALIZATION (December 2025)
+   - Body axes display (X, Y, Z) with customizable colors
+   - RA/Dec celestial coordinate grid generation
+   - Grid labels with Right Ascension and Declination values
+   - Master toggle for all attitude-related visualizations
+   - Dynamic camera-distance-based scaling for vectors and cones
+
+4. ADVANCED CAMERA CONTROLS (December 2025)
+   - Tracking mode with satellite-locked camera
+   - Free camera mode with smooth Earth-orbital controls
+   - Nadir view button for overhead satellite view
+   - Smooth transitions between camera modes
+   - Camera position persistence across settings changes
+
+5. DATA PARSING ENHANCEMENTS (December 2025)
+   - Extensible JSON data format with meta.custom support
+   - Fault-tolerant parsing (missing data doesn't crash plugin)
+   - Support for multiple data frames
+   - Per-satellite sensor definitions
+   - Flexible coordinate system support (Geodetic, ECEF, ECI)
+
+6. USER INTERFACE IMPROVEMENTS (December 2025)
+   - Collapsible sidebar with scrollable satellite list
+   - Satellite selection and tracking indicators
+   - Repositioned Cesium controls for better UX
+   - Tooltip-based button labels
+   - Configurable UI element visibility
+
+7. TIMELINE PERSISTENCE (December 2025)
+   - Fixed timeline reset bug on settings changes
+   - Narrowed React useEffect dependencies
+   - Separate data-processing and rendering options
+   - Maintained animation state across panel updates
+
+8. DOCUMENTATION AND TOOLING (December 2025)
+   - Comprehensive README with setup guide
+   - ROADMAP for future features
+   - Standalone satellite data generator (Keplerian orbits)
+   - Pre-generated test data for quick start
+   - Development and contribution guidelines
+
+================================================================================
+
+THIRD-PARTY COMPONENTS
+================================================================================
+
+This software includes the following third-party components:
+
+CesiumJS
+  Copyright 2011-2024 Cesium Contributors
+  Apache License 2.0
+  https://github.com/CesiumGS/cesium
+
+Resium
+  Copyright 2018-2024 Resium Contributors
+  MIT License
+  https://github.com/reearth/resium
+
+Grafana
+  Copyright 2014-2024 Grafana Labs
+  Apache License 2.0 / AGPL 3.0
+  https://github.com/grafana/grafana
+
+React
+  Copyright 2013-2024 Meta Platforms, Inc.
+  MIT License
+  https://github.com/facebook/react
+
+See package.json for complete list of dependencies.
+
+================================================================================
+
+MODIFICATIONS NOTICE
+================================================================================
+
+Per Apache License 2.0, Section 4(b), this NOTICE file serves to inform users
+that this software has been modified from the original Satellite Visualizer
+Plugin created by Lucas Brémond.
+
+All modifications are provided under the same Apache License 2.0 as the
+original work, ensuring compatibility and compliance with open source licensing.
+
+Modified files include:
+- src/components/SatelliteVisualizer.tsx (extensive modifications)
+- src/parsers/*.ts (new files)
+- src/utils/*.ts (new files)
+- src/types/*.ts (new files)
+- src/module.ts (panel settings additions)
+- README.md (complete rewrite)
+- And various other source files
+
+For a complete list of changes, see the Git commit history.
+
+================================================================================
+
+CONTACT INFORMATION
+================================================================================
+
+Original Plugin:
+  Author: Lucas Brémond
+  Repository: https://github.com/lucas-bremond/satellite-visualizer
+
+Derivative Work:
+  Author: Ricardo Santos
+  Institution: Instituto Superior Técnico
+  Repository: https://github.com/dovskyrick/r3f-test
+  Contact: feedback@dovsky.com
+
+================================================================================
+
+For complete license terms, see the LICENSE file in this directory.
+
