@@ -43,12 +43,14 @@
 - [ ] Ensure all features work as documented
 
 ### 2. Screenshots & Media
-- [ ] Add plugin screenshot to: `grafana-plugins/3d-orbit-attitude-plugin/src/img/screenshot.png`
+- [x] Add plugin screenshot to: `grafana-plugins/3d-orbit-attitude-plugin/src/img/screenshot.png`
 - [ ] (Optional) Create demo GIF showing key features
 - [ ] (Optional) Record 1-2 minute demo video
 
 ### 3. Repository Housekeeping
-- [ ] Consider renaming repository (see suggestions below)
+- [x] Consider renaming repository (DONE: grafana-satellite-visualizer)
+- [x] README updated with correct repo name
+- [x] Built plugin dist/ included in repository for easy deployment
 - [ ] Add repository description on GitHub
 - [ ] Add topics/tags: `grafana`, `satellite`, `visualization`, `cesium`, `3d`, `aerospace`
 - [ ] Star Lucas Brémond's original repository (good etiquette!)
@@ -237,10 +239,13 @@ capabilities.
 
 Before posting to Grafana forum:
 
-- [ ] All placeholder text replaced ✅ (DONE)
+- [x] All placeholder text replaced ✅ (DONE)
+- [x] Screenshot added to plugin folder ✅ (DONE)
+- [x] README updated with screenshot and NASA credits ✅ (DONE)
+- [x] Built plugin included in repo (no build step needed) ✅ (DONE)
 - [ ] Repository description added on GitHub
-- [ ] Screenshot added to plugin folder
-- [ ] Test the plugin with fresh eyes
+- [ ] Repository topics/tags added on GitHub
+- [ ] Test the plugin with fresh eyes (follow Quick Start)
 - [ ] Proofread READMEs for typos
 - [ ] Lucas Brémond's repo starred (show appreciation!)
 - [ ] Ready to handle user questions/issues

@@ -4,8 +4,9 @@
 # Dependencies
 node_modules/
 
-# Build outputs
+# Build outputs (except plugin dist for easy deployment)
 dist/
+!grafana-plugins/3d-orbit-attitude-plugin/dist/
 build/
 
 # Environment
@@ -38,4 +39,3 @@ cesium-plugin-template/
 ground-track-r3f-plugin/
 test-plugin/
 
-PRE-PUBLICATION-CHECKLIST.md

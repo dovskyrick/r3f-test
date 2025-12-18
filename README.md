@@ -6,7 +6,7 @@ A comprehensive suite for **real-time 3D visualization of satellite orbits, atti
 [![CesiumJS](https://img.shields.io/badge/CesiumJS-Powered-blue?logo=cesium)](https://cesium.com/platform/cesiumjs/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-![3D Satellite Visualization Demo](./docs/demo-screenshot.png)
+![3D Satellite Visualization Demo](./grafana-plugins/3d-orbit-attitude-plugin/src/img/screenshot.png)
 
 > **⚡ Built Upon**: This project extends and enhances the original [Satellite Visualizer Plugin](https://github.com/lucas-bremond/satellite-visualizer) by **Lucas Brémond** (Apache 2.0 License). We've added multi-satellite tracking, sensor FOV visualization, attitude displays, and advanced camera controls for aerospace research applications.
 
@@ -52,8 +52,10 @@ A comprehensive suite for **real-time 3D visualization of satellite orbits, atti
 ### Step 1: Clone Repository
 ```bash
 git clone https://github.com/dovskyrick/grafana-satellite-visualizer.git
-cd r3f-test
+cd grafana-satellite-visualizer
 ```
+
+> **Note**: The plugin is pre-built and included in the repository. No build step required!
 
 ### Step 2: Start Grafana
 ```bash
@@ -65,8 +67,8 @@ Access Grafana at **http://localhost:3000** (admin/admin)
 
 ### Step 3: Load Test Data
 ```bash
-# Copy pre-generated satellite data
-cat satellite-data-generator/output/multi-satellite.json
+# Copy pre-generated satellite data (from project root)
+cat ../satellite-data-generator/output/multi-satellite.json
 ```
 
 In Grafana:
@@ -168,11 +170,11 @@ Seamless integration with Grafana ecosystem:
 ## 📁 Repository Structure
 
 ```
-r3f-test/
+grafana-satellite-visualizer/
 ├── grafana-plugins/
 │   └── 3d-orbit-attitude-plugin/    # Main Grafana plugin
 │       ├── src/                     # Plugin source code
-│       ├── dist/                    # Built plugin (auto-generated)
+│       ├── dist/                    # Built plugin (included)
 │       ├── README.md                # Plugin documentation
 │       ├── ROADMAP.md               # Future features
 │       └── package.json
@@ -235,7 +237,7 @@ This plugin is part of ongoing aerospace engineering research. **Your feedback d
 ```bash
 # Clone repository
 git clone https://github.com/dovskyrick/grafana-satellite-visualizer.git
-cd r3f-test
+cd grafana-satellite-visualizer
 
 # Install dependencies for plugin
 cd grafana-plugins/3d-orbit-attitude-plugin
@@ -282,6 +284,7 @@ This project is built upon:
 
 ### Additional Thanks
 
+- **NASA** for providing the ACRIM satellite 3D model
 - **CesiumJS** team for the incredible 3D geospatial platform
 - **Grafana Labs** for the extensible visualization framework
 - **Resium** project for React-CesiumJS integration
