@@ -349,6 +349,8 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   }, [timeRange]);
 
   // Parse satellite data from DataFrames
+  // Main data parsing: extract satellite position, orientation, availability, and sensors
+  // Note: parseSatellites() only uses options.coordinatesType internally, but we pass full options object for type compatibility
   useEffect(() => {
     if (!isLoaded) {
       return;
@@ -376,7 +378,8 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     } else {
       setSatellites([]);
     }
-  }, [data, options, isLoaded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, options.coordinatesType, isLoaded]); // Only coordinatesType affects parsing; other options are for rendering only
   
   // Default to tracking first satellite
   useEffect(() => {
