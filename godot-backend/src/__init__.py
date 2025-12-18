@@ -1,1 +1,0 @@
-# GODOT Trajectory API package 

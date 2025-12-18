@@ -31,3 +31,9 @@ npm-debug.log*
 .cache/
 .npm/
 
+# Archived/Experimental Projects (not actively developed)
+my-cesium-app/
+godot-backend/
+cesium-plugin-template/
+ground-track-r3f-plugin/
+test-plugin/
