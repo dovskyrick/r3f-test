@@ -23,7 +23,10 @@
       "id": 1,
       "options": {
         "showSceneModePicker": true,
-        "showBaseLayerPicker": true
+        "showBaseLayerPicker": true,
+        "showAnimation": true,
+        "showTimeline": true,
+        "showCredits": false
       },
       "pluginVersion": "10.0.0",
       "targets": [
