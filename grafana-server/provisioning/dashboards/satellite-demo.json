@@ -22,8 +22,8 @@
       },
       "id": 1,
       "options": {
-        "showSceneModePickerOption": true,
-        "showBaseLayerOption": true
+        "showSceneModePicker": true,
+        "showBaseLayerPicker": true
       },
       "pluginVersion": "10.0.0",
       "targets": [
