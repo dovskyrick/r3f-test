@@ -45,6 +45,12 @@ A comprehensive suite for **real-time 3D visualization of satellite orbits, atti
 
 ## 🚀 Quick Start (5 Minutes)
 
+**What you get out-of-the-box:**
+- ✅ Grafana with plugin pre-installed
+- ✅ Demo dashboard auto-created
+- ✅ TestData datasource pre-configured
+- ✅ Just add your data and Cesium token!
+
 ### Prerequisites
 - Docker & Docker Compose ([Install Guide](https://docs.docker.com/get-docker/))
 - Cesium Ion account ([Free Sign-up](https://cesium.com/ion/signup))
@@ -68,26 +74,20 @@ docker-compose up -d
 
 > **Tip:** To see startup logs, use `docker-compose up` (without `-d`)
 
-### Step 3: Load Test Data
-```bash
-# Copy pre-generated satellite data (from project root)
-cat ../satellite-data-generator/output/multi-satellite.json
-```
+### Step 3: Open & Configure Demo Dashboard
 
-In Grafana:
-1. Go to **Explore** or create a **Dashboard**
-2. Add **TestData DB** data source
-3. Select scenario: **JSON API**
-4. Paste the JSON
-5. Run query
+The demo dashboard is **automatically created** when Grafana starts!
 
-### Step 4: Create Visualization
-1. Add a new panel
-2. Select visualization: **"3D Orbit & Attitude Visualization"**
-3. In panel settings:
-   - Paste your **Cesium Ion Access Token**
-   - Toggle features: trajectory, sensors, FOV, etc.
-4. Watch your satellites orbit Earth in 3D! 🛰️
+1. Go to **Dashboards** → **Satellite Visualizer Demo**
+2. Click **Edit** (pencil icon) on the panel
+3. **One-time setup:** 
+   - In Query tab: Paste content from `demo-data.json` (839 lines) into the JSON API field
+   - In Panel options: Add your **Cesium Ion Access Token** ([Get free token](https://cesium.com/ion/signup))
+4. Click **Apply** and **Save dashboard**
+
+🛰️ **Done! Your 3 satellites are now orbiting Earth in 3D!**
+
+> **Note:** Once saved, the data persists with the dashboard - you only configure this once!
 
 👉 **[Detailed Setup Guide](./grafana-plugins/3d-orbit-attitude-plugin/README.md#-quick-start)**
 

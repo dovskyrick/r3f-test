@@ -25,6 +25,8 @@ services:
       - ../grafana-plugins/test-plugin/the-cube-panel:/var/lib/grafana/plugins/the-cube-panel
       # Mount 3d-orbit-attitude-plugin
       - ../grafana-plugins/3d-orbit-attitude-plugin/dist:/var/lib/grafana/plugins/3d-orbit-attitude-plugin
+      # Mount provisioning for auto-configuration
+      - ./provisioning:/etc/grafana/provisioning
       # Persist Grafana data
       - grafana-storage:/var/lib/grafana
     restart: unless-stopped
