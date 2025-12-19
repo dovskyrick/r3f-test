@@ -6,6 +6,8 @@ services:
     container_name: grafana-dev
     ports:
       - "3000:3000"
+    labels:
+      - "com.grafana.url=http://localhost:3000"
     environment:
       # Allow unsigned plugins (required for development)
       - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=the-cube-panel,3d-orbit-attitude-plugin

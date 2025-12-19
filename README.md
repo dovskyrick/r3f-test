@@ -63,7 +63,10 @@ cd grafana-server
 docker-compose up -d
 ```
 
-Access Grafana at **http://localhost:3000** (admin/admin)
+**🌐 Access Grafana at: http://localhost:3000**  
+**Login:** admin / admin
+
+> **Tip:** To see startup logs, use `docker-compose up` (without `-d`)
 
 ### Step 3: Load Test Data
 ```bash

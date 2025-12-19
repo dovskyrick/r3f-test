@@ -88,7 +88,7 @@ This plugin requires a **self-hosted Grafana instance** because it's not yet pub
 #### 1.1 Clone This Repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/dovskyrick/grafana-satellite-visualizer.git
 cd r3f-test/grafana-server
 ```
 
