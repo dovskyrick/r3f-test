@@ -74,20 +74,18 @@ docker-compose up -d
 
 > **Tip:** To see startup logs, use `docker-compose up` (without `-d`)
 
-### Step 3: Open & Configure Demo Dashboard
+### Step 3: Open Demo Dashboard
 
-The demo dashboard is **automatically created** when Grafana starts!
+The demo dashboard is **automatically created** with test data included!
 
 1. Go to **Dashboards** → **Satellite Visualizer Demo**
 2. Click **Edit** (pencil icon) on the panel
-3. **One-time setup:** 
-   - In Query tab: Paste content from `demo-data.json` (839 lines) into the JSON API field
-   - In Panel options: Add your **Cesium Ion Access Token** ([Get free token](https://cesium.com/ion/signup))
+3. In **Panel options**: Add your **Cesium Ion Access Token** ([Get free token](https://cesium.com/ion/signup))
 4. Click **Apply** and **Save dashboard**
 
-🛰️ **Done! Your 3 satellites are now orbiting Earth in 3D!**
+🛰️ **Done! Three satellites are now orbiting Earth in 3D!**
 
-> **Note:** Once saved, the data persists with the dashboard - you only configure this once!
+> **What's included:** Starlink-4021, Hubble Space Telescope, and ISS with sensor coverage
 
 👉 **[Detailed Setup Guide](./grafana-plugins/3d-orbit-attitude-plugin/README.md#-quick-start)**
 
