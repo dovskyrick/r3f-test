@@ -1,6 +1,7 @@
 # Cursor AI
 .cursorrules
 PRE-PUBLICATION-CHECKLIST.md
+RELEASE-NOTES-*.md
 
 # Dependencies
 node_modules/
