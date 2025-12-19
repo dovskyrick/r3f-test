@@ -21,7 +21,10 @@
         "y": 0
       },
       "id": 1,
-      "options": {},
+      "options": {
+        "showSceneModePickerOption": true,
+        "showBaseLayerOption": true
+      },
       "pluginVersion": "10.0.0",
       "targets": [
         {
