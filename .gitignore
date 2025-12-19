@@ -2,6 +2,7 @@
 .cursorrules
 PRE-PUBLICATION-CHECKLIST.md
 RELEASE-NOTES-*.md
+GRAFANA-FORUM-POST.md
 
 # Dependencies
 node_modules/

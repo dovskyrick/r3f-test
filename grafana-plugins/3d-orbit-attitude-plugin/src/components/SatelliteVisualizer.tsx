@@ -439,8 +439,10 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   // Handle tracking mode toggle with nadir transition
   const handleTrackingToggle = () => {
     if (isTracked && trackedSatelliteId) {
-      // Going from tracked → free: fly to nadir first (100m for better Earth view), then activate free camera
-      flyToSatelliteNadirView(trackedSatelliteId, 0.2, 6000000);
+      // Going from tracked → free: fly to nadir first with zoom limit respected (2x Earth radius)
+      const earthRadius = 6378137; // meters
+      const safeDistance = earthRadius * 2; // ~12,756 km (within 3x limit)
+      flyToSatelliteNadirView(trackedSatelliteId, 0.2, safeDistance);
       
       // Wait for animation + buffer time before activating free camera
       setTimeout(() => {
@@ -479,9 +481,11 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       setTrackedSatelliteId(satelliteId);
       console.log(`🎯 Tracking switched to: ${satelliteId}`);
     } else {
-      // Free mode: update tracked satellite, fly to nadir, but stay in free mode
+      // Free mode: update tracked satellite, fly to nadir with zoom limit respected (2x Earth radius)
       setTrackedSatelliteId(satelliteId);
-      flyToSatelliteNadirView(satelliteId, 0.5, 6000000);
+      const earthRadius = 6378137; // meters
+      const safeDistance = earthRadius * 2; // ~12,756 km (within 3x limit)
+      flyToSatelliteNadirView(satelliteId, 0.5, safeDistance);
       console.log(`🌍 Free camera flying to: ${satelliteId}`);
     }
   };
@@ -667,15 +671,44 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           if (ref?.cesiumElement) {
             const viewer = ref.cesiumElement;
             const controller = viewer.scene.screenSpaceCameraController;
+            const camera = viewer.scene.camera;
             
-            // Remove zoom-out limit
-            controller.maximumZoomDistance = Number.POSITIVE_INFINITY;
+            // WGS84 Earth radius
+            const earthRadius = 6378137; // meters
+            
+            // Controller limit: 3x Earth radius (works smoothly for tracked mode)
+            controller.maximumZoomDistance = earthRadius * 3; // ~19,134 km
             controller.enableCollisionDetection = false;
             
+            // Hard camera height limit: 5x Earth radius (catches free camera mode)
+            const hardMaxZoomDistance = earthRadius * 5; // ~31,890 km
+            
+            // Add a post-render listener to enforce the hard camera height limit
+            // This primarily affects free camera mode, as tracked mode stops at 3R via controller
+            viewer.scene.postRender.addEventListener(() => {
+              const cameraHeight = camera.positionCartographic.height;
+              if (cameraHeight > hardMaxZoomDistance) {
+                // Force camera back within hard limit
+                const direction = camera.direction.clone();
+                const up = camera.up.clone();
+                const position = Cartesian3.fromDegrees(
+                  camera.positionCartographic.longitude * (180 / Math.PI),
+                  camera.positionCartographic.latitude * (180 / Math.PI),
+                  hardMaxZoomDistance
+                );
+                camera.setView({
+                  destination: position,
+                  orientation: {
+                    direction: direction,
+                    up: up
+                  }
+                });
+              }
+            });
+            
             // Extend camera far clipping plane for celestial grid visibility
-            const earthRadius = 6378137; // WGS84 maximum radius in meters
             const celestialDistance = earthRadius * 100;
-            viewer.scene.camera.frustum.far = celestialDistance * 3;
+            camera.frustum.far = celestialDistance * 3;
             
             // Add Carto options to BaseLayerPicker (runs in ref callback for guaranteed timing)
             // Note: Default imagery setup is in useEffect to prevent reset on re-renders
