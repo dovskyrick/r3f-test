@@ -14,7 +14,7 @@ A comprehensive suite for **real-time 3D visualization of satellite orbits, atti
 
 ## 🎯 What's Included
 
-### 1. [3D Orbit & Attitude Plugin](./grafana-plugins/3d-orbit-attitude-plugin/)
+### 1. [Satellite Visualization Plugin](./grafana-plugins/3d-orbit-attitude-plugin/)
 **Main Grafana panel plugin** for 3D satellite visualization:
 - Multi-satellite tracking with independent trajectories
 - 3D sensor field-of-view visualization (cones, ground footprints, celestial projections)
@@ -49,11 +49,11 @@ A comprehensive suite for **real-time 3D visualization of satellite orbits, atti
 - ✅ Grafana with plugin pre-installed
 - ✅ Demo dashboard auto-created
 - ✅ TestData datasource pre-configured
-- ✅ Just add your data and Cesium token!
+- ✅ Works immediately with default base layer!
 
 ### Prerequisites
 - Docker & Docker Compose ([Install Guide](https://docs.docker.com/get-docker/))
-- Cesium Ion account ([Free Sign-up](https://cesium.com/ion/signup))
+- **(Optional)** Cesium Ion account - Only needed for premium base layers/maps ([Free Sign-up](https://cesium.com/ion/signup))
 
 ### Step 1: Clone Repository
 ```bash
@@ -79,11 +79,9 @@ docker-compose up -d
 The demo dashboard is **automatically created** with test data included!
 
 1. Go to **Dashboards** → **Satellite Visualizer Demo**
-2. Click **Edit** (pencil icon) on the panel
-3. In **Panel options**: Add your **Cesium Ion Access Token** ([Get free token](https://cesium.com/ion/signup))
-4. Click **Apply** and **Save dashboard**
+2. **That's it!** Three satellites are now orbiting Earth in 3D! 🛰️
 
-🛰️ **Done! Three satellites are now orbiting Earth in 3D!**
+> **💡 Optional**: To use premium base layers (satellite imagery, terrain maps), add a Cesium Ion Access Token in **Panel Options** ([Get free token](https://cesium.com/ion/signup)). The default base layer works without any token.
 
 > **What's included:** Starlink-4021, Hubble Space Telescope, and ISS with sensor coverage
 
@@ -203,9 +201,10 @@ grafana-satellite-visualizer/
 - View logs: `docker-compose logs grafana`
 
 **"Invalid Access Token" error:**
-- Get token from [Cesium Ion](https://cesium.com/ion/tokens)
-- Verify token permissions
-- Paste carefully (no extra spaces)
+- This only occurs if you try to use premium Cesium base layers/textures
+- The default base layer works without any token
+- If you need premium maps: Get token from [Cesium Ion](https://cesium.com/ion/tokens)
+- Verify token permissions and paste carefully (no extra spaces)
 
 **Timeline resets when changing settings:**
 - Update to latest version (this bug was fixed)
@@ -262,7 +261,7 @@ This project is licensed under the **Apache License 2.0** - see individual compo
 
 ### License Information
 
-- **3D Orbit & Attitude Plugin**: Apache License 2.0
+- **Satellite Visualization Plugin**: Apache License 2.0
   - Original work: Copyright © 2024 Lucas Brémond
   - Enhancements: Copyright © 2025 Ricardo Santos, Instituto Superior Técnico
   - Based on [Satellite Visualizer Plugin](https://github.com/lucas-bremond/satellite-visualizer)

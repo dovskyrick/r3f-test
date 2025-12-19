@@ -39,6 +39,15 @@ npm run generate:single
 Generates:
 - `output/single-satellite.json`
 
+### Generate Many Satellites (Stress Test)
+
+```bash
+npm run generate:many
+```
+
+Generates:
+- `output/many-satellites.json` - Array of 14 satellites for performance testing
+
 ## Output Format
 
 ### Multi-Satellite JSON
@@ -115,7 +124,7 @@ satellite-data-generator/
 2. In Grafana, add TestData data source
 3. Select "JSON API" scenario
 4. Paste JSON
-5. Use in 3D Orbit Attitude Plugin
+5. Use in Satellite Visualization Plugin
 
 ### In Custom Backend
 

@@ -2,7 +2,7 @@
 
 A powerful Grafana panel plugin for **real-time 3D visualization of satellite orbits, attitude, and sensor field-of-view** projections. Built on [CesiumJS](https://cesium.com/platform/cesiumjs/) for high-performance geospatial rendering.
 
-![3D Satellite Visualization](./src/img/screenshot.png)
+![3D Satellite Visualization](./src/img/Grafana_Vis_Example_2.png)
 
 > **⚡ Based On**: This plugin is an **extended and enhanced version** of the original [Satellite Visualizer Plugin](https://github.com/lucas-bremond/satellite-visualizer) by **Lucas Brémond**. We've added multi-satellite support, sensor visualization, attitude displays, and advanced camera controls. All original work remains under **Apache License 2.0** © 2024 Lucas Brémond.
 
@@ -75,7 +75,8 @@ Before you begin, ensure you have:
   - Navigate to **Access Tokens** in your account settings
   - Copy your default access token (or create a new one)
 - **Basic Terminal Knowledge**: For running setup commands
-- **(Optional)** Node.js & npm: For generating test data
+- **(Optional)** Node.js & npm: For generating custom test data or developing the plugin
+- **(Optional)** Cesium Ion Access Token: Only needed for premium base layers/maps
 
 ---
 
@@ -105,6 +106,8 @@ This starts Grafana on **http://localhost:3000** with:
 - Plugin directory mounted from `../grafana-plugins`
 - Unsigned plugins enabled
 
+> **🔄 Live Development**: The plugin's `dist/` folder is mounted directly into the Grafana container. This means you can rebuild the plugin (`npm run build`) and just refresh your browser to see changes - no need to restart the Docker container!
+
 #### 1.3 Access Grafana
 
 Open your browser to [http://localhost:3000](http://localhost:3000) and log in.
@@ -117,8 +120,8 @@ The plugin is automatically loaded if you started Grafana from the project's `do
 
 To verify:
 1. Go to **Configuration** → **Plugins**
-2. Search for "3D Orbit"
-3. You should see **"3D Orbit & Attitude Visualization"**
+2. Search for "Satellite"
+3. You should see **"Satellite Visualization"**
 
 > **Note**: If the plugin doesn't appear, ensure the `grafana-plugins/3d-orbit-attitude-plugin/dist` folder exists. You may need to build the plugin first (see Development section).
 
@@ -161,16 +164,18 @@ Generated files appear in `satellite-data-generator/output/`. Then follow **Opti
 
 1. **Create a Dashboard** (or edit an existing one)
 2. **Add a Panel**
-3. **Select Visualization**: Choose **"3D Orbit & Attitude Visualization"**
+3. **Select Visualization**: Choose **"Satellite Visualization"**
 4. **Configure Data Source**:
    - Select **TestData DB**
    - Scenario: **JSON API**
    - Paste your satellite JSON
 5. **Configure Panel Settings** (right sidebar):
-   - **Access Token**: Paste your Cesium Ion access token
    - **Show Trajectory**: Toggle trajectory paths
    - **Show Attitude Visualization**: Enable sensor cones, axes, FOV projections
+   - **(Optional) Access Token**: Only needed for premium Cesium base layers/textures
 6. **Save Dashboard**
+
+> **💡 Cesium Token**: The plugin works immediately with the default base layer. You only need a Cesium Ion token if you want to use premium satellite imagery or terrain maps.
 
 ---
 
@@ -256,7 +261,7 @@ Sensors are defined in `meta.custom.sensors`:
 - **Coordinates Type**: Geodetic (default), Cartesian Fixed (ECEF), or Cartesian Inertial (ECI)
 - **Model Asset Mode**: Point, 3D Model (Cesium Ion), or 3D Model (URI)
 - **Asset ID**: Cesium Ion asset ID for 3D satellite models
-- **Access Token**: Your Cesium Ion access token (required)
+- **Access Token**: Cesium Ion token (optional - only needed for premium base layers/textures or Cesium Ion 3D models)
 
 ### Trajectory Settings
 
@@ -456,9 +461,12 @@ We welcome contributions! This plugin is part of a research thesis and we're act
 
 ### "Invalid Access Token" Error
 
-1. Verify your Cesium Ion token at [https://cesium.com/ion/tokens](https://cesium.com/ion/tokens)
-2. Ensure token has necessary permissions
-3. Check token is pasted correctly (no extra spaces)
+1. **Note**: This error only appears if you try to use premium Cesium base layers/textures or Cesium Ion 3D models
+2. The plugin works fine with the default base layer without any token
+3. If you need premium features:
+   - Get a token at [https://cesium.com/ion/tokens](https://cesium.com/ion/tokens)
+   - Ensure token has necessary permissions
+   - Paste carefully (no extra spaces)
 
 ### Timeline Resets When Changing Settings
 
