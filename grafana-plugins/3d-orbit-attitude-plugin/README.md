@@ -2,6 +2,8 @@
 
 A powerful Grafana panel plugin for **real-time 3D visualization of satellite orbits, attitude, and sensor field-of-view** projections. Built on [CesiumJS](https://cesium.com/platform/cesiumjs/) for high-performance geospatial rendering.
 
+**🌐 [Try Live Demo](https://satellite-visualizer-demo.fly.dev/)** - No installation required!
+
 ![3D Satellite Visualization](./src/img/Grafana_Vis_Example_2.png)
 
 > **⚡ Based On**: This plugin is an **extended and enhanced version** of the original [Satellite Visualizer Plugin](https://github.com/lucas-bremond/satellite-visualizer) by **Lucas Brémond**. We've added multi-satellite support, sensor visualization, attitude displays, and advanced camera controls. All original work remains under **Apache License 2.0** © 2024 Lucas Brémond.

@@ -12,6 +12,9 @@ primary_region = 'lhr'  # London - closest to you in Portugal
   GF_SERVER_ROOT_URL = "https://satellite-visualizer-demo.fly.dev"
   GF_SERVER_HTTP_ADDR = "0.0.0.0"
   GF_SERVER_HTTP_PORT = "3000"
+  GF_AUTH_ANONYMOUS_ENABLED = "true"
+  GF_AUTH_ANONYMOUS_ORG_ROLE = "Viewer"
+  GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH = "/etc/grafana/provisioning/dashboards/satellite-demo.json"
   GF_INSTALL_PLUGINS = ""
 
 [http_service]

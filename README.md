@@ -6,6 +6,8 @@ A comprehensive suite for **real-time 3D visualization of satellite orbits, atti
 [![CesiumJS](https://img.shields.io/badge/CesiumJS-Powered-blue?logo=cesium)](https://cesium.com/platform/cesiumjs/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
+**🌐 [Try Live Demo](https://satellite-visualizer-demo.fly.dev/)** - No installation required!
+
 ![3D Satellite Visualization Demo](./grafana-plugins/3d-orbit-attitude-plugin/src/img/Grafana_Vis_Example.png)
 
 > **⚡ Built Upon**: This project extends and enhances the original [Satellite Visualizer Plugin](https://github.com/lucas-bremond/satellite-visualizer) by **Lucas Brémond** (Apache 2.0 License). We've added multi-satellite tracking, sensor FOV visualization, attitude displays, and advanced camera controls for aerospace research applications.
@@ -43,7 +45,15 @@ A comprehensive suite for **real-time 3D visualization of satellite orbits, atti
 
 ---
 
-## 🚀 Quick Start (5 Minutes)
+## 🚀 Quick Start
+
+### Option 1: Try Live Demo (Instant!)
+
+**🌐 [satellite-visualizer-demo.fly.dev](https://satellite-visualizer-demo.fly.dev/)**
+
+No installation needed! Click the link and start exploring immediately. The demo includes 3 satellites (Starlink-4021, Hubble, ISS) with sensors and attitude visualization.
+
+### Option 2: Run Locally (5 Minutes)
 
 **What you get out-of-the-box:**
 - ✅ Grafana with plugin pre-installed
