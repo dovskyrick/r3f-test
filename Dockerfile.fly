@@ -1,0 +1,18 @@
+FROM grafana/grafana:10.0.3
+
+# Set environment variables
+ENV GF_SECURITY_ADMIN_USER=admin \
+    GF_SECURITY_ADMIN_PASSWORD=admin \
+    GF_USERS_ALLOW_SIGN_UP=false \
+    GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=lucasbremond-satellitevisualizer-panel \
+    GF_PATHS_PLUGINS=/var/lib/grafana-plugins
+
+# Copy plugin to separate plugins directory (not overwritten by volume mount)
+COPY --chown=grafana:grafana grafana-plugins/3d-orbit-attitude-plugin/dist /var/lib/grafana-plugins/lucasbremond-satellitevisualizer-panel
+
+# Copy provisioning files (datasources and dashboards)
+COPY --chown=grafana:grafana grafana-server/provisioning /etc/grafana/provisioning
+
+# Expose Grafana port
+EXPOSE 3000
+

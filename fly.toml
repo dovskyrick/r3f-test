@@ -1,0 +1,32 @@
+app = 'satellite-visualizer-demo'
+primary_region = 'lhr'  # London - closest to you in Portugal
+
+[build]
+  dockerfile = 'Dockerfile.fly'
+
+[env]
+  GF_SECURITY_ADMIN_USER = "admin"
+  GF_SECURITY_ADMIN_PASSWORD = "admin"
+  GF_USERS_ALLOW_SIGN_UP = "false"
+  GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS = "lucasbremond-satellitevisualizer-panel"
+  GF_SERVER_ROOT_URL = "https://satellite-visualizer-demo.fly.dev"
+  GF_SERVER_HTTP_ADDR = "0.0.0.0"
+  GF_SERVER_HTTP_PORT = "3000"
+  GF_INSTALL_PLUGINS = ""
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[mounts]
+  source = "grafana_data"
+  destination = "/var/lib/grafana"
+
