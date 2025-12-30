@@ -148,6 +148,35 @@ const getStyles = () => {
       height: 100%;
       overflow: hidden;
     `,
+    tabContainer: css`
+      flex-shrink: 0;
+      display: flex;
+      background: rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    `,
+    tab: css`
+      flex: 1;
+      padding: 14px 16px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+      
+      &:hover {
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      
+      &.active {
+        color: rgba(255, 255, 255, 0.95);
+        border-bottom-color: #FF9800;
+        background: rgba(255, 152, 0, 0.08);
+      }
+    `,
     sidebarTitle: css`
       flex-shrink: 0;
       padding: 16px;
@@ -418,6 +447,15 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [trackedSatelliteId, setTrackedSatelliteId] = useState<string | null>(null);
   const [hiddenSatellites, setHiddenSatellites] = useState<Set<string>>(new Set());
   const [settingsModalSatelliteId, setSettingsModalSatelliteId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'satellites' | 'groundstations'>('satellites');
+
+  // Mock ground stations (placeholder data for UI only)
+  const mockGroundStations = [
+    { id: 'GS-MAD', name: 'Madrid Deep Space' },
+    { id: 'GS-GDS', name: 'Goldstone Complex' },
+    { id: 'GS-CAN', name: 'Canberra Station' },
+    { id: 'GS-HAW', name: 'Hawaii Tracking' },
+  ];
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
@@ -1201,49 +1239,107 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           ></div>
         </div>
 
-        {/* Sidebar - Satellite List */}
+        {/* Sidebar - Satellite & Ground Station Lists */}
         <div className={cx(styles.sidebar, isSidebarOpen && 'open')}>
           <div className={styles.sidebarContent}>
-            {satellites.length === 0 ? (
-              <div className={styles.emptyState}>No satellites available</div>
-            ) : (
+            {/* Tab Navigation */}
+            <div className={styles.tabContainer}>
+              <button
+                className={cx(styles.tab, activeTab === 'satellites' && 'active')}
+                onClick={() => setActiveTab('satellites')}
+              >
+                Satellites
+              </button>
+              <button
+                className={cx(styles.tab, activeTab === 'groundstations' && 'active')}
+                onClick={() => setActiveTab('groundstations')}
+              >
+                Ground Stations
+              </button>
+            </div>
+
+            {/* Satellites Tab Content */}
+            {activeTab === 'satellites' && (
+              <>
+                {satellites.length === 0 ? (
+                  <div className={styles.emptyState}>No satellites available</div>
+                ) : (
+                  <div className={styles.satelliteList}>
+                    {satellites.map((satellite) => (
+                      <div 
+                        key={satellite.id} 
+                        className={cx(
+                          styles.satelliteItem,
+                          trackedSatelliteId === satellite.id && 'tracked'
+                        )}
+                        onClick={() => handleSatelliteClick(satellite.id)}
+                      >
+                        <button
+                          className={styles.visibilityToggle}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSatelliteVisibility(satellite.id);
+                          }}
+                          title={isSatelliteVisible(satellite.id) ? 'Hide satellite' : 'Show satellite'}
+                        >
+                          {isSatelliteVisible(satellite.id) ? <Eye size={16} /> : <EyeOff size={16} />}
+                        </button>
+                        
+                        <div className={styles.satelliteInfo}>
+                          <div className={styles.satelliteName} title={satellite.name}>
+                            {satellite.name}
+                          </div>
+                          <div className={styles.satelliteId} title={satellite.id}>
+                            {satellite.id}
+                          </div>
+                        </div>
+                        
+                        <button
+                          className={styles.settingsButton}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSettingsModalSatelliteId(satellite.id);
+                          }}
+                          title="Satellite settings"
+                        >
+                          <Settings size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Ground Stations Tab Content */}
+            {activeTab === 'groundstations' && (
               <div className={styles.satelliteList}>
-                {satellites.map((satellite) => (
+                {mockGroundStations.map((gs) => (
                   <div 
-                    key={satellite.id} 
-                    className={cx(
-                      styles.satelliteItem,
-                      trackedSatelliteId === satellite.id && 'tracked'
-                    )}
-                    onClick={() => handleSatelliteClick(satellite.id)}
+                    key={gs.id} 
+                    className={styles.satelliteItem}
                   >
                     <button
                       className={styles.visibilityToggle}
-                      onClick={(e) => {
-                        e.stopPropagation(); // Don't trigger satellite selection
-                        toggleSatelliteVisibility(satellite.id);
-                      }}
-                      title={isSatelliteVisible(satellite.id) ? 'Hide satellite' : 'Show satellite'}
+                      onClick={(e) => e.stopPropagation()}
+                      title="Ground station visibility (coming soon)"
                     >
-                      {isSatelliteVisible(satellite.id) ? <Eye size={16} /> : <EyeOff size={16} />}
+                      <Eye size={16} />
                     </button>
                     
                     <div className={styles.satelliteInfo}>
-                      <div className={styles.satelliteName} title={satellite.name}>
-                        {satellite.name}
+                      <div className={styles.satelliteName} title={gs.name}>
+                        {gs.name}
                       </div>
-                      <div className={styles.satelliteId} title={satellite.id}>
-                        {satellite.id}
+                      <div className={styles.satelliteId} title={gs.id}>
+                        {gs.id}
                       </div>
                     </div>
                     
                     <button
                       className={styles.settingsButton}
-                      onClick={(e) => {
-                        e.stopPropagation(); // Don't trigger satellite selection
-                        setSettingsModalSatelliteId(satellite.id);
-                      }}
-                      title="Satellite settings"
+                      onClick={(e) => e.stopPropagation()}
+                      title="Ground station settings (coming soon)"
                     >
                       <Settings size={16} />
                     </button>
