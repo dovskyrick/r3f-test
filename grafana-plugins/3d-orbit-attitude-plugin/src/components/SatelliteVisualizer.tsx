@@ -1244,7 +1244,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               key={gs.id}
             >
               <PointGraphics
-                pixelSize={20}
+                pixelSize={6}
                 color={Color.ORANGE}
                 outlineColor={Color.DARKORANGE}
                 outlineWidth={2}
