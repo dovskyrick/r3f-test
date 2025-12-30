@@ -12,7 +12,7 @@ import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import {
   // SatelliteEntityRenderer,
   // SensorVisualizationRenderer,
-  // BodyAxesRenderer,
+  BodyAxesRenderer,
   CelestialGridRenderer,
   GroundStationRenderer,
 } from './entities/CesiumEntityRenderers';
@@ -31,7 +31,6 @@ import {
   Transforms,
   Color,
   PolylineDashMaterialProperty,
-  PolylineArrowMaterialProperty,
   IonResource,
   Cartesian2,
   Matrix3,
@@ -945,45 +944,20 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         {/* Body Axes (X/Y/Z attitude vectors) - Per-satellite */}
         {options.showAttitudeVisualization && options.showBodyAxes && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
-          .map((satellite) =>
-          attitudeVectors.map((vector, index) => (
-            <Entity 
-              availability={satellite.availability} 
-              key={`${satellite.id}-attitude-vector-${index}`}
-            >
-              <PolylineGraphics
-                positions={new CallbackProperty((time) => {
-                  const pos = satellite.position.getValue(time);
-                  const orient = satellite.orientation.getValue(time);
-                  if (!pos || !orient) {
-                    return [];
-                  }
-                  
-                  // Calculate dynamic vector length based on tracking mode and camera distance
-                  const viewer = viewerRef.current?.cesiumElement;
-                  const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
-                  const vectorLength = getScaledLength(50000, isThisSatelliteTracked, viewer, pos);
-                  
-                  // Rotate axis by satellite orientation to get direction in ECEF
-                  const rotationMatrix = Matrix3.fromQuaternion(orient);
-                  const axisECEF = Matrix3.multiplyByVector(rotationMatrix, vector.axis, new Cartesian3());
-                  
-                  // Calculate endpoint with dynamic length
-                  const endPos = Cartesian3.add(
-                    pos,
-                    Cartesian3.multiplyByScalar(axisECEF, vectorLength, new Cartesian3()),
-                    new Cartesian3()
-                  );
-                  
-                  return [pos, endPos];
-                }, false)}
-                width={10}
-                material={new PolylineArrowMaterialProperty(vector.color)}
-                arcType={ArcType.NONE}
+          .map((satellite) => {
+            const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
+            return (
+              <BodyAxesRenderer
+                key={`${satellite.id}-body-axes`}
+                satellite={satellite}
+                options={options}
+                isTracked={isThisSatelliteTracked}
+                viewerRef={viewerRef}
+                attitudeVectors={attitudeVectors}
               />
-            </Entity>
-          ))
-        )}
+            );
+          })
+        }
         
         {/* Sensor FOV Cones - Per-satellite sensors */}
         {options.showAttitudeVisualization && options.showSensorCones && satellites
