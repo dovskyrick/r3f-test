@@ -9,6 +9,7 @@ import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import { getScaledLength } from 'utils/cameraScaling';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
+import { Eye, EyeOff, Settings, X } from 'lucide-react';
 
 import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics } from 'resium';
 import {
@@ -245,6 +246,100 @@ const getStyles = () => {
       overflow: hidden;
       text-overflow: ellipsis;
     `,
+    settingsButton: css`
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      margin-left: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      color: rgba(255, 255, 255, 0.6);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+    `,
+    modalOverlay: css`
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(4px);
+    `,
+    modal: css`
+      background: rgba(30, 30, 30, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    `,
+    modalHeader: css`
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.02);
+    `,
+    modalTitle: css`
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.95);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    `,
+    modalClose: css`
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      border-radius: 4px;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 1);
+      }
+    `,
+    modalContent: css`
+      padding: 24px 20px;
+      overflow-y: auto;
+      flex: 1;
+      color: rgba(255, 255, 255, 0.7);
+    `,
     emptyState: css`
       padding: 32px 16px;
       text-align: center;
@@ -322,6 +417,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [satellites, setSatellites] = useState<ParsedSatellite[]>([]);
   const [trackedSatelliteId, setTrackedSatelliteId] = useState<string | null>(null);
   const [hiddenSatellites, setHiddenSatellites] = useState<Set<string>>(new Set());
+  const [settingsModalSatelliteId, setSettingsModalSatelliteId] = useState<string | null>(null);
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
@@ -1129,7 +1225,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                       }}
                       title={isSatelliteVisible(satellite.id) ? 'Hide satellite' : 'Show satellite'}
                     >
-                      {isSatelliteVisible(satellite.id) ? '◉' : '○'}
+                      {isSatelliteVisible(satellite.id) ? <Eye size={16} /> : <EyeOff size={16} />}
                     </button>
                     
                     <div className={styles.satelliteInfo}>
@@ -1140,12 +1236,55 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                         {satellite.id}
                       </div>
                     </div>
+                    
+                    <button
+                      className={styles.settingsButton}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Don't trigger satellite selection
+                        setSettingsModalSatelliteId(satellite.id);
+                      }}
+                      title="Satellite settings"
+                    >
+                      <Settings size={16} />
+                    </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
         </div>
+
+        {/* Settings Modal */}
+        {settingsModalSatelliteId && (
+          <div 
+            className={styles.modalOverlay}
+            onClick={() => setSettingsModalSatelliteId(null)}
+          >
+            <div 
+              className={styles.modal}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>
+                  <Settings size={18} />
+                  {satellites.find(sat => sat.id === settingsModalSatelliteId)?.name || 'Satellite Settings'}
+                </h3>
+                <button
+                  className={styles.modalClose}
+                  onClick={() => setSettingsModalSatelliteId(null)}
+                  title="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className={styles.modalContent}>
+                <p style={{ textAlign: 'center', padding: '40px 20px' }}>
+                  Settings panel coming soon...
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

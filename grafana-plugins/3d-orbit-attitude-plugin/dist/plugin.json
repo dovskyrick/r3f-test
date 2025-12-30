@@ -20,8 +20,8 @@
         "path": "img/screenshot.png"
       }
     ],
-    "version": "1.0.0",
-    "updated": "2025-12-19"
+    "version": "1.0.1",
+    "updated": "2025-12-30"
   },
   "dependencies": {
     "grafanaDependency": ">=9.3.2",

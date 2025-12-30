@@ -68,6 +68,7 @@
     "@grafana/schema": "10.0.3",
     "@grafana/ui": "10.0.3",
     "cesium": "^1.112.0",
+    "lucide-react": "^0.562.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "resium": "^1.17.2",
