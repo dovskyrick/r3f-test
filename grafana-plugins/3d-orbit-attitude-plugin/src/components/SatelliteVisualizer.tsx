@@ -8,6 +8,14 @@ import { ParsedSatellite } from 'types/satelliteTypes';
 import { parseGroundStations } from 'parsers/groundStationParser';
 import { GroundStation } from 'types/groundStationTypes';
 import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
+// TODO: Uncomment as we extract each renderer component
+import {
+  // SatelliteEntityRenderer,
+  // SensorVisualizationRenderer,
+  // BodyAxesRenderer,
+  CelestialGridRenderer,
+  GroundStationRenderer,
+} from './entities/CesiumEntityRenderers';
 import { getScaledLength } from 'utils/cameraScaling';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
@@ -34,9 +42,6 @@ import {
   UrlTemplateImageryProvider,
   ProviderViewModel,
   buildModuleUrl,
-  LabelStyle,
-  HorizontalOrigin,
-  VerticalOrigin,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -1175,50 +1180,15 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           ))
         )}
         
-        {/* RA/Dec Celestial Grid - Right Ascension Lines (Meridians) */}
-        {options.showAttitudeVisualization && options.showRADecGrid && raLines.map((line, index) => (
-          <Entity name={`RA Line ${index}`} key={`ra-${index}`}>
-            <PolylineGraphics
-              positions={line}
-              width={1}
-              material={Color.WHITE.withAlpha(0.5)}
-              arcType={ArcType.NONE}
-            />
-          </Entity>
-        ))}
-        {/* RA/Dec Celestial Grid - Declination Lines (Parallels) - Light Brown */}
-        {options.showAttitudeVisualization && options.showRADecGrid && decLines.map((line, index) => (
-          <Entity name={`Dec Line ${index}`} key={`dec-${index}`}>
-            <PolylineGraphics
-              positions={line}
-              width={1}
-              material={Color.fromBytes(200, 180, 160, 128)}
-              arcType={ArcType.NONE}
-            />
-          </Entity>
-        ))}
-        {/* RA/Dec Grid Labels - Color coded: White for RA (hours), Light Brown for Dec (degrees) */}
-        {options.showAttitudeVisualization && options.showRADecGrid && options.showGridLabels && gridLabels.map((label, index) => {
-          // Determine if this is an RA label (ends with 'h') or Dec label (ends with '°')
-          const isRALabel = label.text.endsWith('h');
-          const labelColor = isRALabel ? Color.WHITE : Color.fromBytes(200, 180, 160, 255);
-          
-          return (
-            <Entity position={label.position} key={`grid-label-${index}`}>
-              <LabelGraphics
-                text={label.text}
-                font={`${options.gridLabelSize}px sans-serif`}
-                fillColor={labelColor}
-                outlineColor={Color.BLACK}
-                outlineWidth={2}
-                style={LabelStyle.FILL_AND_OUTLINE}
-                pixelOffset={new Cartesian2(0, -10)}
-                horizontalOrigin={HorizontalOrigin.CENTER}
-                verticalOrigin={VerticalOrigin.BOTTOM}
-              />
-            </Entity>
-          );
-        })}
+        {/* RA/Dec Celestial Grid */}
+        {options.showAttitudeVisualization && options.showRADecGrid && (
+          <CelestialGridRenderer
+            options={options}
+            raLines={raLines}
+            decLines={decLines}
+            gridLabels={gridLabels}
+          />
+        )}
         {options.locations.map((location, index) => (
           <Entity
             name={location.name}
@@ -1234,35 +1204,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         ))}
 
         {/* Ground Stations */}
-        {groundStations.map((gs) => {
-          const gsPosition = Cartesian3.fromDegrees(gs.longitude, gs.latitude, gs.altitude);
-          
-          return (
-            <Entity
-              name={gs.name}
-              position={gsPosition}
-              key={gs.id}
-            >
-              <PointGraphics
-                pixelSize={6}
-                color={Color.ORANGE}
-                outlineColor={Color.DARKORANGE}
-                outlineWidth={2}
-              />
-              <LabelGraphics
-                text={gs.name}
-                font="14px sans-serif"
-                fillColor={Color.WHITE}
-                outlineColor={Color.BLACK}
-                outlineWidth={2}
-                style={LabelStyle.FILL_AND_OUTLINE}
-                pixelOffset={new Cartesian2(0, -25)}
-                horizontalOrigin={HorizontalOrigin.CENTER}
-                verticalOrigin={VerticalOrigin.BOTTOM}
-              />
-            </Entity>
-          );
-        })}
+        {groundStations.map((gs) => (
+          <GroundStationRenderer key={gs.id} groundStation={gs} />
+        ))}
       </Viewer>
 
           <div
