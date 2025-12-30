@@ -1,11 +1,13 @@
 import React from 'react';
-import { Color, Cartesian3, Cartesian2, JulianDate, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty } from 'cesium';
-import { Entity, PointGraphics, LabelGraphics, PolylineGraphics } from 'resium';
+import { Color, Cartesian3, Cartesian2, JulianDate, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid } from 'cesium';
+import { Entity, PointGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics } from 'resium';
 import { ParsedSatellite } from 'types/satelliteTypes';
 import { SensorDefinition } from 'types/sensorTypes';
 import { GroundStation } from 'types/groundStationTypes';
 import { SimpleOptions } from 'types';
 import { getScaledLength } from 'utils/cameraScaling';
+import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
+import { computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonHierarchy } from 'utils/projections';
 
 /**
  * CesiumEntityRenderers.tsx
@@ -61,8 +63,7 @@ export interface SensorVisualizationProps {
   options: SimpleOptions;
   isTracked: boolean;
   viewerRef: React.RefObject<any>;
-  timestamp: JulianDate | null;
-  sensorColor: Color;
+  sensorIndex: number; // For color selection
 }
 
 export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = ({
@@ -71,12 +72,195 @@ export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = (
   options,
   isTracked,
   viewerRef,
-  timestamp,
-  sensorColor,
+  sensorIndex,
 }) => {
-  // TODO: Extract sensor visualization logic from main component
-  // Will render: Sensor cone, FOV footprint, celestial projection
-  return null;
+  const sensorColor = SENSOR_COLORS[sensorIndex % SENSOR_COLORS.length];
+  
+  return (
+    <>
+      {/* 1. Sensor Cone (3D FOV visualization) */}
+      {options.showSensorCones && (
+        <Entity 
+          key={`${satellite.id}-sensor-cone-${sensor.id}`}
+          name={`${satellite.name} - ${sensor.name} (FOV: ${sensor.fov}°)`}
+          availability={satellite.availability}
+        >
+          <PolylineGraphics
+            positions={new CallbackProperty((time) => {
+              const satPos = satellite.position.getValue(time);
+              const satOrient = satellite.orientation.getValue(time);
+              if (!satPos || !satOrient) {
+                return [];
+              }
+              
+              // Sensor body frame orientation (constant, relative to satellite)
+              const sensorBodyQuat = new Quaternion(
+                sensor.orientation.qx,
+                sensor.orientation.qy,
+                sensor.orientation.qz,
+                sensor.orientation.qw
+              );
+              
+              // Compute sensor world orientation: q_world = q_satellite × q_sensor_body
+              const sensorWorldQuat = Quaternion.multiply(
+                satOrient,
+                sensorBodyQuat,
+                new Quaternion()
+              );
+              
+              // Get sensor pointing direction (Z-axis in sensor frame)
+              const rotMatrix = Matrix3.fromQuaternion(sensorWorldQuat);
+              const sensorDir = Matrix3.multiplyByVector(
+                rotMatrix,
+                new Cartesian3(0, 0, 1),  // Z-axis
+                new Cartesian3()
+              );
+              Cartesian3.normalize(sensorDir, sensorDir);
+              
+              // Generate cone mesh with camera-scaled length
+              const viewer = viewerRef.current?.cesiumElement;
+              const coneLength = getScaledLength(50000, isTracked, viewer, satPos);
+              
+              return generateConeMesh(satPos, sensorDir, sensor.fov, coneLength, 16);
+            }, false)}
+            width={1.5}
+            material={Color.fromBytes(
+              sensorColor.r,
+              sensorColor.g,
+              sensorColor.b,
+              Math.floor(sensorColor.a * 255)
+            )}
+            arcType={ArcType.NONE}
+          />
+        </Entity>
+      )}
+      
+      {/* 2. FOV Ground Footprint */}
+      {options.showFOVFootprint && (
+        <Entity 
+          key={`${satellite.id}-sensor-footprint-${sensor.id}`}
+          name={`${satellite.name} - ${sensor.name} Footprint`}
+          availability={satellite.availability}
+        >
+          <PolygonGraphics
+            hierarchy={new CallbackProperty((time) => {
+              const satPos = satellite.position.getValue(time);
+              const satOrient = satellite.orientation.getValue(time);
+              if (!satPos || !satOrient) {
+                return createDummyPolygonHierarchy();
+              }
+
+              // Sensor body frame orientation (constant, relative to satellite)
+              const sensorBodyQuat = new Quaternion(
+                sensor.orientation.qx,
+                sensor.orientation.qy,
+                sensor.orientation.qz,
+                sensor.orientation.qw
+              );
+              
+              // Compute sensor world orientation: q_world = q_satellite × q_sensor_body
+              const sensorWorldQuat = Quaternion.multiply(
+                satOrient,
+                sensorBodyQuat,
+                new Quaternion()
+              );
+              
+              // Compute FOV footprint
+              const footprintPoints = computeFOVFootprint(
+                satPos,
+                sensorWorldQuat,
+                sensor.fov / 2  // computeFOVFootprint expects half-angle
+              );
+
+              // Return points, or dummy triangle if cone doesn't hit Earth
+              return footprintPoints.length > 0 
+                ? new PolygonHierarchy(footprintPoints)
+                : createDummyPolygonHierarchy();
+            }, false) as any}
+            material={Color.fromBytes(
+              sensorColor.r,
+              sensorColor.g,
+              sensorColor.b,
+              Math.floor(0.3 * 255)  // 30% alpha for footprint
+            )}
+            outline={true}
+            outlineColor={Color.fromBytes(
+              sensorColor.r,
+              sensorColor.g,
+              sensorColor.b,
+              255
+            )}
+            outlineWidth={2}
+            height={0}
+          />
+        </Entity>
+      )}
+      
+      {/* 3. Celestial FOV Projection */}
+      {options.showCelestialFOV && (
+        <Entity 
+          key={`${satellite.id}-sensor-celestial-${sensor.id}`}
+          name={`${satellite.name} - ${sensor.name} Celestial FOV`}
+          availability={satellite.availability}
+        >
+          <PolygonGraphics
+            hierarchy={new CallbackProperty((time) => {
+              const satPos = satellite.position.getValue(time);
+              const satOrient = satellite.orientation.getValue(time);
+              if (!satPos || !satOrient) {
+                return createDummyPolygonHierarchy();
+              }
+
+              // Sensor body frame orientation
+              const sensorBodyQuat = new Quaternion(
+                sensor.orientation.qx,
+                sensor.orientation.qy,
+                sensor.orientation.qz,
+                sensor.orientation.qw
+              );
+              
+              // Compute sensor world orientation
+              const sensorWorldQuat = Quaternion.multiply(
+                satOrient,
+                sensorBodyQuat,
+                new Quaternion()
+              );
+              
+              // Celestial sphere radius (same as RA/Dec grid)
+              const celestialRadius = Ellipsoid.WGS84.maximumRadius * 100;
+              
+              // Compute celestial projection
+              const celestialPoints = computeFOVCelestialProjection(
+                satPos,
+                sensorWorldQuat,
+                sensor.fov / 2,  // Half-angle
+                celestialRadius
+              );
+
+              return celestialPoints.length > 0 
+                ? new PolygonHierarchy(celestialPoints)
+                : createDummyPolygonHierarchy();
+            }, false) as any}
+            material={Color.fromBytes(
+              sensorColor.r,
+              sensorColor.g,
+              sensorColor.b,
+              Math.floor(0.3 * 255)  // 30% alpha for transparency
+            )}
+            outline={true}
+            outlineColor={Color.fromBytes(
+              sensorColor.r,
+              sensorColor.g,
+              sensorColor.b,
+              255
+            )}
+            outlineWidth={1}  // Match celestial grid line width
+            perPositionHeight={true}
+          />
+        </Entity>
+      )}
+    </>
+  );
 };
 
 // ============================================================================
