@@ -13,7 +13,7 @@ import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { Eye, EyeOff, Settings, X, ChevronRight, Menu } from 'lucide-react';
 
-import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics, EllipsoidGraphics } from 'resium';
+import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics } from 'resium';
 import {
   Ion,
   JulianDate,
@@ -1234,32 +1234,35 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         ))}
 
         {/* Ground Stations */}
-        {groundStations.map((gs) => (
-          <Entity
-            name={gs.name}
-            position={Cartesian3.fromDegrees(gs.longitude, gs.latitude, gs.altitude)}
-            key={gs.id}
-          >
-            <EllipsoidGraphics
-              radii={new Cartesian3(50000, 50000, 50000)}  // 50km radius sphere (visible from space)
-              material={Color.ORANGE.withAlpha(0.8)}
-              outline={true}
-              outlineColor={Color.DARKORANGE}
-              outlineWidth={2}
-            />
-            <LabelGraphics
-              text={gs.name}
-              font="14px sans-serif"
-              fillColor={Color.WHITE}
-              outlineColor={Color.BLACK}
-              outlineWidth={2}
-              style={LabelStyle.FILL_AND_OUTLINE}
-              pixelOffset={new Cartesian2(0, -60)}
-              horizontalOrigin={HorizontalOrigin.CENTER}
-              verticalOrigin={VerticalOrigin.BOTTOM}
-            />
-          </Entity>
-        ))}
+        {groundStations.map((gs) => {
+          const gsPosition = Cartesian3.fromDegrees(gs.longitude, gs.latitude, gs.altitude);
+          
+          return (
+            <Entity
+              name={gs.name}
+              position={gsPosition}
+              key={gs.id}
+            >
+              <PointGraphics
+                pixelSize={20}
+                color={Color.ORANGE}
+                outlineColor={Color.DARKORANGE}
+                outlineWidth={2}
+              />
+              <LabelGraphics
+                text={gs.name}
+                font="14px sans-serif"
+                fillColor={Color.WHITE}
+                outlineColor={Color.BLACK}
+                outlineWidth={2}
+                style={LabelStyle.FILL_AND_OUTLINE}
+                pixelOffset={new Cartesian2(0, -25)}
+                horizontalOrigin={HorizontalOrigin.CENTER}
+                verticalOrigin={VerticalOrigin.BOTTOM}
+              />
+            </Entity>
+          );
+        })}
       </Viewer>
 
           <div
