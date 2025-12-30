@@ -1,0 +1,42 @@
+[
+  {
+    "type": "groundStations",
+    "meta": {
+      "custom": {
+        "groundStations": [
+          {
+            "id": "GS-DSS14",
+            "name": "Goldstone - DSS-14",
+            "latitude": 35.4267,
+            "longitude": -116.8900,
+            "altitude": 1071
+          },
+          {
+            "id": "GS-DSS43",
+            "name": "Canberra - DSS-43",
+            "latitude": -35.4019,
+            "longitude": 148.9819,
+            "altitude": 758
+          },
+          {
+            "id": "GS-DSS63",
+            "name": "Madrid - DSS-63",
+            "latitude": 40.4314,
+            "longitude": -4.2481,
+            "altitude": 907
+          },
+          {
+            "id": "GS-NNO",
+            "name": "New Norcia",
+            "latitude": -31.0483,
+            "longitude": 116.1914,
+            "altitude": 287
+          }
+        ]
+      }
+    },
+    "columns": [],
+    "rows": []
+  }
+]
+

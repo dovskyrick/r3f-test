@@ -5,13 +5,15 @@ import { computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonH
 import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
 import { parseSatellites } from 'parsers/satelliteParser';
 import { ParsedSatellite } from 'types/satelliteTypes';
+import { parseGroundStations } from 'parsers/groundStationParser';
+import { GroundStation } from 'types/groundStationTypes';
 import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import { getScaledLength } from 'utils/cameraScaling';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { Eye, EyeOff, Settings, X, ChevronRight, Menu } from 'lucide-react';
 
-import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics } from 'resium';
+import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics, EllipsoidGraphics } from 'resium';
 import {
   Ion,
   JulianDate,
@@ -444,18 +446,11 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
   const [timestamp, setTimestamp] = useState<JulianDate | null>(null);
   const [satellites, setSatellites] = useState<ParsedSatellite[]>([]);
+  const [groundStations, setGroundStations] = useState<GroundStation[]>([]);
   const [trackedSatelliteId, setTrackedSatelliteId] = useState<string | null>(null);
   const [hiddenSatellites, setHiddenSatellites] = useState<Set<string>>(new Set());
   const [settingsModalSatelliteId, setSettingsModalSatelliteId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'satellites' | 'groundstations'>('satellites');
-
-  // Mock ground stations (placeholder data for UI only)
-  const mockGroundStations = [
-    { id: 'GS-MAD', name: 'Madrid Deep Space' },
-    { id: 'GS-GDS', name: 'Goldstone Complex' },
-    { id: 'GS-CAN', name: 'Canberra Station' },
-    { id: 'GS-HAW', name: 'Hawaii Tracking' },
-  ];
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
@@ -497,6 +492,11 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         const parsedSatellites = parseSatellites(data.series, options);
         setSatellites(parsedSatellites);
         
+        // Parse ground stations
+        const parsedGroundStations = parseGroundStations(data);
+        setGroundStations(parsedGroundStations);
+        console.log(`📡 Parsed ${parsedGroundStations.length} ground station(s)`);
+        
         // Set timestamp from first satellite's first data point
         if (parsedSatellites.length > 0) {
           const firstSatellite = parsedSatellites[0];
@@ -508,6 +508,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       } catch (error) {
         console.error('❌ Failed to parse satellites:', error);
         setSatellites([]);
+        setGroundStations([]);
       }
     } else {
       setSatellites([]);
@@ -1231,6 +1232,34 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             <LabelGraphics text={location.name} pixelOffset={new Cartesian2(30.0, 30.0)} />
           </Entity>
         ))}
+
+        {/* Ground Stations */}
+        {groundStations.map((gs) => (
+          <Entity
+            name={gs.name}
+            position={Cartesian3.fromDegrees(gs.longitude, gs.latitude, gs.altitude)}
+            key={gs.id}
+          >
+            <EllipsoidGraphics
+              radii={new Cartesian3(50000, 50000, 50000)}  // 50km radius sphere (visible from space)
+              material={Color.ORANGE.withAlpha(0.8)}
+              outline={true}
+              outlineColor={Color.DARKORANGE}
+              outlineWidth={2}
+            />
+            <LabelGraphics
+              text={gs.name}
+              font="14px sans-serif"
+              fillColor={Color.WHITE}
+              outlineColor={Color.BLACK}
+              outlineWidth={2}
+              style={LabelStyle.FILL_AND_OUTLINE}
+              pixelOffset={new Cartesian2(0, -60)}
+              horizontalOrigin={HorizontalOrigin.CENTER}
+              verticalOrigin={VerticalOrigin.BOTTOM}
+            />
+          </Entity>
+        ))}
       </Viewer>
 
           <div
@@ -1313,39 +1342,45 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
             {/* Ground Stations Tab Content */}
             {activeTab === 'groundstations' && (
-              <div className={styles.satelliteList}>
-                {mockGroundStations.map((gs) => (
-                  <div 
-                    key={gs.id} 
-                    className={styles.satelliteItem}
-                  >
-                    <button
-                      className={styles.visibilityToggle}
-                      onClick={(e) => e.stopPropagation()}
-                      title="Ground station visibility (coming soon)"
-                    >
-                      <Eye size={16} />
-                    </button>
-                    
-                    <div className={styles.satelliteInfo}>
-                      <div className={styles.satelliteName} title={gs.name}>
-                        {gs.name}
+              <>
+                {groundStations.length === 0 ? (
+                  <div className={styles.emptyState}>No ground stations available</div>
+                ) : (
+                  <div className={styles.satelliteList}>
+                    {groundStations.map((gs) => (
+                      <div 
+                        key={gs.id} 
+                        className={styles.satelliteItem}
+                      >
+                        <button
+                          className={styles.visibilityToggle}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Ground station visibility (coming soon)"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        
+                        <div className={styles.satelliteInfo}>
+                          <div className={styles.satelliteName} title={gs.name}>
+                            {gs.name}
+                          </div>
+                          <div className={styles.satelliteId} title={gs.id}>
+                            {gs.id}
+                          </div>
+                        </div>
+                        
+                        <button
+                          className={styles.settingsButton}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Ground station settings (coming soon)"
+                        >
+                          <Settings size={16} />
+                        </button>
                       </div>
-                      <div className={styles.satelliteId} title={gs.id}>
-                        {gs.id}
-                      </div>
-                    </div>
-                    
-                    <button
-                      className={styles.settingsButton}
-                      onClick={(e) => e.stopPropagation()}
-                      title="Ground station settings (coming soon)"
-                    >
-                      <Settings size={16} />
-                    </button>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
