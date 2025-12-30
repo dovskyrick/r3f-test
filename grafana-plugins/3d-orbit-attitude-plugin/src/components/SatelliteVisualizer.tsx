@@ -9,7 +9,7 @@ import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import { getScaledLength } from 'utils/cameraScaling';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
-import { Eye, EyeOff, Settings, X } from 'lucide-react';
+import { Eye, EyeOff, Settings, X, ChevronRight, Menu } from 'lucide-react';
 
 import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics } from 'resium';
 import {
@@ -743,7 +743,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             title={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
           >
-            {isSidebarOpen ? '✕' : '☰'}
+            {isSidebarOpen ? <ChevronRight size={20} /> : <Menu size={20} />}
           </button>
       
           <Viewer
