@@ -393,6 +393,45 @@ const getStyles = () => {
       overflow-y: auto;
       flex: 1;
       color: rgba(255, 255, 255, 0.7);
+      max-height: calc(80vh - 120px);
+    `,
+    settingRow: css`
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    `,
+    settingLabel: css`
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      cursor: pointer;
+      user-select: none;
+      
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #4CAF50;
+      }
+      
+      span {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+      }
+    `,
+    settingDescription: css`
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-left: 30px;
+      margin-top: 4px;
+      line-height: 1.4;
     `,
     emptyState: css`
       padding: 32px 16px;
@@ -474,6 +513,21 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [hiddenSatellites, setHiddenSatellites] = useState<Set<string>>(new Set());
   const [settingsModalSatelliteId, setSettingsModalSatelliteId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'satellites' | 'groundstations'>('satellites');
+  
+  // Per-satellite render settings (for future features like transparent cones)
+  const [satelliteRenderSettings, setSatelliteRenderSettings] = useState<Map<string, {
+    transparentCones: boolean;
+    // Future settings will go here
+    setting2: boolean;
+    setting3: boolean;
+    setting4: boolean;
+    setting5: boolean;
+    setting6: boolean;
+    setting7: boolean;
+    setting8: boolean;
+    setting9: boolean;
+    setting10: boolean;
+  }>>(new Map());
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
@@ -1153,9 +1207,150 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 </button>
               </div>
               <div className={styles.modalContent}>
-                <p style={{ textAlign: 'center', padding: '40px 20px' }}>
-                  Settings panel coming soon...
-                </p>
+                {/* Setting 1: Transparent Sensor Cones (Functional) */}
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input
+                        type="checkbox"
+                        checked={satelliteRenderSettings.get(settingsModalSatelliteId!)?.transparentCones || false}
+                        onChange={(e) => {
+                          const newSettings = new Map(satelliteRenderSettings);
+                          const current = newSettings.get(settingsModalSatelliteId!) || {
+                            transparentCones: false,
+                            setting2: false,
+                            setting3: false,
+                            setting4: false,
+                            setting5: false,
+                            setting6: false,
+                            setting7: false,
+                            setting8: false,
+                            setting9: false,
+                            setting10: false,
+                          };
+                          newSettings.set(settingsModalSatelliteId!, {
+                            ...current,
+                            transparentCones: e.target.checked
+                          });
+                          setSatelliteRenderSettings(newSettings);
+                        }}
+                      />
+                      <span>Transparent Sensor Cones</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Show filled transparent cones instead of wireframe grid (coming soon)
+                    </div>
+                  </div>
+                </div>
+
+                {/* Setting 2-10: Placeholder toggles for scroll testing */}
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input type="checkbox" disabled />
+                      <span>Custom Trajectory Color</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Override panel-wide trajectory color for this satellite
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input type="checkbox" disabled />
+                      <span>Show Orbital Plane</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Display the satellite&apos;s orbital plane as a translucent disc
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input type="checkbox" disabled />
+                      <span>Show Ground Track</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Project satellite path onto Earth surface
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input type="checkbox" disabled />
+                      <span>Show Velocity Vector</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Display velocity direction and magnitude as arrow
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input type="checkbox" disabled />
+                      <span>Show Sun Vector</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Show direction to Sun from satellite position
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input type="checkbox" disabled />
+                      <span>Sensor Footprint Labels</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Add text labels to ground footprints showing sensor names
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input type="checkbox" disabled />
+                      <span>Dynamic Label Size</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Scale satellite label based on camera distance
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input type="checkbox" disabled />
+                      <span>Show Orbit History</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Display past trajectory as fading trail
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div>
+                    <label className={styles.settingLabel}>
+                      <input type="checkbox" disabled />
+                      <span>Eclipse Periods</span>
+                    </label>
+                    <div className={styles.settingDescription}>
+                      Highlight when satellite is in Earth&apos;s shadow
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
