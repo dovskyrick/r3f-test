@@ -433,6 +433,62 @@ const getStyles = () => {
       margin-top: 4px;
       line-height: 1.4;
     `,
+    settingsGroup: css`
+      margin-bottom: 24px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    `,
+    settingsGroupTitle: css`
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    `,
+    sensorColorRow: css`
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    `,
+    colorPreview: css`
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      
+      &:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+      }
+    `,
+    sensorColorInfo: css`
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      min-width: 0;
+    `,
+    sensorName: css`
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    `,
+    sensorColorValue: css`
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: 'Courier New', monospace;
+    `,
     emptyState: css`
       padding: 32px 16px;
       text-align: center;
@@ -1287,6 +1343,40 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 </button>
               </div>
               <div className={styles.modalContent}>
+                {/* Sensor Colors Section */}
+                {(() => {
+                  const currentSatellite = satellites.find(sat => sat.id === settingsModalSatelliteId);
+                  const hasSensors = currentSatellite && currentSatellite.sensors.length > 0;
+                  
+                  return hasSensors ? (
+                    <div className={styles.settingsGroup}>
+                      <h4 className={styles.settingsGroupTitle}>Sensor Colors</h4>
+                      {currentSatellite!.sensors.map((sensor, idx) => {
+                        const color = _getSensorColor(currentSatellite!.id, sensor.id, sensor, idx);
+                        return (
+                          <div key={sensor.id} className={styles.settingRow}>
+                            <div className={styles.sensorColorRow}>
+                              <div 
+                                className={styles.colorPreview}
+                                style={{ backgroundColor: color }}
+                                title={color}
+                              />
+                              <div className={styles.sensorColorInfo}>
+                                <div className={styles.sensorName}>{sensor.name}</div>
+                                <div className={styles.sensorColorValue}>{color}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Render Settings Section */}
+                <div className={styles.settingsGroup}>
+                  <h4 className={styles.settingsGroupTitle}>Render Settings</h4>
+                  
                 {/* Setting 1: Transparent Sensor Cones (Functional) */}
                 <div className={styles.settingRow}>
                   <div>
@@ -1336,6 +1426,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                     </div>
                   </div>
                 </div>
+                </div> {/* End Render Settings Group */}
               </div>
             </div>
           </div>
