@@ -1216,6 +1216,20 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                         type="checkbox"
                         checked={satelliteRenderSettings.get(settingsModalSatelliteId!)?.transparentCones || false}
                         onChange={(e) => {
+                          // Show warning when enabling transparent mode
+                          if (e.target.checked) {
+                            const confirmed = window.confirm(
+                              '⚠️ Performance Warning\n\n' +
+                              'Transparent sensor cones may significantly impact frame rate, ' +
+                              'especially with multiple satellites and sensors.\n\n' +
+                              'Lower frame rates are expected when this feature is enabled.\n\n' +
+                              'Do you want to activate transparent cones?'
+                            );
+                            if (!confirmed) {
+                              return; // User cancelled, don't change the setting
+                            }
+                          }
+                          
                           const newSettings = new Map(satelliteRenderSettings);
                           const current = newSettings.get(settingsModalSatelliteId!) || {
                             transparentCones: false,
@@ -1239,7 +1253,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                       <span>Transparent Sensor Cones</span>
                     </label>
                     <div className={styles.settingDescription}>
-                      Show filled transparent cones instead of wireframe grid
+                      Show filled transparent cones instead of wireframe grid (⚠️ may impact performance)
                     </div>
                   </div>
                 </div>
