@@ -1026,6 +1026,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 isTracked={isThisSatelliteTracked}
                 viewerRef={viewerRef}
                 sensorIndex={idx}
+                transparentMode={satelliteRenderSettings.get(satellite.id)?.transparentCones || false}
               />
             ));
           })
@@ -1238,116 +1239,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                       <span>Transparent Sensor Cones</span>
                     </label>
                     <div className={styles.settingDescription}>
-                      Show filled transparent cones instead of wireframe grid (coming soon)
-                    </div>
-                  </div>
-                </div>
-
-                {/* Setting 2-10: Placeholder toggles for scroll testing */}
-                <div className={styles.settingRow}>
-                  <div>
-                    <label className={styles.settingLabel}>
-                      <input type="checkbox" disabled />
-                      <span>Custom Trajectory Color</span>
-                    </label>
-                    <div className={styles.settingDescription}>
-                      Override panel-wide trajectory color for this satellite
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div>
-                    <label className={styles.settingLabel}>
-                      <input type="checkbox" disabled />
-                      <span>Show Orbital Plane</span>
-                    </label>
-                    <div className={styles.settingDescription}>
-                      Display the satellite&apos;s orbital plane as a translucent disc
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div>
-                    <label className={styles.settingLabel}>
-                      <input type="checkbox" disabled />
-                      <span>Show Ground Track</span>
-                    </label>
-                    <div className={styles.settingDescription}>
-                      Project satellite path onto Earth surface
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div>
-                    <label className={styles.settingLabel}>
-                      <input type="checkbox" disabled />
-                      <span>Show Velocity Vector</span>
-                    </label>
-                    <div className={styles.settingDescription}>
-                      Display velocity direction and magnitude as arrow
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div>
-                    <label className={styles.settingLabel}>
-                      <input type="checkbox" disabled />
-                      <span>Show Sun Vector</span>
-                    </label>
-                    <div className={styles.settingDescription}>
-                      Show direction to Sun from satellite position
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div>
-                    <label className={styles.settingLabel}>
-                      <input type="checkbox" disabled />
-                      <span>Sensor Footprint Labels</span>
-                    </label>
-                    <div className={styles.settingDescription}>
-                      Add text labels to ground footprints showing sensor names
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div>
-                    <label className={styles.settingLabel}>
-                      <input type="checkbox" disabled />
-                      <span>Dynamic Label Size</span>
-                    </label>
-                    <div className={styles.settingDescription}>
-                      Scale satellite label based on camera distance
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div>
-                    <label className={styles.settingLabel}>
-                      <input type="checkbox" disabled />
-                      <span>Show Orbit History</span>
-                    </label>
-                    <div className={styles.settingDescription}>
-                      Display past trajectory as fading trail
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.settingRow}>
-                  <div>
-                    <label className={styles.settingLabel}>
-                      <input type="checkbox" disabled />
-                      <span>Eclipse Periods</span>
-                    </label>
-                    <div className={styles.settingDescription}>
-                      Highlight when satellite is in Earth&apos;s shadow
+                      Show filled transparent cones instead of wireframe grid
                     </div>
                   </div>
                 </div>

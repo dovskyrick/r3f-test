@@ -35,7 +35,7 @@ import { SensorDefinition } from 'types/sensorTypes';
 import { GroundStation } from 'types/groundStationTypes';
 import { SimpleOptions, AssetMode } from 'types';
 import { getScaledLength } from 'utils/cameraScaling';
-import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
+import { generateConeMesh, generateSolidConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import { computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonHierarchy } from 'utils/projections';
 
 /**
@@ -134,6 +134,7 @@ export interface SensorVisualizationProps {
   isTracked: boolean;
   viewerRef: React.RefObject<any>;
   sensorIndex: number; // For color selection
+  transparentMode?: boolean; // Toggle between wireframe and transparent rendering
 }
 
 export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = ({
@@ -143,13 +144,15 @@ export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = (
   isTracked,
   viewerRef,
   sensorIndex,
+  transparentMode = false, // Default to wireframe mode
 }) => {
   const sensorColor = SENSOR_COLORS[sensorIndex % SENSOR_COLORS.length];
   
   return (
     <>
       {/* 1. Sensor Cone (3D FOV visualization) */}
-      {options.showSensorCones && (
+      {/* Wireframe Mode (Original) */}
+      {options.showSensorCones && !transparentMode && (
         <Entity 
           key={`${satellite.id}-sensor-cone-${sensor.id}`}
           name={`${satellite.name} - ${sensor.name} (FOV: ${sensor.fov}°)`}
@@ -204,6 +207,75 @@ export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = (
           />
         </Entity>
       )}
+      
+      {/* Transparent Mode (New) - Renders multiple triangular polygons */}
+      {options.showSensorCones && transparentMode && (() => {
+        // Compute cone parameters for this render cycle
+        const computeConeTriangles = (time: any) => {
+          const satPos = satellite.position.getValue(time);
+          const satOrient = satellite.orientation.getValue(time);
+          if (!satPos || !satOrient) {
+            return [];
+          }
+          
+          // Sensor body frame orientation
+          const sensorBodyQuat = new Quaternion(
+            sensor.orientation.qx,
+            sensor.orientation.qy,
+            sensor.orientation.qz,
+            sensor.orientation.qw
+          );
+          
+          // Compute sensor world orientation
+          const sensorWorldQuat = Quaternion.multiply(
+            satOrient,
+            sensorBodyQuat,
+            new Quaternion()
+          );
+          
+          // Sensor direction in world frame
+          const rotMatrix = Matrix3.fromQuaternion(sensorWorldQuat);
+          const sensorDir = Matrix3.getColumn(rotMatrix, 2, new Cartesian3());
+          
+          // Get scaled cone length
+          const viewer = viewerRef.current?.cesiumElement;
+          if (!viewer) {
+            return [];
+          }
+          const coneLength = getScaledLength(50000, isTracked, viewer, satPos);
+          
+          // Generate solid cone triangles
+          return generateSolidConeMesh(satPos, sensorDir, sensor.fov, coneLength, 24); // 24 segments for good performance
+        };
+        
+        // Create initial triangles for rendering (will be updated via CallbackProperty)
+        const initialTriangles = Array.from({ length: 24 }, (_, i) => i);
+        
+        return initialTriangles.map((_, triIndex) => (
+          <Entity
+            key={`${satellite.id}-sensor-cone-tri-${sensor.id}-${triIndex}`}
+            availability={satellite.availability}
+          >
+            <PolygonGraphics
+              hierarchy={new CallbackProperty((time) => {
+                const triangles = computeConeTriangles(time);
+                if (triIndex < triangles.length) {
+                  return new PolygonHierarchy(triangles[triIndex]);
+                }
+                return createDummyPolygonHierarchy();
+              }, false)}
+              material={Color.fromBytes(
+                sensorColor.r,
+                sensorColor.g,
+                sensorColor.b,
+                Math.floor(0.3 * 255) // 30% opacity
+              )}
+              outline={false}
+              perPositionHeight={true}
+            />
+          </Entity>
+        ));
+      })()}
       
       {/* 2. FOV Ground Footprint */}
       {options.showFOVFootprint && (
