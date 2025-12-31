@@ -43,7 +43,7 @@ import {
   GroundStationRenderer,
 } from './entities/CesiumEntityRenderers';
 import { css, cx } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, ColorPicker } from '@grafana/ui';
 import { Eye, EyeOff, Settings, X, ChevronRight, Menu } from 'lucide-react';
 
 import { Viewer, Clock, Entity, PointGraphics, LabelGraphics } from 'resium';
@@ -489,6 +489,38 @@ const getStyles = () => {
       color: rgba(255, 255, 255, 0.5);
       font-family: 'Courier New', monospace;
     `,
+    colorPickerContainer: css`
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    `,
+    colorPickerActions: css`
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      justify-content: flex-end;
+    `,
+    colorPickerButton: css`
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      
+      &:active {
+        transform: scale(0.98);
+      }
+    `,
     emptyState: css`
       padding: 32px 16px;
       text-align: center;
@@ -587,6 +619,12 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
 
   // Sensor color overrides (localStorage persistence)
   const [sensorColors, setSensorColors] = useState<Map<string, Map<string, string>>>(new Map());
+  
+  // Color picker state (track which sensor color is being edited)
+  const [colorPickerState, setColorPickerState] = useState<{
+    satelliteId: string;
+    sensorId: string;
+  } | null>(null);
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
@@ -653,11 +691,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     ]));
     localStorage.setItem('grafana_satelliteVisualizer_sensorColors', serialized);
   };
-
-  // TEMPORARY: Satisfy TypeScript unused variable check - REMOVE in Phase 3
-  if (false) {
-    console.log(_getSensorColor, _updateSensorColor, _resetSensorColor);
-  }
 
   // Load color overrides from localStorage on mount
   useEffect(() => {
@@ -1353,17 +1386,54 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                       <h4 className={styles.settingsGroupTitle}>Sensor Colors</h4>
                       {currentSatellite!.sensors.map((sensor, idx) => {
                         const color = _getSensorColor(currentSatellite!.id, sensor.id, sensor, idx);
+                        const isPickerOpen = colorPickerState?.satelliteId === currentSatellite!.id && 
+                                             colorPickerState?.sensorId === sensor.id;
+                        
                         return (
                           <div key={sensor.id} className={styles.settingRow}>
                             <div className={styles.sensorColorRow}>
-                              <div 
-                                className={styles.colorPreview}
-                                style={{ backgroundColor: color }}
-                                title={color}
-                              />
+                              {!isPickerOpen && (
+                                <div 
+                                  className={styles.colorPreview}
+                                  style={{ backgroundColor: color }}
+                                  title={`Click to change color: ${color}`}
+                                  onClick={() => {
+                                    setColorPickerState({ satelliteId: currentSatellite!.id, sensorId: sensor.id });
+                                  }}
+                                />
+                              )}
                               <div className={styles.sensorColorInfo}>
                                 <div className={styles.sensorName}>{sensor.name}</div>
-                                <div className={styles.sensorColorValue}>{color}</div>
+                                {!isPickerOpen && (
+                                  <div className={styles.sensorColorValue}>{color}</div>
+                                )}
+                                {isPickerOpen && (
+                                  <div className={styles.colorPickerContainer}>
+                                    <ColorPicker
+                                      color={color}
+                                      onChange={(newColor) => {
+                                        _updateSensorColor(currentSatellite!.id, sensor.id, newColor);
+                                      }}
+                                    />
+                                    <div className={styles.colorPickerActions}>
+                                      <button
+                                        className={styles.colorPickerButton}
+                                        onClick={() => {
+                                          _resetSensorColor(currentSatellite!.id, sensor.id);
+                                          setColorPickerState(null);
+                                        }}
+                                      >
+                                        Reset to Default
+                                      </button>
+                                      <button
+                                        className={styles.colorPickerButton}
+                                        onClick={() => setColorPickerState(null)}
+                                      >
+                                        Done
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
