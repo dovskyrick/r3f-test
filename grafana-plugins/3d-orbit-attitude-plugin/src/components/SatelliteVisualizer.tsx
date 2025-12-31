@@ -1,14 +1,42 @@
+/**
+ * SatelliteVisualizer.tsx
+ * 
+ * Main panel component for 3D satellite visualization using CesiumJS.
+ * 
+ * ARCHITECTURE (Post-Refactoring, Dec 31 2025):
+ * This component is now focused on orchestration and state management.
+ * All Cesium entity rendering logic has been extracted to:
+ * - ./entities/CesiumEntityRenderers.tsx
+ * 
+ * RESPONSIBILITIES:
+ * ✓ State management (satellites, tracking, visibility, UI toggles)
+ * ✓ Cesium viewer initialization and configuration
+ * ✓ Camera controls (tracking mode, free camera, nadir view)
+ * ✓ UI controls (sidebar, buttons, modals)
+ * ✓ Data parsing and preprocessing
+ * ✓ Coordinating child renderer components
+ * 
+ * RENDERING DELEGATION:
+ * All 3D entity rendering is delegated to specialized components:
+ * - SatelliteEntityRenderer: Main satellite model/point + trajectory
+ * - SensorVisualizationRenderer: Sensor cones + FOV projections
+ * - BodyAxesRenderer: Satellite body axes (X/Y/Z)
+ * - CelestialGridRenderer: RA/Dec celestial coordinate grid
+ * - GroundStationRenderer: Ground station markers
+ * 
+ * See: grafana-plugins/plans-broad-scope/25-12-december/31-refactoring-complete-summary.md
+ */
+
 import React, { useEffect, useState } from 'react';
 import { PanelProps, DataHoverEvent, LegacyGraphHoverEvent } from '@grafana/data';
-import { AssetMode, SimpleOptions } from 'types';
+import { SimpleOptions } from 'types';
 import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
 import { parseSatellites } from 'parsers/satelliteParser';
 import { ParsedSatellite } from 'types/satelliteTypes';
 import { parseGroundStations } from 'parsers/groundStationParser';
 import { GroundStation } from 'types/groundStationTypes';
-// TODO: Uncomment as we extract each renderer component
 import {
-  // SatelliteEntityRenderer,
+  SatelliteEntityRenderer,
   SensorVisualizationRenderer,
   BodyAxesRenderer,
   CelestialGridRenderer,
@@ -18,7 +46,7 @@ import { css, cx } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { Eye, EyeOff, Settings, X, ChevronRight, Menu } from 'lucide-react';
 
-import { Viewer, Clock, Entity, PointGraphics, ModelGraphics, PathGraphics, LabelGraphics } from 'resium';
+import { Viewer, Clock, Entity, PointGraphics, LabelGraphics } from 'resium';
 import {
   Ion,
   JulianDate,
@@ -26,7 +54,6 @@ import {
   Cartesian3,
   Transforms,
   Color,
-  PolylineDashMaterialProperty,
   IonResource,
   Cartesian2,
   Ellipsoid,
@@ -897,42 +924,22 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         {timestamp && <Clock currentTime={timestamp} />}
         
         {/* Main Satellite Entities - Multiple satellites support */}
+        {/* Main Satellite Entities */}
         {satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
-          .map((satellite) => (
-          <Entity
-            key={satellite.id}
-            id={satellite.id}
-            name={satellite.name}
-            availability={satellite.availability}
-            position={satellite.position}
-            orientation={satellite.orientation}
-            tracked={isTracked && trackedSatelliteId === satellite.id}
-          >
-            {options.assetMode === AssetMode.Point && (
-              <PointGraphics pixelSize={options.pointSize} color={Color.fromCssColorString(options.pointColor)} />
-            )}
-            {options.assetMode === AssetMode.Model && satelliteResource && (
-              <ModelGraphics
-                uri={satelliteResource}
-                scale={options.modelScale}
-                minimumPixelSize={options.modelMinimumPixelSize}
-                maximumScale={options.modelMaximumScale}
+          .map((satellite) => {
+            const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
+            return (
+              <SatelliteEntityRenderer
+                key={satellite.id}
+                satellite={satellite}
+                options={options}
+                satelliteResource={satelliteResource}
+                isTracked={isThisSatelliteTracked}
               />
-            )}
-            {options.trajectoryShow && (
-              <PathGraphics
-                width={options.trajectoryWidth}
-                material={
-                  new PolylineDashMaterialProperty({
-                    color: Color.fromCssColorString(options.trajectoryColor),
-                    dashLength: options.trajectoryDashLength,
-                  })
-                }
-              />
-            )}
-          </Entity>
-        ))}
+            );
+          })
+        }
         {/* Body Axes (X/Y/Z attitude vectors) - Per-satellite */}
         {options.showAttitudeVisualization && options.showBodyAxes && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))

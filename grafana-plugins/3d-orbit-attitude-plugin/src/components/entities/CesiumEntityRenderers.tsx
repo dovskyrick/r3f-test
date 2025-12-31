@@ -1,10 +1,39 @@
+/**
+ * CesiumEntityRenderers.tsx
+ * 
+ * Extracted rendering components for 3D entities in the Cesium viewer.
+ * 
+ * CREATED: December 31, 2025 (Refactoring from SatelliteVisualizer.tsx)
+ * PURPOSE: Separate rendering concerns from state management and UI logic
+ * 
+ * Each component in this file is responsible for rendering a specific type of 3D entity.
+ * All components are pure React functional components that receive data via props
+ * and render Cesium/Resium entities accordingly.
+ * 
+ * COMPONENTS:
+ * 1. SatelliteEntityRenderer     - Main satellite model/point + trajectory path
+ * 2. SensorVisualizationRenderer - Sensor cones + ground footprints + celestial FOV
+ * 3. BodyAxesRenderer            - Satellite body axes (X, Y, Z) with dynamic scaling
+ * 4. CelestialGridRenderer       - RA/Dec celestial coordinate grid with labels
+ * 5. GroundStationRenderer       - Ground station markers on Earth surface
+ * 
+ * DESIGN PRINCIPLES:
+ * - Single Responsibility: Each renderer does one thing
+ * - Explicit Props: All dependencies passed as props
+ * - Type Safety: Full TypeScript interfaces for all props
+ * - No Side Effects: Pure rendering logic only
+ * - Composable: Can be used independently or together
+ * 
+ * See: grafana-plugins/plans-broad-scope/25-12-december/31-refactoring-complete-summary.md
+ */
+
 import React from 'react';
-import { Color, Cartesian3, Cartesian2, JulianDate, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid } from 'cesium';
-import { Entity, PointGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics } from 'resium';
+import { Color, Cartesian3, Cartesian2, Resource, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid, PolylineDashMaterialProperty } from 'cesium';
+import { Entity, PointGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics, ModelGraphics, PathGraphics } from 'resium';
 import { ParsedSatellite } from 'types/satelliteTypes';
 import { SensorDefinition } from 'types/sensorTypes';
 import { GroundStation } from 'types/groundStationTypes';
-import { SimpleOptions } from 'types';
+import { SimpleOptions, AssetMode } from 'types';
 import { getScaledLength } from 'utils/cameraScaling';
 import { generateConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import { computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonHierarchy } from 'utils/projections';
@@ -30,27 +59,68 @@ import { computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonH
 export interface SatelliteEntityProps {
   satellite: ParsedSatellite;
   options: SimpleOptions;
+  satelliteResource: Resource | IonResource | string | undefined;
   isTracked: boolean;
-  isVisible: boolean;
-  viewerRef: React.RefObject<any>;
-  timestamp: JulianDate | null;
-  satelliteResource?: IonResource | string;
-  attitudeVectors: Array<{ axis: Cartesian3; color: Color; name: string }>;
 }
 
+/**
+ * SatelliteEntityRenderer
+ * 
+ * Renders the main satellite entity with its model/point representation and trajectory path.
+ * This is the core visual representation of the satellite.
+ * 
+ * @param satellite - The parsed satellite data with position and orientation
+ * @param options - Panel options controlling visualization settings
+ * @param satelliteResource - Cesium resource for 3D model (if using model mode)
+ * @param isTracked - Whether this satellite is currently being tracked by the camera
+ */
 export const SatelliteEntityRenderer: React.FC<SatelliteEntityProps> = ({
   satellite,
   options,
-  isTracked,
-  isVisible,
-  viewerRef,
-  timestamp,
   satelliteResource,
-  attitudeVectors,
+  isTracked,
 }) => {
-  // TODO: Extract satellite rendering logic from main component
-  // Will render: Entity with ModelGraphics/PointGraphics, PathGraphics, LabelGraphics
-  return null;
+  return (
+    <Entity
+      id={satellite.id}
+      name={satellite.name}
+      availability={satellite.availability}
+      position={satellite.position}
+      orientation={satellite.orientation}
+      tracked={isTracked}
+    >
+      {/* Point representation */}
+      {options.assetMode === AssetMode.Point && (
+        <PointGraphics 
+          pixelSize={options.pointSize} 
+          color={Color.fromCssColorString(options.pointColor)} 
+        />
+      )}
+      
+      {/* 3D Model representation */}
+      {options.assetMode === AssetMode.Model && satelliteResource && (
+        <ModelGraphics
+          uri={satelliteResource}
+          scale={options.modelScale}
+          minimumPixelSize={options.modelMinimumPixelSize}
+          maximumScale={options.modelMaximumScale}
+        />
+      )}
+      
+      {/* Trajectory path */}
+      {options.trajectoryShow && (
+        <PathGraphics
+          width={options.trajectoryWidth}
+          material={
+            new PolylineDashMaterialProperty({
+              color: Color.fromCssColorString(options.trajectoryColor),
+              dashLength: options.trajectoryDashLength,
+            })
+          }
+        />
+      )}
+    </Entity>
+  );
 };
 
 // ============================================================================
