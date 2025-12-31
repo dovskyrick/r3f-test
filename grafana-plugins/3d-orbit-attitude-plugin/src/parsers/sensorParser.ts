@@ -35,7 +35,8 @@ export function parseSensors(dataFrame: any): SensorDefinition[] {
           qy: ori.qy,
           qz: ori.qz,
           qw: ori.qw
-        }
+        },
+        color: sensor.color  // Parse optional color field
       });
     }
     

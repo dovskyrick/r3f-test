@@ -529,6 +529,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     setting10: boolean;
   }>>(new Map());
 
+  // Sensor color overrides (localStorage persistence)
+  const [sensorColors, setSensorColors] = useState<Map<string, Map<string, string>>>(new Map());
+
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
   const [decLines, setDecLines] = useState<Cartesian3[][]>([]);
@@ -543,6 +546,82 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     { axis: new Cartesian3(0, 1, 0), color: safeColor(options.yAxisColor, Color.GREEN), name: 'Y-axis' },
     { axis: new Cartesian3(0, 0, 1), color: safeColor(options.zAxisColor, Color.BLUE), name: 'Z-axis' },
   ], [options.xAxisColor, options.yAxisColor, options.zAxisColor]);
+
+  // Color management helper functions
+  // Note: Will be used in Phase 3 (display colors in UI) and Phase 4 (color picker)
+  const _getSensorColor = (satelliteId: string, sensorId: string, sensor: any, defaultIndex: number): string => {
+    // Priority 1: User override from localStorage
+    const override = sensorColors.get(satelliteId)?.get(sensorId);
+    if (override) {
+      return override;
+    }
+    
+    // Priority 2: Color from sensor JSON
+    if (sensor.color) {
+      return sensor.color;
+    }
+    
+    // Priority 3: Default color palette
+    const defaultColors = ['#00FFFF', '#FF00FF', '#FFFF00', '#FFA500', '#00FF00'];
+    return defaultColors[defaultIndex % defaultColors.length];
+  };
+
+  const _updateSensorColor = (satelliteId: string, sensorId: string, color: string) => {
+    const newColors = new Map(sensorColors);
+    if (!newColors.has(satelliteId)) {
+      newColors.set(satelliteId, new Map());
+    }
+    newColors.get(satelliteId)!.set(sensorId, color);
+    setSensorColors(newColors);
+    
+    // Persist to localStorage
+    const serialized = JSON.stringify(Array.from(newColors.entries()).map(([satId, sensors]) => [
+      satId,
+      Array.from(sensors.entries())
+    ]));
+    localStorage.setItem('grafana_satelliteVisualizer_sensorColors', serialized);
+  };
+
+  const _resetSensorColor = (satelliteId: string, sensorId: string) => {
+    const newColors = new Map(sensorColors);
+    newColors.get(satelliteId)?.delete(sensorId);
+    if (newColors.get(satelliteId)?.size === 0) {
+      newColors.delete(satelliteId);
+    }
+    setSensorColors(newColors);
+    
+    // Update localStorage
+    const serialized = JSON.stringify(Array.from(newColors.entries()).map(([satId, sensors]) => [
+      satId,
+      Array.from(sensors.entries())
+    ]));
+    localStorage.setItem('grafana_satelliteVisualizer_sensorColors', serialized);
+  };
+
+  // TEMPORARY: Satisfy TypeScript unused variable check - REMOVE in Phase 3
+  if (false) {
+    console.log(_getSensorColor, _updateSensorColor, _resetSensorColor);
+  }
+
+  // Load color overrides from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('grafana_satelliteVisualizer_sensorColors');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const restored = new Map<string, Map<string, string>>(
+          parsed.map(([satId, sensors]: [string, Array<[string, string]>]) => [
+            satId,
+            new Map<string, string>(sensors)
+          ])
+        );
+        setSensorColors(restored);
+        console.log('✅ Loaded sensor color overrides from localStorage');
+      }
+    } catch (error) {
+      console.warn('Failed to load sensor colors from localStorage:', error);
+    }
+  }, []);
 
   useEffect(() => {
     const timeInterval = new TimeInterval({

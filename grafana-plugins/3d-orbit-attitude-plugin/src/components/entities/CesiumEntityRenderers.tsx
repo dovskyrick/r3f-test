@@ -35,6 +35,7 @@ import { SensorDefinition } from 'types/sensorTypes';
 import { GroundStation } from 'types/groundStationTypes';
 import { SimpleOptions, AssetMode } from 'types';
 import { getScaledLength } from 'utils/cameraScaling';
+import { hexToRgb } from 'utils/colorHelpers';
 import { generateConeMesh, generateSolidConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import { computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonHierarchy } from 'utils/projections';
 
@@ -146,7 +147,11 @@ export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = (
   sensorIndex,
   transparentMode = false, // Default to wireframe mode
 }) => {
-  const sensorColor = SENSOR_COLORS[sensorIndex % SENSOR_COLORS.length];
+  // Get color: Use sensor's color if defined, otherwise fall back to default palette
+  const defaultColor = SENSOR_COLORS[sensorIndex % SENSOR_COLORS.length];
+  const sensorColor = sensor.color 
+    ? hexToRgb(sensor.color) || defaultColor  // Use sensor color or fallback if invalid hex
+    : defaultColor;  // Use default palette if no color specified
   
   return (
     <>
