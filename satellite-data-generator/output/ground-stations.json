@@ -1,42 +1,30 @@
 [
   {
-    "type": "groundStations",
-    "meta": {
-      "custom": {
-        "groundStations": [
-          {
-            "id": "GS-DSS14",
-            "name": "Goldstone - DSS-14",
-            "latitude": 35.4267,
-            "longitude": -116.8900,
-            "altitude": 1071
-          },
-          {
-            "id": "GS-DSS43",
-            "name": "Canberra - DSS-43",
-            "latitude": -35.4019,
-            "longitude": 148.9819,
-            "altitude": 758
-          },
-          {
-            "id": "GS-DSS63",
-            "name": "Madrid - DSS-63",
-            "latitude": 40.4314,
-            "longitude": -4.2481,
-            "altitude": 907
-          },
-          {
-            "id": "GS-NNO",
-            "name": "New Norcia",
-            "latitude": -31.0483,
-            "longitude": 116.1914,
-            "altitude": 287
-          }
-        ]
-      }
-    },
-    "columns": [],
-    "rows": []
+    "id": "gs-goldstone",
+    "name": "Goldstone (DSN)",
+    "latitude": 35.4267,
+    "longitude": -116.89,
+    "altitude": 1005
+  },
+  {
+    "id": "gs-canberra",
+    "name": "Canberra (DSN)",
+    "latitude": -35.4014,
+    "longitude": 148.9819,
+    "altitude": 691
+  },
+  {
+    "id": "gs-madrid",
+    "name": "Madrid (DSN)",
+    "latitude": 40.4319,
+    "longitude": -4.2481,
+    "altitude": 834
+  },
+  {
+    "id": "gs-kourou",
+    "name": "Kourou (ESA)",
+    "latitude": 5.2517,
+    "longitude": -52.805,
+    "altitude": 26
   }
 ]
-

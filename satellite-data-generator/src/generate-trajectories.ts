@@ -21,6 +21,18 @@ interface SensorDefinition {
     qz: number;
     qw: number;
   };
+  color?: string; // Add color field
+}
+
+/**
+ * Ground station definition.
+ */
+interface GroundStationDefinition {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  altitude: number; // meters above ellipsoid
 }
 
 /**
@@ -64,7 +76,7 @@ function generateSatelliteJSON(
 }
 
 /**
- * Generate example sensors for a satellite with unique orientations per satellite.
+ * Generate example sensors for a satellite with unique orientations AND colors.
  */
 function generateSensors(satelliteIdx: number): SensorDefinition[] {
   // Different sensor orientations for each satellite (rotations around different axes)
@@ -91,16 +103,59 @@ function generateSensors(satelliteIdx: number): SensorDefinition[] {
 
   const orientations = satelliteOrientations[satelliteIdx % satelliteOrientations.length];
 
+  // Default sensor colors (cyan, magenta, yellow pattern)
+  const defaultColors = [
+    '#00FFFF', // Cyan
+    '#FF00FF', // Magenta
+    '#FFFF00', // Yellow
+  ];
+
   const sensorConfigs = [
-    { name: 'Main Camera', fov: 10, orientation: orientations[0] },
-    { name: 'Nadir Camera', fov: 15, orientation: orientations[1] },
-    { name: 'Star Tracker', fov: 20, orientation: orientations[2] },
+    { name: 'Main Camera', fov: 10, orientation: orientations[0], color: defaultColors[0] },
+    { name: 'Nadir Camera', fov: 15, orientation: orientations[1], color: defaultColors[1] },
+    { name: 'Star Tracker', fov: 20, orientation: orientations[2], color: defaultColors[2] },
   ];
 
   return sensorConfigs.map((config, idx) => ({
     id: `sat${satelliteIdx}-sens${idx}`,
     ...config,
   }));
+}
+
+/**
+ * Generate realistic ground station locations (NASA Deep Space Network + ESA)
+ */
+function generateGroundStations(): GroundStationDefinition[] {
+  return [
+    {
+      id: 'gs-goldstone',
+      name: 'Goldstone (DSN)',
+      latitude: 35.4267,
+      longitude: -116.8900,
+      altitude: 1005, // meters
+    },
+    {
+      id: 'gs-canberra',
+      name: 'Canberra (DSN)',
+      latitude: -35.4014,
+      longitude: 148.9819,
+      altitude: 691,
+    },
+    {
+      id: 'gs-madrid',
+      name: 'Madrid (DSN)',
+      latitude: 40.4319,
+      longitude: -4.2481,
+      altitude: 834,
+    },
+    {
+      id: 'gs-kourou',
+      name: 'Kourou (ESA)',
+      latitude: 5.2517,
+      longitude: -52.8050,
+      altitude: 26,
+    },
+  ];
 }
 
 /**
@@ -216,20 +271,46 @@ function main() {
       return satData;
     });
 
-    // Write combined multi-satellite file
+    // Write combined multi-satellite file WITH ground stations in the same array
+    const groundStations = generateGroundStations();
+    
+    // Create ground stations object in the format that matches the parser
+    const groundStationsObject = {
+      type: "groundStations",
+      meta: {
+        custom: {
+          groundStations: groundStations
+        }
+      },
+      columns: [],
+      rows: []
+    };
+    
+    // Combine satellites array with ground stations object at the end
+    const completeData = [...satellitesData, groundStationsObject];
+    
     const outputPath = path.join(outputDir, 'multi-satellite.json');
-    fs.writeFileSync(outputPath, JSON.stringify(satellitesData, null, 2));
+    fs.writeFileSync(outputPath, JSON.stringify(completeData, null, 2));
     
     console.log(`✅ Generated: ${outputPath}`);
     console.log(`   Total satellites: ${satellitesData.length}`);
+    console.log(`   Ground stations: ${groundStations.length}`);
+    groundStations.forEach(gs => {
+      console.log(`     • ${gs.name} (${gs.latitude.toFixed(2)}°, ${gs.longitude.toFixed(2)}°)`);
+    });
     
-    // Also write individual files
+    // Also write individual satellite files
     satellitesData.forEach((satData, idx) => {
       const individualPath = path.join(outputDir, `satellite-${idx + 1}.json`);
       fs.writeFileSync(individualPath, JSON.stringify(satData, null, 2));
     });
     
-    console.log(`   Individual files: satellite-1.json, satellite-2.json, satellite-3.json`);
+    console.log(`\n   Individual files: satellite-1.json, satellite-2.json, satellite-3.json`);
+    
+    // Also write standalone ground stations file (for reference)
+    const groundStationsPath = path.join(outputDir, 'ground-stations.json');
+    fs.writeFileSync(groundStationsPath, JSON.stringify(groundStations, null, 2));
+    console.log(`   Ground stations file: ground-stations.json (standalone)`);
   }
 
   console.log('\n✨ Done! Output in: output/');

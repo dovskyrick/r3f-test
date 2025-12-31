@@ -16,6 +16,7 @@ interface SensorDefinition {
     qz: number;
     qw: number;
   };
+  color?: string; // Add color field
 }
 
 /**
@@ -59,12 +60,31 @@ function generateSatelliteJSON(
 }
 
 /**
- * Generate simple sensors for a satellite.
+ * Generate simple sensors for a satellite with colors.
  */
 function generateSensors(satelliteIdx: number): SensorDefinition[] {
+  // Cycle through color palette for variety
+  const colorPalette = [
+    '#00FFFF', // Cyan
+    '#FF00FF', // Magenta
+    '#FFFF00', // Yellow
+    '#FFA500', // Orange
+    '#00FF00', // Lime
+  ];
+  
   const sensorConfigs = [
-    { name: 'Main Camera', fov: 10, orientation: { qx: 0, qy: 0, qz: 0, qw: 1 } },
-    { name: 'Nadir Camera', fov: 15, orientation: { qx: 1, qy: 0, qz: 0, qw: 0 } },
+    { 
+      name: 'Main Camera', 
+      fov: 10, 
+      orientation: { qx: 0, qy: 0, qz: 0, qw: 1 },
+      color: colorPalette[satelliteIdx % colorPalette.length]
+    },
+    { 
+      name: 'Nadir Camera', 
+      fov: 15, 
+      orientation: { qx: 1, qy: 0, qz: 0, qw: 0 },
+      color: colorPalette[(satelliteIdx + 1) % colorPalette.length]
+    },
   ];
 
   return sensorConfigs.map((config, idx) => ({
