@@ -136,6 +136,7 @@ export interface SensorVisualizationProps {
   viewerRef: React.RefObject<any>;
   sensorIndex: number; // For color selection
   transparentMode?: boolean; // Toggle between wireframe and transparent rendering
+  customColor?: string; // Optional custom color from UI settings (hex string)
 }
 
 export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = ({
@@ -146,12 +147,25 @@ export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = (
   viewerRef,
   sensorIndex,
   transparentMode = false, // Default to wireframe mode
+  customColor, // User-selected color from settings UI
 }) => {
-  // Get color: Use sensor's color if defined, otherwise fall back to default palette
+  // Priority for color selection:
+  // 1. customColor (from UI settings - highest priority)
+  // 2. sensor.color (from JSON)
+  // 3. Default palette based on sensorIndex
   const defaultColor = SENSOR_COLORS[sensorIndex % SENSOR_COLORS.length];
-  const sensorColor = sensor.color 
-    ? hexToRgb(sensor.color) || defaultColor  // Use sensor color or fallback if invalid hex
-    : defaultColor;  // Use default palette if no color specified
+  
+  let sensorColor = defaultColor;
+  
+  if (customColor) {
+    // Use custom color from UI settings (highest priority)
+    const parsed = hexToRgb(customColor);
+    sensorColor = parsed || defaultColor;
+  } else if (sensor.color) {
+    // Use color from JSON
+    const parsed = hexToRgb(sensor.color);
+    sensorColor = parsed || defaultColor;
+  }
   
   return (
     <>

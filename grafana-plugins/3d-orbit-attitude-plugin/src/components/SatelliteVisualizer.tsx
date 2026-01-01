@@ -1218,18 +1218,24 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           .filter(sat => !hiddenSatellites.has(sat.id))
           .map((satellite) => {
             const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
-            return satellite.sensors.map((sensor, idx) => (
-              <SensorVisualizationRenderer
-                key={`${satellite.id}-sensor-${sensor.id}`}
-                satellite={satellite}
-                sensor={sensor}
-                options={options}
-                isTracked={isThisSatelliteTracked}
-                viewerRef={viewerRef}
-                sensorIndex={idx}
-                transparentMode={satelliteRenderSettings.get(satellite.id)?.transparentCones || false}
-              />
-            ));
+            return satellite.sensors.map((sensor, idx) => {
+              // Get the actual color for this sensor (respecting user overrides)
+              const sensorColor = _getSensorColor(satellite.id, sensor.id, sensor, idx);
+              
+              return (
+                <SensorVisualizationRenderer
+                  key={`${satellite.id}-sensor-${sensor.id}`}
+                  satellite={satellite}
+                  sensor={sensor}
+                  options={options}
+                  isTracked={isThisSatelliteTracked}
+                  viewerRef={viewerRef}
+                  sensorIndex={idx}
+                  transparentMode={satelliteRenderSettings.get(satellite.id)?.transparentCones || false}
+                  customColor={sensorColor}
+                />
+              );
+            });
           })
         }
         
