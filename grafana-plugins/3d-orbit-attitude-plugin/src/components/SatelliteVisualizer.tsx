@@ -456,19 +456,50 @@ const getStyles = () => {
       gap: 12px;
       width: 100%;
     `,
-    colorPreview: css`
-      width: 32px;
-      height: 32px;
-      border-radius: 4px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      flex-shrink: 0;
+    sensorColorRowVertical: css`
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    `,
+    sensorNameRow: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    `,
+    colorPickerWrapper: css`
+      width: 100%;
+    `,
+    resetButton: css`
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 11px;
       cursor: pointer;
-      transition: border-color 0.2s;
+      transition: all 0.2s;
       
       &:hover {
-        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
       }
     `,
+    // DEPRECATED: Old color preview box (commented out for potential future use)
+    // colorPreview: css`
+    //   width: 32px;
+    //   height: 32px;
+    //   border-radius: 4px;
+    //   border: 2px solid rgba(255, 255, 255, 0.2);
+    //   flex-shrink: 0;
+    //   cursor: pointer;
+    //   transition: border-color 0.2s;
+    //   
+    //   &:hover {
+    //     border-color: rgba(255, 255, 255, 0.5);
+    //   }
+    // `,
     sensorColorInfo: css`
       display: flex;
       flex-direction: column;
@@ -484,43 +515,45 @@ const getStyles = () => {
       overflow: hidden;
       text-overflow: ellipsis;
     `,
-    sensorColorValue: css`
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
-      font-family: 'Courier New', monospace;
-    `,
-    colorPickerContainer: css`
-      margin-top: 12px;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    `,
-    colorPickerActions: css`
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      justify-content: flex-end;
-    `,
-    colorPickerButton: css`
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      
-      &:hover {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.3);
-      }
-      
-      &:active {
-        transform: scale(0.98);
-      }
-    `,
+    // DEPRECATED: Old hex value display (commented out)
+    // sensorColorValue: css`
+    //   font-size: 12px;
+    //   color: rgba(255, 255, 255, 0.5);
+    //   font-family: 'Courier New', monospace;
+    // `,
+    // DEPRECATED: Old color picker container with Done/Reset buttons (commented out)
+    // colorPickerContainer: css`
+    //   margin-top: 12px;
+    //   padding: 12px;
+    //   background: rgba(0, 0, 0, 0.3);
+    //   border-radius: 4px;
+    //   border: 1px solid rgba(255, 255, 255, 0.1);
+    // `,
+    // colorPickerActions: css`
+    //   display: flex;
+    //   gap: 8px;
+    //   margin-top: 12px;
+    //   justify-content: flex-end;
+    // `,
+    // colorPickerButton: css`
+    //   padding: 6px 12px;
+    //   background: rgba(255, 255, 255, 0.1);
+    //   border: 1px solid rgba(255, 255, 255, 0.2);
+    //   border-radius: 4px;
+    //   color: rgba(255, 255, 255, 0.9);
+    //   font-size: 12px;
+    //   cursor: pointer;
+    //   transition: all 0.2s;
+    //   
+    //   &:hover {
+    //     background: rgba(255, 255, 255, 0.2);
+    //     border-color: rgba(255, 255, 255, 0.3);
+    //   }
+    //   
+    //   &:active {
+    //     transform: scale(0.98);
+    //   }
+    // `,
     emptyState: css`
       padding: 32px 16px;
       text-align: center;
@@ -620,11 +653,11 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   // Sensor color overrides (localStorage persistence)
   const [sensorColors, setSensorColors] = useState<Map<string, Map<string, string>>>(new Map());
   
-  // Color picker state (track which sensor color is being edited)
-  const [colorPickerState, setColorPickerState] = useState<{
-    satelliteId: string;
-    sensorId: string;
-  } | null>(null);
+  // Color picker state - REMOVED: No longer needed, pickers always visible
+  // const [colorPickerState, setColorPickerState] = useState<{
+  //   satelliteId: string;
+  //   sensorId: string;
+  // } | null>(null);
 
   const [satelliteResource, setSatelliteResource] = useState<IonResource | string | undefined>(undefined);
   const [raLines, setRALines] = useState<Cartesian3[][]>([]);
@@ -1386,54 +1419,29 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                       <h4 className={styles.settingsGroupTitle}>Sensor Colors</h4>
                       {currentSatellite!.sensors.map((sensor, idx) => {
                         const color = _getSensorColor(currentSatellite!.id, sensor.id, sensor, idx);
-                        const isPickerOpen = colorPickerState?.satelliteId === currentSatellite!.id && 
-                                             colorPickerState?.sensorId === sensor.id;
                         
                         return (
                           <div key={sensor.id} className={styles.settingRow}>
-                            <div className={styles.sensorColorRow}>
-                              {!isPickerOpen && (
-                                <div 
-                                  className={styles.colorPreview}
-                                  style={{ backgroundColor: color }}
-                                  title={`Click to change color: ${color}`}
+                            <div className={styles.sensorColorRowVertical}>
+                              <div className={styles.sensorNameRow}>
+                                <div className={styles.sensorName}>{sensor.name}</div>
+                                <button
+                                  className={styles.resetButton}
                                   onClick={() => {
-                                    setColorPickerState({ satelliteId: currentSatellite!.id, sensorId: sensor.id });
+                                    _resetSensorColor(currentSatellite!.id, sensor.id);
+                                  }}
+                                  title="Reset to default color from JSON"
+                                >
+                                  Reset
+                                </button>
+                              </div>
+                              <div className={styles.colorPickerWrapper}>
+                                <ColorPicker
+                                  color={color}
+                                  onChange={(newColor) => {
+                                    _updateSensorColor(currentSatellite!.id, sensor.id, newColor);
                                   }}
                                 />
-                              )}
-                              <div className={styles.sensorColorInfo}>
-                                <div className={styles.sensorName}>{sensor.name}</div>
-                                {!isPickerOpen && (
-                                  <div className={styles.sensorColorValue}>{color}</div>
-                                )}
-                                {isPickerOpen && (
-                                  <div className={styles.colorPickerContainer}>
-                                    <ColorPicker
-                                      color={color}
-                                      onChange={(newColor) => {
-                                        _updateSensorColor(currentSatellite!.id, sensor.id, newColor);
-                                      }}
-                                    />
-                                    <div className={styles.colorPickerActions}>
-                                      <button
-                                        className={styles.colorPickerButton}
-                                        onClick={() => {
-                                          _resetSensorColor(currentSatellite!.id, sensor.id);
-                                          setColorPickerState(null);
-                                        }}
-                                      >
-                                        Reset to Default
-                                      </button>
-                                      <button
-                                        className={styles.colorPickerButton}
-                                        onClick={() => setColorPickerState(null)}
-                                      >
-                                        Done
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           </div>
