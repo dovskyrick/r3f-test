@@ -673,6 +673,10 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   
   // Store viewer reference for imagery setup in useEffect
   const viewerRef = React.useRef<any>(null);
+  
+  // Modal overlay refs for ESC key handling
+  const satelliteModalRef = React.useRef<HTMLDivElement>(null);
+  const groundStationModalRef = React.useRef<HTMLDivElement>(null);
 
   // Attitude vector configurations (can be moved to settings later)
   const attitudeVectors = React.useMemo(() => [
@@ -751,6 +755,20 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       console.warn('Failed to load sensor colors from localStorage:', error);
     }
   }, []);
+
+  // Focus satellite settings modal when it opens (for ESC key handling)
+  useEffect(() => {
+    if (settingsModalSatelliteId && satelliteModalRef.current) {
+      satelliteModalRef.current.focus();
+    }
+  }, [settingsModalSatelliteId]);
+
+  // Focus ground station settings modal when it opens (for ESC key handling)
+  useEffect(() => {
+    if (settingsModalGroundStationId && groundStationModalRef.current) {
+      groundStationModalRef.current.focus();
+    }
+  }, [settingsModalGroundStationId]);
 
   useEffect(() => {
     const timeInterval = new TimeInterval({
@@ -1420,6 +1438,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         {/* Settings Modal */}
         {settingsModalSatelliteId && (
           <div 
+            ref={satelliteModalRef}
             className={styles.modalOverlay}
             onClick={() => setSettingsModalSatelliteId(null)}
             onKeyDown={(e) => {
@@ -1430,7 +1449,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               }
             }}
             tabIndex={-1}  // Make div focusable to receive keyboard events
-            autoFocus  // Auto-focus when modal opens so ESC works immediately
           >
             <div 
               className={styles.modal}
@@ -1554,6 +1572,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         {/* Ground Station Settings Modal */}
         {settingsModalGroundStationId && (
           <div 
+            ref={groundStationModalRef}
             className={styles.modalOverlay}
             onClick={() => setSettingsModalGroundStationId(null)}
             onKeyDown={(e) => {
@@ -1564,7 +1583,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               }
             }}
             tabIndex={-1}
-            autoFocus
           >
             <div 
               className={styles.modal}
