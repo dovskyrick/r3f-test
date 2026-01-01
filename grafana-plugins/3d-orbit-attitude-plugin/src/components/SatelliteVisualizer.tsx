@@ -637,7 +637,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [groundStations, setGroundStations] = useState<GroundStation[]>([]);
   const [trackedSatelliteId, setTrackedSatelliteId] = useState<string | null>(null);
   const [hiddenSatellites, setHiddenSatellites] = useState<Set<string>>(new Set());
+  const [hiddenGroundStations, setHiddenGroundStations] = useState<Set<string>>(new Set());
   const [settingsModalSatelliteId, setSettingsModalSatelliteId] = useState<string | null>(null);
+  const [settingsModalGroundStationId, setSettingsModalGroundStationId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'satellites' | 'groundstations'>('satellites');
   
   // Per-satellite render settings (for future features like transparent cones)
@@ -1268,9 +1270,12 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         ))}
 
         {/* Ground Stations */}
-        {groundStations.map((gs) => (
-          <GroundStationRenderer key={gs.id} groundStation={gs} />
-        ))}
+        {groundStations
+          .filter(gs => !hiddenGroundStations.has(gs.id))
+          .map((gs) => (
+            <GroundStationRenderer key={gs.id} groundStation={gs} />
+          ))
+        }
       </Viewer>
 
           <div
@@ -1358,37 +1363,53 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   <div className={styles.emptyState}>No ground stations available</div>
                 ) : (
                   <div className={styles.satelliteList}>
-                    {groundStations.map((gs) => (
-                      <div 
-                        key={gs.id} 
-                        className={styles.satelliteItem}
-                      >
-                        <button
-                          className={styles.visibilityToggle}
-                          onClick={(e) => e.stopPropagation()}
-                          title="Ground station visibility (coming soon)"
+                    {groundStations.map((gs) => {
+                      const isHidden = hiddenGroundStations.has(gs.id);
+                      
+                      return (
+                        <div 
+                          key={gs.id} 
+                          className={styles.satelliteItem}
                         >
-                          <Eye size={16} />
-                        </button>
-                        
-                        <div className={styles.satelliteInfo}>
-                          <div className={styles.satelliteName} title={gs.name}>
-                            {gs.name}
+                          <button
+                            className={styles.visibilityToggle}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newHidden = new Set(hiddenGroundStations);
+                              if (isHidden) {
+                                newHidden.delete(gs.id);
+                              } else {
+                                newHidden.add(gs.id);
+                              }
+                              setHiddenGroundStations(newHidden);
+                            }}
+                            title={isHidden ? 'Show ground station' : 'Hide ground station'}
+                          >
+                            {isHidden ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                          
+                          <div className={styles.satelliteInfo}>
+                            <div className={styles.satelliteName} title={gs.name}>
+                              {gs.name}
+                            </div>
+                            <div className={styles.satelliteId} title={gs.id}>
+                              {gs.id}
+                            </div>
                           </div>
-                          <div className={styles.satelliteId} title={gs.id}>
-                            {gs.id}
-                          </div>
+                          
+                          <button
+                            className={styles.settingsButton}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSettingsModalGroundStationId(gs.id);
+                            }}
+                            title="Ground station settings"
+                          >
+                            <Settings size={16} />
+                          </button>
                         </div>
-                        
-                        <button
-                          className={styles.settingsButton}
-                          onClick={(e) => e.stopPropagation()}
-                          title="Ground station settings (coming soon)"
-                        >
-                          <Settings size={16} />
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </>
@@ -1525,6 +1546,47 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   </div>
                 </div>
                 </div> {/* End Render Settings Group */}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Ground Station Settings Modal */}
+        {settingsModalGroundStationId && (
+          <div 
+            className={styles.modalOverlay}
+            onClick={() => setSettingsModalGroundStationId(null)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.stopPropagation();
+                e.preventDefault();
+                setSettingsModalGroundStationId(null);
+              }
+            }}
+            tabIndex={-1}
+            autoFocus
+          >
+            <div 
+              className={styles.modal}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>
+                  <Settings size={18} />
+                  {groundStations.find(gs => gs.id === settingsModalGroundStationId)?.name || 'Ground Station Settings'}
+                </h3>
+                <button
+                  className={styles.modalClose}
+                  onClick={() => setSettingsModalGroundStationId(null)}
+                  title="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className={styles.modalContent}>
+                <div className={styles.emptyState}>
+                  Ground station settings coming soon...
+                </div>
               </div>
             </div>
           </div>
