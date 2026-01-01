@@ -340,6 +340,11 @@ const getStyles = () => {
       justify-content: center;
       z-index: 9999;
       backdrop-filter: blur(4px);
+      
+      /* Remove focus outline (we handle ESC, don't need visual focus indicator) */
+      &:focus {
+        outline: none;
+      }
     `,
     modal: css`
       background: rgba(30, 30, 30, 0.98);
@@ -1396,6 +1401,15 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           <div 
             className={styles.modalOverlay}
             onClick={() => setSettingsModalSatelliteId(null)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.stopPropagation();  // Prevent Grafana from handling ESC
+                e.preventDefault();    // Cancel default browser behavior
+                setSettingsModalSatelliteId(null);  // Close modal
+              }
+            }}
+            tabIndex={-1}  // Make div focusable to receive keyboard events
+            autoFocus  // Auto-focus when modal opens so ESC works immediately
           >
             <div 
               className={styles.modal}
