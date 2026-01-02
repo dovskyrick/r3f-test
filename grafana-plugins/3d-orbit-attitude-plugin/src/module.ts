@@ -1,5 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
-import { SimpleOptions, AssetMode, CoordinatesType } from './types';
+import { SimpleOptions, AssetMode, CoordinatesType, UncertaintyOpacityMode } from './types';
 import { SatelliteVisualizer } from './components/SatelliteVisualizer';
 
 import { LocationEditor } from './LocationEditor';
@@ -149,6 +149,38 @@ export const plugin = new PanelPlugin<SimpleOptions>(SatelliteVisualizer).setPan
       description: 'Project sensor field-of-view onto celestial sphere to show observed sky region.',
       defaultValue: true,
       showIf: (config: any) => config.showAttitudeVisualization,
+    })
+
+    // ============================================================
+    // 📊 UNCERTAINTY ELLIPSOIDS (position uncertainty)
+    // ============================================================
+    .addBooleanSwitch({
+      path: 'showUncertaintyEllipsoids',
+      name: '📊 Show Uncertainty Ellipsoids',
+      description: 'Display 3D confidence ellipsoids representing position uncertainty (covariance). Opacity indicates data quality.',
+      defaultValue: false,
+      showIf: (config: any) => config.showAttitudeVisualization,
+    })
+    .addSelect({
+      path: 'uncertaintyOpacityMode',
+      name: '📊 Data Quality Visualization',
+      description: 'Opacity level indicates data quality: High (70%) = good, Medium (30%) = fair, Low (10%) = poor',
+      settings: {
+        options: [
+          { value: UncertaintyOpacityMode.High, label: 'High Quality (70% opacity)' },
+          { value: UncertaintyOpacityMode.Medium, label: 'Medium Quality (30% opacity)' },
+          { value: UncertaintyOpacityMode.Low, label: 'Low Quality (10% opacity)' },
+        ],
+      },
+      defaultValue: UncertaintyOpacityMode.Medium,
+      showIf: (config: any) => config.showAttitudeVisualization && config.showUncertaintyEllipsoids,
+    })
+    .addColorPicker({
+      path: 'uncertaintyColor',
+      name: '📊 Ellipsoid Color',
+      description: 'Color for uncertainty ellipsoids (cyan recommended for consistency)',
+      defaultValue: '#00FFFF',  // Cyan
+      showIf: (config: any) => config.showAttitudeVisualization && config.showUncertaintyEllipsoids,
     })
 
     // ============================================================

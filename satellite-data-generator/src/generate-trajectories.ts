@@ -61,6 +61,13 @@ function generateSatelliteJSON(
       { text: 'qy', type: 'number' },
       { text: 'qz', type: 'number' },
       { text: 'qs', type: 'number' },
+      // Position uncertainty covariance (ECEF frame, meters²)
+      { text: 'cov_xx', type: 'number' },
+      { text: 'cov_yy', type: 'number' },
+      { text: 'cov_zz', type: 'number' },
+      { text: 'cov_xy', type: 'number' },
+      { text: 'cov_xz', type: 'number' },
+      { text: 'cov_yz', type: 'number' },
     ],
     rows: trajectoryPoints.map(p => [
       p.time,
@@ -71,6 +78,12 @@ function generateSatelliteJSON(
       p.qy,
       p.qz,
       p.qs,
+      p.cov_xx,
+      p.cov_yy,
+      p.cov_zz,
+      p.cov_xy,
+      p.cov_xz,
+      p.cov_yz,
     ]),
   };
 }

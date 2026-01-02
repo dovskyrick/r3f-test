@@ -28,7 +28,7 @@
  */
 
 import React from 'react';
-import { Color, Cartesian3, Cartesian2, Resource, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid, PolylineDashMaterialProperty } from 'cesium';
+import { Color, Cartesian3, Cartesian2, Resource, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid, PolylineDashMaterialProperty, JulianDate } from 'cesium';
 import { Entity, PointGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics, ModelGraphics, PathGraphics } from 'resium';
 import { ParsedSatellite } from 'types/satelliteTypes';
 import { SensorDefinition } from 'types/sensorTypes';
@@ -38,6 +38,7 @@ import { getScaledLength } from 'utils/cameraScaling';
 import { hexToRgb } from 'utils/colorHelpers';
 import { generateConeMesh, generateSolidConeMesh, SENSOR_COLORS } from 'utils/sensorCone';
 import { computeFOVFootprint, computeFOVCelestialProjection, createDummyPolygonHierarchy } from 'utils/projections';
+import { covarianceToEllipsoid, getOpacityForQuality } from 'utils/covarianceEllipsoid';
 
 /**
  * CesiumEntityRenderers.tsx
@@ -598,3 +599,94 @@ export const GroundStationRenderer: React.FC<GroundStationProps> = ({
   );
 };
 
+// ============================================================================
+// 6. UNCERTAINTY ELLIPSOID RENDERER
+// ============================================================================
+
+export interface UncertaintyEllipsoidProps {
+  satellite: ParsedSatellite;
+  opacityMode: string;
+  ellipsoidColor: string;
+  sigmaScale?: number;
+}
+
+/**
+ * UncertaintyEllipsoidRenderer
+ * 
+ * Renders 3D confidence ellipsoids representing position uncertainty.
+ * Uses covariance data to compute ellipsoid shape and orientation.
+ * 
+ * Opacity indicates data quality:
+ * - High (70%): Good quality data
+ * - Medium (30%): Fair quality data
+ * - Low (10%): Poor quality data
+ * 
+ * @param satellite - Satellite with covariance data
+ * @param opacityMode - Data quality visualization mode
+ * @param ellipsoidColor - Hex color string for ellipsoid
+ * @param sigmaScale - Confidence interval scale (default: 1.0 = 1-sigma ~68%)
+ */
+export const UncertaintyEllipsoidRenderer: React.FC<UncertaintyEllipsoidProps> = ({
+  satellite,
+  opacityMode,
+  ellipsoidColor,
+  sigmaScale = 1.0,
+}) => {
+  // No covariance data available
+  if (!satellite.covariance || satellite.covariance.length === 0) {
+    return null;
+  }
+
+  const opacity = getOpacityForQuality(opacityMode);
+  const baseColor = Color.fromCssColorString(ellipsoidColor);
+  const color = baseColor.withAlpha(opacity);
+
+  return (
+    <>
+      {satellite.covariance.map((covEpoch, index) => {
+        // Compute ellipsoid parameters from covariance
+        const { radii, orientation } = covarianceToEllipsoid(covEpoch.covariance, sigmaScale);
+        
+        // DEBUG: Log ellipsoid parameters
+        if (index === 0) {
+          console.log(`🔵 Uncertainty Ellipsoid for ${satellite.name}:`, {
+            radii: { x: radii.x, y: radii.y, z: radii.z },
+            covariance: covEpoch.covariance,
+            timestamp: new Date(covEpoch.timestamp).toISOString()
+          });
+        }
+        
+        // Get satellite position at this timestamp
+        const julianDate = JulianDate.fromDate(new Date(covEpoch.timestamp));
+        const position = satellite.position.getValue(julianDate);
+        
+        if (!position) {
+          console.warn(`⚠️ No position found for ${satellite.name} at epoch ${index}`);
+          return null;
+        }
+
+        // TEMPORARY: Make ellipsoids HUGE for testing (50 pixel points)
+        const testPixelSize = 50;
+
+        return (
+          <Entity
+            key={`${satellite.id}-ellipsoid-${index}`}
+            position={position}
+            orientation={new CallbackProperty(() => orientation, false)}
+          >
+            {/* 
+              TEMPORARY: Rendering large colored points to verify visibility.
+              Will be replaced with proper EllipsoidGraphics later.
+            */}
+            <PointGraphics
+              pixelSize={testPixelSize}
+              color={color}
+              outlineColor={color.withAlpha(opacity * 0.5)}
+              outlineWidth={2}
+            />
+          </Entity>
+        );
+      })}
+    </>
+  );
+};

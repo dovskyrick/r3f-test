@@ -22,10 +22,60 @@ export interface TrajectoryPoint {
   qy: number;
   qz: number;
   qs: number;
+  // Position uncertainty covariance (3x3 symmetric, ECEF frame, m²)
+  cov_xx: number;
+  cov_yy: number;
+  cov_zz: number;
+  cov_xy: number;
+  cov_xz: number;
+  cov_yz: number;
 }
 
 const EARTH_RADIUS_KM = 6371;
 const TWO_PI = 2 * Math.PI;
+
+/**
+ * Generate realistic position uncertainty covariance that grows with time.
+ * Simulates sparse measurements:
+ * - Fresh data after "measurement" has low uncertainty (~10m)
+ * - Uncertainty grows between measurements (~50m max)
+ * - Creates 3x3 covariance in ECEF frame
+ */
+function generateCovarianceForEpoch(
+  pointIndex: number,
+  totalPoints: number,
+  measurementInterval: number = 5 // "measurement" every N points
+): {
+  cov_xx: number;
+  cov_yy: number;
+  cov_zz: number;
+  cov_xy: number;
+  cov_xz: number;
+  cov_yz: number;
+} {
+  // Time since last "measurement" (in point indices)
+  const timeSinceMeasurement = pointIndex % measurementInterval;
+  
+  // Base uncertainty (meters) - grows quadratically
+  const baseUncertainty = 10 + (timeSinceMeasurement ** 2) * 2;  // 10m → 50m
+  
+  // Create diagonal-dominant covariance (realistic for orbit determination)
+  // Radial uncertainty is typically larger than transverse
+  const radialVar = baseUncertainty ** 2;           // σ_r²
+  const transverseVar = (baseUncertainty * 0.7) ** 2;  // σ_t²
+  
+  // Small random correlations (realistic)
+  const correlation = (Math.random() - 0.5) * 0.2 * Math.sqrt(radialVar * transverseVar);
+  
+  return {
+    cov_xx: radialVar,
+    cov_yy: transverseVar,
+    cov_zz: transverseVar,
+    cov_xy: correlation,
+    cov_xz: correlation * 0.5,
+    cov_yz: correlation * 0.5,
+  };
+}
 
 /**
  * Calculate orbital period using Kepler's Third Law (simplified).
@@ -93,6 +143,9 @@ export function generateCircularOrbit(params: OrbitParams): TrajectoryPoint[] {
     const qz = 0;
     const qs = 1;
     
+    // Generate covariance for this epoch
+    const covariance = generateCovarianceForEpoch(i, numPoints);
+    
     points.push({
       time: timeMs,
       longitude: longitude,
@@ -102,6 +155,7 @@ export function generateCircularOrbit(params: OrbitParams): TrajectoryPoint[] {
       qy,
       qz,
       qs,
+      ...covariance,  // Spread cov_xx, cov_yy, etc.
     });
   }
 

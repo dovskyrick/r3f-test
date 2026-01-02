@@ -4,6 +4,7 @@
 
 import { SampledPositionProperty, SampledProperty, TimeIntervalCollection, IonResource } from 'cesium';
 import { SensorDefinition } from './sensorTypes';
+import { CovarianceEpoch } from '../parsers/covarianceParser';
 
 /**
  * Parsed satellite data structure containing all information needed for visualization.
@@ -16,5 +17,6 @@ export interface ParsedSatellite {
   availability: TimeIntervalCollection; // Time intervals when satellite has data
   sensors: SensorDefinition[];          // Attached sensors
   resource?: IonResource | string;      // 3D model resource (optional, can use default)
+  covariance?: CovarianceEpoch[];       // Position uncertainty (optional)
 }
 

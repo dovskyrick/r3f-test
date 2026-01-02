@@ -23,6 +23,10 @@ export interface SimpleOptions {
   showFOVFootprint: boolean;
   showCelestialFOV: boolean;
 
+  showUncertaintyEllipsoids: boolean;
+  uncertaintyOpacityMode: UncertaintyOpacityMode;
+  uncertaintyColor: string;
+
   showBodyAxes: boolean;
   xAxisColor: string;
   yAxisColor: string;
@@ -62,6 +66,12 @@ export enum CoordinatesType {
   CartesianFixed = 'CartesianFixed',
   CartesianInertial = 'CartesianInertial',
   Geodetic = 'Geodetic',
+}
+
+export enum UncertaintyOpacityMode {
+  High = 'High (70%)',      // High-quality data
+  Medium = 'Medium (30%)',  // Medium-quality data
+  Low = 'Low (10%)',        // Low-quality data
 }
 
 export interface Location {

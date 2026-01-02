@@ -19,6 +19,7 @@ import {
 import { CoordinatesType, SimpleOptions } from 'types';
 import { ParsedSatellite } from 'types/satelliteTypes';
 import { parseSensors } from './sensorParser';
+import { parseCovariance } from './covarianceParser';
 
 /**
  * Parse multiple satellites from an array of DataFrames.
@@ -151,6 +152,12 @@ export function parseSatellites(
       const sensors = parseSensors(dataFrame);
       console.log(`   Sensors: ${sensors.length}`);
 
+      // Parse covariance data (optional - may not exist in all datasets)
+      const covariance = parseCovariance(dataFrame);
+      if (covariance.length > 0) {
+        console.log(`   Covariance epochs: ${covariance.length}`);
+      }
+
       satellites.push({
         id: satelliteId,
         name: satelliteName,
@@ -158,6 +165,7 @@ export function parseSatellites(
         orientation,
         availability,
         sensors,
+        covariance: covariance.length > 0 ? covariance : undefined,
       });
 
       console.log(`✅ Satellite ${satelliteName} parsed successfully`);
