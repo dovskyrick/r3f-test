@@ -56,24 +56,25 @@ function generateCovarianceForEpoch(
   // Time since last "measurement" (in point indices)
   const timeSinceMeasurement = pointIndex % measurementInterval;
   
-  // Base uncertainty (meters) - grows quadratically
-  const baseUncertainty = 10 + (timeSinceMeasurement ** 2) * 2;  // 10m → 50m
+  // EXAGGERATED uncertainties for visual testing - make ellipsoids very obvious!
+  const baseUncertainty = 100 + (timeSinceMeasurement ** 2) * 50;  // 100m → 1250m
   
-  // Create diagonal-dominant covariance (realistic for orbit determination)
-  // Radial uncertainty is typically larger than transverse
-  const radialVar = baseUncertainty ** 2;           // σ_r²
-  const transverseVar = (baseUncertainty * 0.7) ** 2;  // σ_t²
+  // Create HIGHLY SKEWED covariance for visual testing
+  // Make X, Y, Z have very different variances
+  const xVar = (baseUncertainty * 3.0) ** 2;    // 3x larger in X
+  const yVar = (baseUncertainty * 0.5) ** 2;    // 0.5x in Y (smallest)
+  const zVar = (baseUncertainty * 1.5) ** 2;    // 1.5x in Z
   
-  // Small random correlations (realistic)
-  const correlation = (Math.random() - 0.5) * 0.2 * Math.sqrt(radialVar * transverseVar);
+  // Add STRONG correlations to create tilted ellipsoids
+  const strongCorrelation = 0.6 * Math.sqrt(xVar * yVar);  // 60% correlation!
   
   return {
-    cov_xx: radialVar,
-    cov_yy: transverseVar,
-    cov_zz: transverseVar,
-    cov_xy: correlation,
-    cov_xz: correlation * 0.5,
-    cov_yz: correlation * 0.5,
+    cov_xx: xVar,
+    cov_yy: yVar,
+    cov_zz: zVar,
+    cov_xy: strongCorrelation,
+    cov_xz: strongCorrelation * 0.8,
+    cov_yz: strongCorrelation * 0.4,
   };
 }
 

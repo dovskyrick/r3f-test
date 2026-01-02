@@ -29,7 +29,7 @@
 
 import React from 'react';
 import { Color, Cartesian3, Cartesian2, Resource, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid, PolylineDashMaterialProperty, JulianDate } from 'cesium';
-import { Entity, PointGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics, ModelGraphics, PathGraphics } from 'resium';
+import { Entity, PointGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics, ModelGraphics, PathGraphics, EllipsoidGraphics } from 'resium';
 import { ParsedSatellite } from 'types/satelliteTypes';
 import { SensorDefinition } from 'types/sensorTypes';
 import { GroundStation } from 'types/groundStationTypes';
@@ -665,9 +665,6 @@ export const UncertaintyEllipsoidRenderer: React.FC<UncertaintyEllipsoidProps> =
           return null;
         }
 
-        // TEMPORARY: Make ellipsoids HUGE for testing (50 pixel points)
-        const testPixelSize = 50;
-
         return (
           <Entity
             key={`${satellite.id}-ellipsoid-${index}`}
@@ -675,13 +672,14 @@ export const UncertaintyEllipsoidRenderer: React.FC<UncertaintyEllipsoidProps> =
             orientation={new CallbackProperty(() => orientation, false)}
           >
             {/* 
-              TEMPORARY: Rendering large colored points to verify visibility.
-              Will be replaced with proper EllipsoidGraphics later.
+              Using Cesium's native EllipsoidGraphics for proper 3D oriented ellipsoids.
+              The orientation quaternion rotates the ellipsoid to match the covariance principal axes.
             */}
-            <PointGraphics
-              pixelSize={testPixelSize}
-              color={color}
-              outlineColor={color.withAlpha(opacity * 0.5)}
+            <EllipsoidGraphics
+              radii={radii}
+              material={color}
+              outline={true}
+              outlineColor={color.withAlpha(opacity * 0.8)}
               outlineWidth={2}
             />
           </Entity>
