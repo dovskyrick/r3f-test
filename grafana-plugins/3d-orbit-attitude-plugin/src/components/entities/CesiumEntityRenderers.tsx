@@ -613,8 +613,8 @@ export interface UncertaintyEllipsoidProps {
 /**
  * UncertaintyEllipsoidRenderer
  * 
- * Renders 3D confidence ellipsoids representing position uncertainty.
- * Uses covariance data to compute ellipsoid shape and orientation.
+ * Renders a single 3D confidence ellipsoid that follows the satellite.
+ * The ellipsoid's shape changes based on the nearest covariance data point.
  * 
  * Opacity indicates data quality:
  * - High (70%): Good quality data
@@ -634,6 +634,7 @@ export const UncertaintyEllipsoidRenderer: React.FC<UncertaintyEllipsoidProps> =
 }) => {
   // No covariance data available
   if (!satellite.covariance || satellite.covariance.length === 0) {
+    console.log(`ℹ️ No covariance data for ${satellite.name}`);
     return null;
   }
 
@@ -641,50 +642,73 @@ export const UncertaintyEllipsoidRenderer: React.FC<UncertaintyEllipsoidProps> =
   const baseColor = Color.fromCssColorString(ellipsoidColor);
   const color = baseColor.withAlpha(opacity);
 
-  return (
-    <>
-      {satellite.covariance.map((covEpoch, index) => {
-        // Compute ellipsoid parameters from covariance
-        const { radii, orientation } = covarianceToEllipsoid(covEpoch.covariance, sigmaScale);
-        
-        // DEBUG: Log ellipsoid parameters
-        if (index === 0) {
-          console.log(`🔵 Uncertainty Ellipsoid for ${satellite.name}:`, {
-            radii: { x: radii.x, y: radii.y, z: radii.z },
-            covariance: covEpoch.covariance,
-            timestamp: new Date(covEpoch.timestamp).toISOString()
-          });
-        }
-        
-        // Get satellite position at this timestamp
-        const julianDate = JulianDate.fromDate(new Date(covEpoch.timestamp));
-        const position = satellite.position.getValue(julianDate);
-        
-        if (!position) {
-          console.warn(`⚠️ No position found for ${satellite.name} at epoch ${index}`);
-          return null;
-        }
+  console.log(`🔵 Rendering uncertainty ellipsoid for ${satellite.name} with ${satellite.covariance.length} epochs`);
 
-        return (
-          <Entity
-            key={`${satellite.id}-ellipsoid-${index}`}
-            position={position}
-            orientation={new CallbackProperty(() => orientation, false)}
-          >
-            {/* 
-              Using Cesium's native EllipsoidGraphics for proper 3D oriented ellipsoids.
-              The orientation quaternion rotates the ellipsoid to match the covariance principal axes.
-            */}
-            <EllipsoidGraphics
-              radii={radii}
-              material={color}
-              outline={true}
-              outlineColor={color.withAlpha(opacity * 0.8)}
-              outlineWidth={2}
-            />
-          </Entity>
-        );
-      })}
-    </>
+  // Create dynamic radii property that updates based on current time
+  const dynamicRadii = new CallbackProperty((time: JulianDate) => {
+    if (!time) {
+      return new Cartesian3(100, 100, 100); // Fallback
+    }
+
+    // Find nearest covariance epoch to current time
+    const currentTimeMs = JulianDate.toDate(time).getTime();
+    let nearestEpoch = satellite.covariance![0];
+    let minDelta = Math.abs(nearestEpoch.timestamp - currentTimeMs);
+
+    for (const epoch of satellite.covariance!) {
+      const delta = Math.abs(epoch.timestamp - currentTimeMs);
+      if (delta < minDelta) {
+        minDelta = delta;
+        nearestEpoch = epoch;
+      }
+    }
+
+    // Compute ellipsoid parameters from nearest covariance
+    const { radii } = covarianceToEllipsoid(nearestEpoch.covariance, sigmaScale);
+    return radii;
+  }, false);
+
+  // Create dynamic orientation property
+  const dynamicOrientation = new CallbackProperty((time: JulianDate) => {
+    if (!time) {
+      return new Quaternion(0, 0, 0, 1); // Identity
+    }
+
+    // Find nearest covariance epoch to current time
+    const currentTimeMs = JulianDate.toDate(time).getTime();
+    let nearestEpoch = satellite.covariance![0];
+    let minDelta = Math.abs(nearestEpoch.timestamp - currentTimeMs);
+
+    for (const epoch of satellite.covariance!) {
+      const delta = Math.abs(epoch.timestamp - currentTimeMs);
+      if (delta < minDelta) {
+        minDelta = delta;
+        nearestEpoch = epoch;
+      }
+    }
+
+    // Compute ellipsoid parameters from nearest covariance
+    const { orientation } = covarianceToEllipsoid(nearestEpoch.covariance, sigmaScale);
+    return orientation;
+  }, false);
+
+  return (
+    <Entity
+      id={`${satellite.id}-uncertainty-ellipsoid`}
+      position={satellite.position}  // Follows satellite position dynamically!
+      orientation={dynamicOrientation}
+    >
+      {/* 
+        Using Cesium's native EllipsoidGraphics with dynamic radii.
+        The ellipsoid follows the satellite and changes shape based on nearest covariance.
+      */}
+      <EllipsoidGraphics
+        radii={dynamicRadii}
+        material={color}
+        outline={true}
+        outlineColor={color.withAlpha(opacity * 0.8)}
+        outlineWidth={2}
+      />
+    </Entity>
   );
 };
