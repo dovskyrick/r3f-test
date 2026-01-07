@@ -1120,30 +1120,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             controller.enableCollisionDetection = false;
             
             // Hard camera height limit: 5x Earth radius (catches free camera mode)
-            const hardMaxZoomDistance = earthRadius * 5; // ~31,890 km
+            // const hardMaxZoomDistance = earthRadius * 5; // ~31,890 km
             
-            // Add a post-render listener to enforce the hard camera height limit
-            // This primarily affects free camera mode, as tracked mode stops at 3R via controller
-            viewer.scene.postRender.addEventListener(() => {
-              const cameraHeight = camera.positionCartographic.height;
-              if (cameraHeight > hardMaxZoomDistance) {
-                // Force camera back within hard limit
-                const direction = camera.direction.clone();
-                const up = camera.up.clone();
-                const position = Cartesian3.fromDegrees(
-                  camera.positionCartographic.longitude * (180 / Math.PI),
-                  camera.positionCartographic.latitude * (180 / Math.PI),
-                  hardMaxZoomDistance
-                );
-                camera.setView({
-                  destination: position,
-                  orientation: {
-                    direction: direction,
-                    up: up
-                  }
-                });
-              }
-            });
+            
             
             // Extend camera far clipping plane for celestial grid visibility
             const celestialDistance = earthRadius * 100;

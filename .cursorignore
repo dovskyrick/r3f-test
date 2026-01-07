@@ -1,0 +1,55 @@
+# ===============================
+# Cursor Ignore – Token Control
+# ===============================
+
+# Dependencies
+**/node_modules/**
+**/vendor/**
+
+# Build outputs
+**/dist/**
+**/build/**
+**/.next/**
+**/out/**
+**/coverage/**
+**/.cache/**
+
+# Version control & tooling
+**/.git/**
+**/.github/**
+**/.vscode/**
+**/.idea/**
+
+# Logs & temp
+**/*.log
+**/tmp/**
+**/temp/**
+
+# Large assets
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.webp
+**/*.svg
+**/*.gif
+**/*.mp4
+**/*.mov
+**/*.avi
+**/*.glb
+**/*.gltf
+**/*.fbx
+
+# Data
+**/*.csv
+**/*.tsv
+**/*.parquet
+**/*.jsonl
+**/data/**
+
+# Maps
+**/*.map
+
+# Lock files
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
