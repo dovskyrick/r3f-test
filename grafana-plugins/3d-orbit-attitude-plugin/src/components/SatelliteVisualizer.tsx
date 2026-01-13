@@ -709,6 +709,111 @@ const getStyles = () => {
         top: 10px !important;
       }
     `,
+    legendPanel: css`
+      position: absolute;
+      bottom: 40px;
+      right: 10px;
+      z-index: 1000;
+      background: rgba(30, 30, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      max-width: 220px;
+      min-width: 180px;
+      max-height: 300px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    `,
+    legendHeader: css`
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.03);
+    `,
+    legendContent: css`
+      padding: 6px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      max-height: 260px;
+      
+      /* Custom scrollbar */
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+      
+      &::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.4);
+      }
+    `,
+    legendSection: css`
+      margin-bottom: 8px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    `,
+    legendSectionTitle: css`
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      padding: 0 2px;
+    `,
+    legendItem: css`
+      display: flex;
+      align-items: center;
+      padding: 4px 6px;
+      border-radius: 3px;
+      transition: background 0.15s ease;
+      cursor: pointer;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    `,
+    legendColorSwatch: css`
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+      
+      &:hover {
+        transform: scale(1.1);
+      }
+    `,
+    legendItemName: css`
+      flex: 1;
+      margin-left: 8px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    `,
+    legendColorPicker: css`
+      margin-top: 4px;
+      margin-left: 24px;
+      padding: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 3px;
+    `,
   };
 };
 
@@ -785,6 +890,9 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [showBodyAxes, setShowBodyAxes] = useState<boolean>(true); // Default on
   const [showITRFAxes, setShowITRFAxes] = useState<boolean>(false);
   const [showICRFAxes, setShowICRFAxes] = useState<boolean>(false);
+  
+  // Legend panel state
+  const [expandedLegendItem, setExpandedLegendItem] = useState<string | null>(null);
   
   // Per-satellite render settings (for future features like transparent cones)
   const [satelliteRenderSettings, setSatelliteRenderSettings] = useState<Map<string, {
@@ -1750,6 +1858,136 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             id="cesium-credits"
             className={options.showCredits ? styles.showCesiumCredits : styles.hideCesiumCredits}
           ></div>
+          
+          {/* Compact Legend Panel - Bottom Right */}
+          <div className={styles.legendPanel}>
+            <div className={styles.legendHeader}>
+              Legend
+            </div>
+            <div className={styles.legendContent}>
+              {/* Reference Frames Section */}
+              <div className={styles.legendSection}>
+                <div className={styles.legendSectionTitle}>Reference Frames</div>
+                
+                {/* LVLH Frame (placeholder) */}
+                {showLVLHAxes && (
+                  <div className={styles.legendItem}>
+                    <div
+                      className={styles.legendColorSwatch}
+                      style={{ background: '#FFA500' }}
+                      onClick={() => setExpandedLegendItem(expandedLegendItem === 'lvlh' ? null : 'lvlh')}
+                    />
+                    <span className={styles.legendItemName}>LVLH Frame</span>
+                  </div>
+                )}
+                {expandedLegendItem === 'lvlh' && (
+                  <div className={styles.legendColorPicker}>
+                    {/* Placeholder for color picker */}
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                  </div>
+                )}
+                
+                {/* Body Axes Frame (placeholder) */}
+                {showBodyAxes && (
+                  <div className={styles.legendItem}>
+                    <div
+                      className={styles.legendColorSwatch}
+                      style={{ background: '#FF0000' }}
+                      onClick={() => setExpandedLegendItem(expandedLegendItem === 'body' ? null : 'body')}
+                    />
+                    <span className={styles.legendItemName}>Body Axes</span>
+                  </div>
+                )}
+                {expandedLegendItem === 'body' && (
+                  <div className={styles.legendColorPicker}>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                  </div>
+                )}
+                
+                {/* ITRF Frame (placeholder) */}
+                {showITRFAxes && (
+                  <div className={styles.legendItem}>
+                    <div
+                      className={styles.legendColorSwatch}
+                      style={{ background: '#00FF00' }}
+                      onClick={() => setExpandedLegendItem(expandedLegendItem === 'itrf' ? null : 'itrf')}
+                    />
+                    <span className={styles.legendItemName}>ITRF Frame</span>
+                  </div>
+                )}
+                {expandedLegendItem === 'itrf' && (
+                  <div className={styles.legendColorPicker}>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                  </div>
+                )}
+                
+                {/* ICRF Frame (placeholder) */}
+                {showICRFAxes && (
+                  <div className={styles.legendItem}>
+                    <div
+                      className={styles.legendColorSwatch}
+                      style={{ background: '#0000FF' }}
+                      onClick={() => setExpandedLegendItem(expandedLegendItem === 'icrf' ? null : 'icrf')}
+                    />
+                    <span className={styles.legendItemName}>ICRF Frame</span>
+                  </div>
+                )}
+                {expandedLegendItem === 'icrf' && (
+                  <div className={styles.legendColorPicker}>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Sensors Section (placeholder for selected satellite) */}
+              <div className={styles.legendSection}>
+                <div className={styles.legendSectionTitle}>Sensors (Satellite 1)</div>
+                
+                {/* Sample sensors - replace with real data later */}
+                <div className={styles.legendItem}>
+                  <div
+                    className={styles.legendColorSwatch}
+                    style={{ background: '#FF1493' }}
+                    onClick={() => setExpandedLegendItem(expandedLegendItem === 'sensor1' ? null : 'sensor1')}
+                  />
+                  <span className={styles.legendItemName}>Main Camera</span>
+                </div>
+                {expandedLegendItem === 'sensor1' && (
+                  <div className={styles.legendColorPicker}>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                  </div>
+                )}
+                
+                <div className={styles.legendItem}>
+                  <div
+                    className={styles.legendColorSwatch}
+                    style={{ background: '#00CED1' }}
+                    onClick={() => setExpandedLegendItem(expandedLegendItem === 'sensor2' ? null : 'sensor2')}
+                  />
+                  <span className={styles.legendItemName}>Star Tracker</span>
+                </div>
+                {expandedLegendItem === 'sensor2' && (
+                  <div className={styles.legendColorPicker}>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                  </div>
+                )}
+                
+                <div className={styles.legendItem}>
+                  <div
+                    className={styles.legendColorSwatch}
+                    style={{ background: '#FFD700' }}
+                    onClick={() => setExpandedLegendItem(expandedLegendItem === 'sensor3' ? null : 'sensor3')}
+                  />
+                  <span className={styles.legendItemName}>Antenna</span>
+                </div>
+                {expandedLegendItem === 'sensor3' && (
+                  <div className={styles.legendColorPicker}>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Sidebar - Satellite & Ground Station Lists */}
