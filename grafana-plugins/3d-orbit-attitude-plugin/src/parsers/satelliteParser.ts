@@ -15,6 +15,7 @@ import {
   TimeInterval,
   TimeIntervalCollection,
   ReferenceFrame,
+  LagrangePolynomialApproximation,
 } from 'cesium';
 import { CoordinatesType, SimpleOptions } from 'types';
 import { ParsedSatellite } from 'types/satelliteTypes';
@@ -83,6 +84,14 @@ export function parseSatellites(
 
       // Create sampled position and orientation properties
       const position = new SampledPositionProperty(ReferenceFrame.FIXED);
+      
+      // Configure interpolation for smoother orbital curves
+      // Higher degree = smoother curves that better approximate orbital mechanics
+      position.setInterpolationOptions({
+        interpolationDegree: 5,
+        interpolationAlgorithm: LagrangePolynomialApproximation,
+      });
+      
       const orientation = new SampledProperty(Quaternion);
 
       let startTime: JulianDate | null = null;

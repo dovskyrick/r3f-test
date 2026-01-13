@@ -28,7 +28,7 @@
  */
 
 import React from 'react';
-import { Color, Cartesian3, Cartesian2, Resource, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid, PolylineDashMaterialProperty, JulianDate, Simon1994PlanetaryPositions, Transforms } from 'cesium';
+import { Color, Cartesian3, Cartesian2, Resource, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid, JulianDate, Simon1994PlanetaryPositions, Transforms } from 'cesium';
 import { Entity, PointGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics, ModelGraphics, PathGraphics, EllipsoidGraphics } from 'resium';
 import { ParsedSatellite } from 'types/satelliteTypes';
 import { SensorDefinition } from 'types/sensorTypes';
@@ -113,12 +113,8 @@ export const SatelliteEntityRenderer: React.FC<SatelliteEntityProps> = ({
       {options.trajectoryShow && (
         <PathGraphics
           width={options.trajectoryWidth}
-          material={
-            new PolylineDashMaterialProperty({
-              color: Color.fromCssColorString(options.trajectoryColor),
-              dashLength: options.trajectoryDashLength,
-            })
-          }
+          material={Color.fromCssColorString(options.trajectoryColor)}
+          resolution={30}
         />
       )}
     </Entity>
