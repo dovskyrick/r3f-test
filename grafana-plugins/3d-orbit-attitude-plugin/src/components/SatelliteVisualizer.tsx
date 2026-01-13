@@ -46,7 +46,7 @@ import {
 } from './entities/CesiumEntityRenderers';
 import { css, cx } from '@emotion/css';
 import { useStyles2, ColorPicker } from '@grafana/ui';
-import { Eye, EyeOff, Settings, X, ChevronRight, Menu, Video, ChevronDown } from 'lucide-react';
+import { Eye, EyeOff, Settings, X, ChevronRight, Menu, Video, ChevronDown, Move3d } from 'lucide-react';
 
 import { Viewer, Clock, Entity, PointGraphics, LabelGraphics } from 'resium';
 import {
@@ -243,6 +243,56 @@ const getStyles = () => {
       display: block;
       font-size: 12px;
       color: rgba(255, 255, 255, 0.5);
+    `,
+    toggleItem: css`
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    `,
+    toggleLabel: css`
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      cursor: pointer;
+      flex: 1;
+    `,
+    toggleSwitch: css`
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      
+      &.active {
+        background: #4CAF50;
+      }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+      }
+      
+      &.active::after {
+        transform: translateX(20px);
+      }
     `,
     sidebarContent: css`
       display: flex;
@@ -722,12 +772,19 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   // New dropdown states for Mode and Camera controls
   const [isModeDropdownOpen, setIsModeDropdownOpen] = useState<boolean>(false);
   const [isCameraDropdownOpen, setIsCameraDropdownOpen] = useState<boolean>(false);
+  const [isAxesDropdownOpen, setIsAxesDropdownOpen] = useState<boolean>(false);
   const [selectedMode, setSelectedMode] = useState<'satellite' | 'earth' | 'celestial'>('satellite');
   
   // Camera view states - different per mode
   const [satelliteCameraView, setSatelliteCameraView] = useState<'nadir' | 'lvlh' | 'fixed' | 'free'>('nadir');
   const [celestialCameraView, setCelestialCameraView] = useState<'sun' | 'lvlh-orbit' | 'star' | 'groundstation'>('sun');
   const [earthCameraView, setEarthCameraView] = useState<'icrf' | 'itrf' | 'gcrf' | 'teme'>('icrf');
+  
+  // Reference axes visibility toggles (common to all modes)
+  const [showLVLHAxes, setShowLVLHAxes] = useState<boolean>(false);
+  const [showBodyAxes, setShowBodyAxes] = useState<boolean>(true); // Default on
+  const [showITRFAxes, setShowITRFAxes] = useState<boolean>(false);
+  const [showICRFAxes, setShowICRFAxes] = useState<boolean>(false);
   
   // Per-satellite render settings (for future features like transparent cones)
   const [satelliteRenderSettings, setSatelliteRenderSettings] = useState<Map<string, {
@@ -925,16 +982,17 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       if (!target.closest(`.${styles.topLeftControlsContainer}`)) {
         setIsModeDropdownOpen(false);
         setIsCameraDropdownOpen(false);
+        setIsAxesDropdownOpen(false);
       }
     };
     
-    if (isModeDropdownOpen || isCameraDropdownOpen) {
+    if (isModeDropdownOpen || isCameraDropdownOpen || isAxesDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
     
     return undefined;
-  }, [isModeDropdownOpen, isCameraDropdownOpen, styles.topLeftControlsContainer]);
+  }, [isModeDropdownOpen, isCameraDropdownOpen, isAxesDropdownOpen, styles.topLeftControlsContainer]);
 
   // Fly camera to satellite with "from above" nadir view
   const flyToSatelliteNadirView = (satelliteId: string, duration = 0.5, distance = 4) => {
@@ -1391,6 +1449,70 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                       </div>
                     </>
                   )}
+                </div>
+              )}
+            </div>
+            
+            {/* Reference Axes Visibility Toggle - Common to All Modes */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className={styles.dropdownButton}
+                onClick={() => {
+                  setIsAxesDropdownOpen(!isAxesDropdownOpen);
+                  setIsModeDropdownOpen(false);
+                  setIsCameraDropdownOpen(false);
+                }}
+                title="Select visible reference axes"
+              >
+                <Move3d size={16} />
+                <ChevronDown size={16} />
+              </button>
+              
+              {isAxesDropdownOpen && (
+                <div className={styles.dropdownMenu}>
+                  {/* LVLH Reference Frame Toggle */}
+                  <div className={styles.toggleItem}>
+                    <label className={styles.toggleLabel} onClick={() => setShowLVLHAxes(!showLVLHAxes)}>
+                      LVLH Reference Frame
+                    </label>
+                    <div
+                      className={`${styles.toggleSwitch} ${showLVLHAxes ? 'active' : ''}`}
+                      onClick={() => setShowLVLHAxes(!showLVLHAxes)}
+                    />
+                  </div>
+                  
+                  {/* Body Axes Reference Frame Toggle */}
+                  <div className={styles.toggleItem}>
+                    <label className={styles.toggleLabel} onClick={() => setShowBodyAxes(!showBodyAxes)}>
+                      Body Axes Reference Frame
+                    </label>
+                    <div
+                      className={`${styles.toggleSwitch} ${showBodyAxes ? 'active' : ''}`}
+                      onClick={() => setShowBodyAxes(!showBodyAxes)}
+                    />
+                  </div>
+                  
+                  {/* ITRF Reference Frame Toggle */}
+                  <div className={styles.toggleItem}>
+                    <label className={styles.toggleLabel} onClick={() => setShowITRFAxes(!showITRFAxes)}>
+                      ITRF Reference Frame
+                    </label>
+                    <div
+                      className={`${styles.toggleSwitch} ${showITRFAxes ? 'active' : ''}`}
+                      onClick={() => setShowITRFAxes(!showITRFAxes)}
+                    />
+                  </div>
+                  
+                  {/* ICRF Reference Frame Toggle */}
+                  <div className={styles.toggleItem}>
+                    <label className={styles.toggleLabel} onClick={() => setShowICRFAxes(!showICRFAxes)}>
+                      ICRF Reference Frame
+                    </label>
+                    <div
+                      className={`${styles.toggleSwitch} ${showICRFAxes ? 'active' : ''}`}
+                      onClick={() => setShowICRFAxes(!showICRFAxes)}
+                    />
+                  </div>
                 </div>
               )}
             </div>
