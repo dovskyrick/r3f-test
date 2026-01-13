@@ -46,7 +46,7 @@ import {
 } from './entities/CesiumEntityRenderers';
 import { css, cx } from '@emotion/css';
 import { useStyles2, ColorPicker } from '@grafana/ui';
-import { Eye, EyeOff, Settings, X, ChevronRight, Menu, Video, ChevronDown, Move3d } from 'lucide-react';
+import { Eye, EyeOff, Settings, X, ChevronRight, Menu, Video, ChevronDown, Move3d, ChevronUp } from 'lucide-react';
 
 import { Viewer, Clock, Entity, PointGraphics, LabelGraphics } from 'resium';
 import {
@@ -723,6 +723,13 @@ const getStyles = () => {
       display: flex;
       flex-direction: column;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+      
+      &.collapsed {
+        max-height: 36px;
+        min-width: 100px;
+        max-width: 120px;
+      }
     `,
     legendHeader: css`
       padding: 8px 10px;
@@ -731,6 +738,29 @@ const getStyles = () => {
       font-weight: 600;
       color: rgba(255, 255, 255, 0.9);
       background: rgba(255, 255, 255, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+    `,
+    legendToggleButton: css`
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s ease;
+      
+      &:hover {
+        color: rgba(255, 255, 255, 1);
+      }
     `,
     legendContent: css`
       padding: 6px;
@@ -893,6 +923,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   
   // Legend panel state
   const [expandedLegendItem, setExpandedLegendItem] = useState<string | null>(null);
+  const [isLegendCollapsed, setIsLegendCollapsed] = useState<boolean>(false);
   
   // Per-satellite render settings (for future features like transparent cones)
   const [satelliteRenderSettings, setSatelliteRenderSettings] = useState<Map<string, {
@@ -1860,11 +1891,19 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           ></div>
           
           {/* Compact Legend Panel - Bottom Right */}
-          <div className={styles.legendPanel}>
-            <div className={styles.legendHeader}>
-              Legend
+          <div className={`${styles.legendPanel} ${isLegendCollapsed ? 'collapsed' : ''}`}>
+            <div 
+              className={styles.legendHeader}
+              onClick={() => setIsLegendCollapsed(!isLegendCollapsed)}
+              title={isLegendCollapsed ? 'Expand legend' : 'Collapse legend'}
+            >
+              <span>Legend</span>
+              <button className={styles.legendToggleButton}>
+                {isLegendCollapsed ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
             </div>
-            <div className={styles.legendContent}>
+            {!isLegendCollapsed && (
+              <div className={styles.legendContent}>
               {/* Reference Frames Section */}
               <div className={styles.legendSection}>
                 <div className={styles.legendSectionTitle}>Reference Frames</div>
@@ -1987,6 +2026,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 )}
               </div>
             </div>
+            )}
           </div>
         </div>
 
