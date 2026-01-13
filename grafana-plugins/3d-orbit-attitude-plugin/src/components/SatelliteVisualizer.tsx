@@ -46,7 +46,7 @@ import {
 } from './entities/CesiumEntityRenderers';
 import { css, cx } from '@emotion/css';
 import { useStyles2, ColorPicker } from '@grafana/ui';
-import { Eye, EyeOff, Settings, X, ChevronRight, Menu } from 'lucide-react';
+import { Eye, EyeOff, Settings, X, ChevronRight, Menu, Video, ChevronDown } from 'lucide-react';
 
 import { Viewer, Clock, Entity, PointGraphics, LabelGraphics } from 'resium';
 import {
@@ -168,6 +168,81 @@ const getStyles = () => {
         opacity: 0.4;
         cursor: not-allowed;
       }
+    `,
+    topLeftControlsContainer: css`
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      display: flex;
+      gap: 8px;
+    `,
+    dropdownButton: css`
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(50, 50, 50, 0.9);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: rgba(70, 70, 70, 0.9);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      
+      &:active {
+        transform: scale(0.98);
+      }
+    `,
+    dropdownMenu: css`
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      background: rgba(40, 40, 40, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      min-width: 200px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      z-index: 1001;
+    `,
+    dropdownItem: css`
+      padding: 10px 16px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      
+      &.active {
+        background: rgba(76, 175, 80, 0.2);
+        color: #4CAF50;
+      }
+    `,
+    dropdownItemLabel: css`
+      display: block;
+      font-weight: 500;
+      margin-bottom: 2px;
+    `,
+    dropdownItemDescription: css`
+      display: block;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
     `,
     sidebarContent: css`
       display: flex;
@@ -644,6 +719,12 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [settingsModalGroundStationId, setSettingsModalGroundStationId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'satellites' | 'groundstations'>('satellites');
   
+  // New dropdown states for Mode and Camera controls
+  const [isModeDropdownOpen, setIsModeDropdownOpen] = useState<boolean>(false);
+  const [isCameraDropdownOpen, setIsCameraDropdownOpen] = useState<boolean>(false);
+  const [selectedMode, setSelectedMode] = useState<'satellite' | 'earth' | 'celestial'>('satellite');
+  const [selectedCameraView, setSelectedCameraView] = useState<'nadir' | 'lvlh' | 'fixed' | 'free'>('nadir');
+  
   // Per-satellite render settings (for future features like transparent cones)
   const [satelliteRenderSettings, setSatelliteRenderSettings] = useState<Map<string, {
     transparentCones: boolean;
@@ -832,6 +913,24 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   useEffect(() => {
     Ion.defaultAccessToken = options.accessToken;
   }, [options.accessToken]);
+  
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(`.${styles.topLeftControlsContainer}`)) {
+        setIsModeDropdownOpen(false);
+        setIsCameraDropdownOpen(false);
+      }
+    };
+    
+    if (isModeDropdownOpen || isCameraDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+    
+    return undefined;
+  }, [isModeDropdownOpen, isCameraDropdownOpen, styles.topLeftControlsContainer]);
 
   // Fly camera to satellite with "from above" nadir view
   const flyToSatelliteNadirView = (satelliteId: string, duration = 0.5, distance = 4) => {
@@ -1065,21 +1164,128 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             {isTracked ? '🎯' : '🌍'}
           </button>
           
-          {/* Nadir View Button - Fly to satellite from above */}
-          {options.showNadirViewButton && (
-            <button
-              className={styles.nadirViewButton}
-              onClick={() => {
-                if (trackedSatelliteId) {
-                  flyToSatelliteNadirView(trackedSatelliteId);
-                }
-              }}
-              disabled={!trackedSatelliteId}
-              title={trackedSatelliteId ? 'Fly to satellite (nadir view)' : 'No satellite selected'}
-            >
-              🛰️
-            </button>
-          )}
+          {/* Top-Left Control Panel - Mode & Camera Dropdowns */}
+          <div className={styles.topLeftControlsContainer}>
+            {/* Mode Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className={styles.dropdownButton}
+                onClick={() => {
+                  setIsModeDropdownOpen(!isModeDropdownOpen);
+                  setIsCameraDropdownOpen(false);
+                }}
+                title="View Mode"
+              >
+                Mode
+                <ChevronDown size={16} />
+              </button>
+              
+              {isModeDropdownOpen && (
+                <div className={styles.dropdownMenu}>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedMode === 'satellite' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedMode('satellite');
+                      setIsModeDropdownOpen(false);
+                      // TODO: Implement satellite-centered view logic
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>🛰️ Satellite Focus</span>
+                    <span className={styles.dropdownItemDescription}>Center on tracked satellite</span>
+                  </div>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedMode === 'earth' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedMode('earth');
+                      setIsModeDropdownOpen(false);
+                      // TODO: Implement earth-centered view logic
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>🌍 Earth Focus</span>
+                    <span className={styles.dropdownItemDescription}>Center on Earth</span>
+                  </div>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedMode === 'celestial' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedMode('celestial');
+                      setIsModeDropdownOpen(false);
+                      // TODO: Implement celestial map view logic
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>⭐ Celestial Map</span>
+                    <span className={styles.dropdownItemDescription}>RA/Dec reference frame</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Camera Angle Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className={styles.dropdownButton}
+                onClick={() => {
+                  setIsCameraDropdownOpen(!isCameraDropdownOpen);
+                  setIsModeDropdownOpen(false);
+                }}
+                title="Camera Angle"
+              >
+                <Video size={16} />
+                <ChevronDown size={16} />
+              </button>
+              
+              {isCameraDropdownOpen && (
+                <div className={styles.dropdownMenu}>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedCameraView === 'nadir' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedCameraView('nadir');
+                      setIsCameraDropdownOpen(false);
+                      // Use existing nadir view function
+                      if (trackedSatelliteId) {
+                        flyToSatelliteNadirView(trackedSatelliteId);
+                      }
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>🔭 Nadir View</span>
+                    <span className={styles.dropdownItemDescription}>View from directly above</span>
+                  </div>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedCameraView === 'lvlh' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedCameraView('lvlh');
+                      setIsCameraDropdownOpen(false);
+                      // TODO: Implement LVLH (Local Vertical Local Horizontal) view
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>📐 LVLH View</span>
+                    <span className={styles.dropdownItemDescription}>Local vertical/horizontal frame</span>
+                  </div>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedCameraView === 'fixed' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedCameraView('fixed');
+                      setIsCameraDropdownOpen(false);
+                      // TODO: Implement fixed inertial view
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>🧭 Fixed Inertial</span>
+                    <span className={styles.dropdownItemDescription}>Inertial reference frame</span>
+                  </div>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedCameraView === 'free' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedCameraView('free');
+                      setIsCameraDropdownOpen(false);
+                      // TODO: Implement free camera mode
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>🎮 Free Camera</span>
+                    <span className={styles.dropdownItemDescription}>Manual camera control</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           
           {/* Sidebar Toggle Button */}
           <button
