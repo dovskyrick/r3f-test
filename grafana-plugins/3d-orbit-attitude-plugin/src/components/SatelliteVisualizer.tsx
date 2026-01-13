@@ -723,7 +723,11 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [isModeDropdownOpen, setIsModeDropdownOpen] = useState<boolean>(false);
   const [isCameraDropdownOpen, setIsCameraDropdownOpen] = useState<boolean>(false);
   const [selectedMode, setSelectedMode] = useState<'satellite' | 'earth' | 'celestial'>('satellite');
-  const [selectedCameraView, setSelectedCameraView] = useState<'nadir' | 'lvlh' | 'fixed' | 'free'>('nadir');
+  
+  // Camera view states - different per mode
+  const [satelliteCameraView, setSatelliteCameraView] = useState<'nadir' | 'lvlh' | 'fixed' | 'free'>('nadir');
+  const [celestialCameraView, setCelestialCameraView] = useState<'sun' | 'lvlh-orbit' | 'star' | 'groundstation'>('sun');
+  const [earthCameraView, setEarthCameraView] = useState<'icrf' | 'itrf' | 'gcrf' | 'teme'>('icrf');
   
   // Per-satellite render settings (for future features like transparent cones)
   const [satelliteRenderSettings, setSatelliteRenderSettings] = useState<Map<string, {
@@ -1219,7 +1223,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               )}
             </div>
             
-            {/* Camera Angle Dropdown */}
+            {/* Camera Angle Dropdown - Options change based on selected mode */}
             <div style={{ position: 'relative' }}>
               <button
                 className={styles.dropdownButton}
@@ -1227,7 +1231,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   setIsCameraDropdownOpen(!isCameraDropdownOpen);
                   setIsModeDropdownOpen(false);
                 }}
-                title="Camera Angle"
+                title="Camera View"
               >
                 <Video size={16} />
                 <ChevronDown size={16} />
@@ -1235,53 +1239,158 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               
               {isCameraDropdownOpen && (
                 <div className={styles.dropdownMenu}>
-                  <div
-                    className={`${styles.dropdownItem} ${selectedCameraView === 'nadir' ? 'active' : ''}`}
-                    onClick={() => {
-                      setSelectedCameraView('nadir');
-                      setIsCameraDropdownOpen(false);
-                      // Use existing nadir view function
-                      if (trackedSatelliteId) {
-                        flyToSatelliteNadirView(trackedSatelliteId);
-                      }
-                    }}
-                  >
-                    <span className={styles.dropdownItemLabel}>🔭 Nadir View</span>
-                    <span className={styles.dropdownItemDescription}>View from directly above</span>
-                  </div>
-                  <div
-                    className={`${styles.dropdownItem} ${selectedCameraView === 'lvlh' ? 'active' : ''}`}
-                    onClick={() => {
-                      setSelectedCameraView('lvlh');
-                      setIsCameraDropdownOpen(false);
-                      // TODO: Implement LVLH (Local Vertical Local Horizontal) view
-                    }}
-                  >
-                    <span className={styles.dropdownItemLabel}>📐 LVLH View</span>
-                    <span className={styles.dropdownItemDescription}>Local vertical/horizontal frame</span>
-                  </div>
-                  <div
-                    className={`${styles.dropdownItem} ${selectedCameraView === 'fixed' ? 'active' : ''}`}
-                    onClick={() => {
-                      setSelectedCameraView('fixed');
-                      setIsCameraDropdownOpen(false);
-                      // TODO: Implement fixed inertial view
-                    }}
-                  >
-                    <span className={styles.dropdownItemLabel}>🧭 Fixed Inertial</span>
-                    <span className={styles.dropdownItemDescription}>Inertial reference frame</span>
-                  </div>
-                  <div
-                    className={`${styles.dropdownItem} ${selectedCameraView === 'free' ? 'active' : ''}`}
-                    onClick={() => {
-                      setSelectedCameraView('free');
-                      setIsCameraDropdownOpen(false);
-                      // TODO: Implement free camera mode
-                    }}
-                  >
-                    <span className={styles.dropdownItemLabel}>🎮 Free Camera</span>
-                    <span className={styles.dropdownItemDescription}>Manual camera control</span>
-                  </div>
+                  {/* Satellite Focus Mode - Satellite-centric camera views */}
+                  {selectedMode === 'satellite' && (
+                    <>
+                      <div
+                        className={`${styles.dropdownItem} ${satelliteCameraView === 'nadir' ? 'active' : ''}`}
+                        onClick={() => {
+                          setSatelliteCameraView('nadir');
+                          setIsCameraDropdownOpen(false);
+                          // Use existing nadir view function
+                          if (trackedSatelliteId) {
+                            flyToSatelliteNadirView(trackedSatelliteId);
+                          }
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🔭 Nadir View</span>
+                        <span className={styles.dropdownItemDescription}>View from directly above</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${satelliteCameraView === 'lvlh' ? 'active' : ''}`}
+                        onClick={() => {
+                          setSatelliteCameraView('lvlh');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement LVLH view
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>📐 LVLH View</span>
+                        <span className={styles.dropdownItemDescription}>Local vertical/horizontal frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${satelliteCameraView === 'fixed' ? 'active' : ''}`}
+                        onClick={() => {
+                          setSatelliteCameraView('fixed');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement fixed inertial view
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🧭 Fixed Inertial</span>
+                        <span className={styles.dropdownItemDescription}>Inertial reference frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${satelliteCameraView === 'free' ? 'active' : ''}`}
+                        onClick={() => {
+                          setSatelliteCameraView('free');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement free camera mode
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🎮 Free Camera</span>
+                        <span className={styles.dropdownItemDescription}>Manual camera control</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  {/* Celestial Map Mode - Celestial reference pointing */}
+                  {selectedMode === 'celestial' && (
+                    <>
+                      <div
+                        className={`${styles.dropdownItem} ${celestialCameraView === 'sun' ? 'active' : ''}`}
+                        onClick={() => {
+                          setCelestialCameraView('sun');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement sun pointing
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>☀️ Sun Pointing</span>
+                        <span className={styles.dropdownItemDescription}>Camera points toward sun</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${celestialCameraView === 'lvlh-orbit' ? 'active' : ''}`}
+                        onClick={() => {
+                          setCelestialCameraView('lvlh-orbit');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement LVLH orbit direction pointing
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🛰️ LVLH Orbit Direction</span>
+                        <span className={styles.dropdownItemDescription}>Aligned with orbit velocity</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${celestialCameraView === 'star' ? 'active' : ''}`}
+                        onClick={() => {
+                          setCelestialCameraView('star');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement star pointing
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>⭐ Star Pointing</span>
+                        <span className={styles.dropdownItemDescription}>Fixed stellar reference</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${celestialCameraView === 'groundstation' ? 'active' : ''}`}
+                        onClick={() => {
+                          setCelestialCameraView('groundstation');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement ground station pointing
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>📡 Ground Station Pointing</span>
+                        <span className={styles.dropdownItemDescription}>Camera toward selected station</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  {/* Earth Focus Mode - Reference frame selection */}
+                  {selectedMode === 'earth' && (
+                    <>
+                      <div
+                        className={`${styles.dropdownItem} ${earthCameraView === 'icrf' ? 'active' : ''}`}
+                        onClick={() => {
+                          setEarthCameraView('icrf');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement ICRF frame
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🌌 ICRF</span>
+                        <span className={styles.dropdownItemDescription}>International Celestial Reference Frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${earthCameraView === 'itrf' ? 'active' : ''}`}
+                        onClick={() => {
+                          setEarthCameraView('itrf');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement ITRF frame
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🌍 ITRF</span>
+                        <span className={styles.dropdownItemDescription}>International Terrestrial Reference Frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${earthCameraView === 'gcrf' ? 'active' : ''}`}
+                        onClick={() => {
+                          setEarthCameraView('gcrf');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement GCRF frame
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🔭 GCRF</span>
+                        <span className={styles.dropdownItemDescription}>Geocentric Celestial Reference Frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${earthCameraView === 'teme' ? 'active' : ''}`}
+                        onClick={() => {
+                          setEarthCameraView('teme');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement TEME frame
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🛰️ TEME</span>
+                        <span className={styles.dropdownItemDescription}>True Equator Mean Equinox</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
