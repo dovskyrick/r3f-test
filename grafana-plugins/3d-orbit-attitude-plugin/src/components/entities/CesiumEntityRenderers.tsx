@@ -28,7 +28,7 @@
  */
 
 import React from 'react';
-import { Color, Cartesian3, Cartesian2, Resource, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid, PolylineDashMaterialProperty, JulianDate } from 'cesium';
+import { Color, Cartesian3, Cartesian2, Resource, IonResource, LabelStyle, HorizontalOrigin, VerticalOrigin, ArcType, Matrix3, CallbackProperty, PolylineArrowMaterialProperty, Quaternion, PolygonHierarchy, Ellipsoid, PolylineDashMaterialProperty, JulianDate, Simon1994PlanetaryPositions, Transforms } from 'cesium';
 import { Entity, PointGraphics, LabelGraphics, PolylineGraphics, PolygonGraphics, ModelGraphics, PathGraphics, EllipsoidGraphics } from 'resium';
 import { ParsedSatellite } from 'types/satelliteTypes';
 import { SensorDefinition } from 'types/sensorTypes';
@@ -710,5 +710,127 @@ export const UncertaintyEllipsoidRenderer: React.FC<UncertaintyEllipsoidProps> =
         outlineWidth={2}
       />
     </Entity>
+  );
+};
+
+// ============================================================================
+// 7. CELESTIAL BODIES RENDERER (Sun + Earth Center)
+// ============================================================================
+
+export interface CelestialBodiesProps {
+  options: SimpleOptions;
+  viewerRef: React.RefObject<any>;
+  clock?: any; // Cesium Clock for time-based sun position
+}
+
+/**
+ * CelestialBodiesRenderer
+ * 
+ * Renders celestial reference objects:
+ * 1. Sun - Visual marker on celestial sphere showing sun position
+ * 2. Earth Center - Symbol at Earth's center (0,0,0) visible above surface
+ * 
+ * @param options - Panel options
+ * @param viewerRef - Reference to Cesium viewer for accessing scene
+ * @param clock - Optional Cesium Clock for time-based calculations
+ */
+export const CelestialBodiesRenderer: React.FC<CelestialBodiesProps> = ({
+  options,
+  viewerRef,
+  clock,
+}) => {
+  // Enable Cesium's built-in sun if viewer is available
+  React.useEffect(() => {
+    if (viewerRef.current?.cesiumElement) {
+      const viewer = viewerRef.current.cesiumElement;
+      if (viewer.scene && viewer.scene.sun) {
+        viewer.scene.sun.show = true;
+      }
+    }
+  }, [viewerRef]);
+
+  // Compute sun position on celestial sphere
+  const getSunPosition = (time: JulianDate): Cartesian3 => {
+    // Use Cesium's built-in sun position calculation (Simon1994PlanetaryPositions)
+    // Returns position in Earth-Centered Inertial (ECI/ICRF) frame
+    const sunPositionECI = Simon1994PlanetaryPositions.computeSunPositionInEarthInertialFrame(time, new Cartesian3());
+    
+    // Transform from ICRF (inertial) to ECEF (fixed) frame for Cesium rendering
+    const icrfToFixed = Transforms.computeIcrfToFixedMatrix(time);
+    if (!icrfToFixed) {
+      // Fallback if transform unavailable
+      const celestialRadius = Ellipsoid.WGS84.maximumRadius * 100;
+      const sunDirection = Cartesian3.normalize(sunPositionECI, new Cartesian3());
+      return Cartesian3.multiplyByScalar(sunDirection, celestialRadius, new Cartesian3());
+    }
+    
+    // Transform sun position to ECEF
+    const sunPositionECEF = Matrix3.multiplyByVector(icrfToFixed, sunPositionECI, new Cartesian3());
+    
+    // Project to celestial sphere (same radius as RA/Dec grid)
+    const celestialRadius = Ellipsoid.WGS84.maximumRadius * 100;
+    const sunDirection = Cartesian3.normalize(sunPositionECEF, new Cartesian3());
+    return Cartesian3.multiplyByScalar(sunDirection, celestialRadius, new Cartesian3());
+  };
+
+  return (
+    <>
+      {/* Sun Position Marker on Celestial Sphere */}
+      {options.showAttitudeVisualization && (
+        <Entity
+          name="Sun Position"
+          position={new CallbackProperty((time) => {
+            if (!time) {
+              return getSunPosition(JulianDate.now());
+            }
+            return getSunPosition(time);
+          }, false) as any}
+        >
+          <PointGraphics
+            pixelSize={12}
+            color={Color.YELLOW}
+            outlineColor={Color.ORANGE}
+            outlineWidth={2}
+          />
+          <LabelGraphics
+            text="☉ Sun"
+            font="16px sans-serif"
+            fillColor={Color.YELLOW}
+            outlineColor={Color.BLACK}
+            outlineWidth={2}
+            style={LabelStyle.FILL_AND_OUTLINE}
+            pixelOffset={new Cartesian2(0, -25)}
+            horizontalOrigin={HorizontalOrigin.CENTER}
+            verticalOrigin={VerticalOrigin.BOTTOM}
+          />
+        </Entity>
+      )}
+
+      {/* Earth Center Symbol */}
+      {options.showAttitudeVisualization && (
+        <Entity
+          name="Earth Center"
+          position={Cartesian3.ZERO} // Earth center at (0, 0, 0)
+        >
+          <PointGraphics
+            pixelSize={10}
+            color={Color.CYAN}
+            outlineColor={Color.BLUE}
+            outlineWidth={2}
+          />
+          <LabelGraphics
+            text="⊕ Earth Center"
+            font="14px sans-serif"
+            fillColor={Color.CYAN}
+            outlineColor={Color.BLACK}
+            outlineWidth={2}
+            style={LabelStyle.FILL_AND_OUTLINE}
+            pixelOffset={new Cartesian2(0, -20)}
+            horizontalOrigin={HorizontalOrigin.CENTER}
+            verticalOrigin={VerticalOrigin.BOTTOM}
+          />
+        </Entity>
+      )}
+    </>
   );
 };

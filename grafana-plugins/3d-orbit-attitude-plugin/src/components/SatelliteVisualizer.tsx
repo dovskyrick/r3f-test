@@ -42,6 +42,7 @@ import {
   CelestialGridRenderer,
   GroundStationRenderer,
   UncertaintyEllipsoidRenderer,
+  CelestialBodiesRenderer,
 } from './entities/CesiumEntityRenderers';
 import { css, cx } from '@emotion/css';
 import { useStyles2, ColorPicker } from '@grafana/ui';
@@ -1275,6 +1276,12 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             gridLabels={gridLabels}
           />
         )}
+        
+        {/* Celestial Bodies (Sun + Earth Center) */}
+        <CelestialBodiesRenderer
+          options={options}
+          viewerRef={viewerRef}
+        />
         {options.locations.map((location, index) => (
           <Entity
             name={location.name}

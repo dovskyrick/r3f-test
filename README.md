@@ -207,7 +207,8 @@ grafana-satellite-visualizer/
 
 **Plugin doesn't appear in Grafana:**
 - Ensure Grafana started correctly: `docker-compose ps`
-- Check plugin is built: `cd grafana-plugins/3d-orbit-attitude-plugin && npm run build`
+- Rebuild the plugin: `cd grafana-plugins/3d-orbit-attitude-plugin && npm run build`
+- Restart Grafana: `cd ../../grafana-server && docker-compose restart`
 - View logs: `docker-compose logs grafana`
 
 **"Invalid Access Token" error:**
@@ -218,7 +219,8 @@ grafana-satellite-visualizer/
 
 **Timeline resets when changing settings:**
 - Update to latest version (this bug was fixed)
-- Run: `git pull && cd grafana-plugins/3d-orbit-attitude-plugin && npm run build`
+- Run: `git pull && cd grafana-plugins/3d-orbit-attitude-plugin && npm install && npm run build`
+- Restart Grafana to load new build
 
 **Satellites don't appear:**
 - Verify JSON format matches [specification](./grafana-plugins/3d-orbit-attitude-plugin/README.md#-data-format)
@@ -253,7 +255,18 @@ cd grafana-satellite-visualizer
 cd grafana-plugins/3d-orbit-attitude-plugin
 npm install
 
-# Start development server
+# Build plugin (required for Grafana to use it)
+npm run build
+
+# Start Grafana
+cd ../../grafana-server
+docker-compose up
+```
+
+**For active development** (if you're modifying plugin code):
+```bash
+# In the plugin directory, use watch mode for auto-rebuild
+cd grafana-plugins/3d-orbit-attitude-plugin
 npm run dev
 
 # In another terminal, start Grafana
@@ -261,7 +274,7 @@ cd ../../grafana-server
 docker-compose up
 ```
 
-Changes to plugin source will auto-rebuild. Refresh Grafana to see updates.
+With `npm run dev`, changes to plugin source will auto-rebuild. Refresh Grafana to see updates.
 
 ---
 
