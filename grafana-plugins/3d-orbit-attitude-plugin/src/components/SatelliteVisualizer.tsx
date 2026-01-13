@@ -1471,47 +1471,51 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               {isAxesDropdownOpen && (
                 <div className={styles.dropdownMenu}>
                   {/* LVLH Reference Frame Toggle */}
-                  <div className={styles.toggleItem}>
-                    <label className={styles.toggleLabel} onClick={() => setShowLVLHAxes(!showLVLHAxes)}>
+                  <div 
+                    className={styles.toggleItem}
+                    onClick={() => setShowLVLHAxes(!showLVLHAxes)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className={styles.toggleLabel}>
                       LVLH Reference Frame
-                    </label>
-                    <div
-                      className={`${styles.toggleSwitch} ${showLVLHAxes ? 'active' : ''}`}
-                      onClick={() => setShowLVLHAxes(!showLVLHAxes)}
-                    />
+                    </span>
+                    {showLVLHAxes ? <Eye size={18} /> : <EyeOff size={18} />}
                   </div>
                   
                   {/* Body Axes Reference Frame Toggle */}
-                  <div className={styles.toggleItem}>
-                    <label className={styles.toggleLabel} onClick={() => setShowBodyAxes(!showBodyAxes)}>
+                  <div 
+                    className={styles.toggleItem}
+                    onClick={() => setShowBodyAxes(!showBodyAxes)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className={styles.toggleLabel}>
                       Body Axes Reference Frame
-                    </label>
-                    <div
-                      className={`${styles.toggleSwitch} ${showBodyAxes ? 'active' : ''}`}
-                      onClick={() => setShowBodyAxes(!showBodyAxes)}
-                    />
+                    </span>
+                    {showBodyAxes ? <Eye size={18} /> : <EyeOff size={18} />}
                   </div>
                   
                   {/* ITRF Reference Frame Toggle */}
-                  <div className={styles.toggleItem}>
-                    <label className={styles.toggleLabel} onClick={() => setShowITRFAxes(!showITRFAxes)}>
+                  <div 
+                    className={styles.toggleItem}
+                    onClick={() => setShowITRFAxes(!showITRFAxes)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className={styles.toggleLabel}>
                       ITRF Reference Frame
-                    </label>
-                    <div
-                      className={`${styles.toggleSwitch} ${showITRFAxes ? 'active' : ''}`}
-                      onClick={() => setShowITRFAxes(!showITRFAxes)}
-                    />
+                    </span>
+                    {showITRFAxes ? <Eye size={18} /> : <EyeOff size={18} />}
                   </div>
                   
                   {/* ICRF Reference Frame Toggle */}
-                  <div className={styles.toggleItem}>
-                    <label className={styles.toggleLabel} onClick={() => setShowICRFAxes(!showICRFAxes)}>
+                  <div 
+                    className={styles.toggleItem}
+                    onClick={() => setShowICRFAxes(!showICRFAxes)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className={styles.toggleLabel}>
                       ICRF Reference Frame
-                    </label>
-                    <div
-                      className={`${styles.toggleSwitch} ${showICRFAxes ? 'active' : ''}`}
-                      onClick={() => setShowICRFAxes(!showICRFAxes)}
-                    />
+                    </span>
+                    {showICRFAxes ? <Eye size={18} /> : <EyeOff size={18} />}
                   </div>
                 </div>
               )}
