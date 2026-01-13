@@ -53,3 +53,37 @@
 **/package-lock.json
 **/yarn.lock
 **/pnpm-lock.yaml
+
+# Planning & documentation (include only when explicitly selected)
+**/plans-broad-scope/**
+# Exclude large documentation files (keep README.md files for context)
+GRAFANA-FORUM-POST.md
+PRE-PUBLICATION-CHECKLIST.md
+RELEASE-NOTES-*.md
+**/plugin-copy-setup-tutorial.md
+
+# Generated data files
+**/output/**
+**/satellite-data-generator/output/**
+**/*-TEST.json
+**/*-BASELINE.json
+
+# Archived/experimental projects
+**/my-cesium-app/**
+**/godot-backend/**
+**/cesium-plugin-template/**
+**/ground-track-r3f-plugin/**
+**/test-plugin/**
+
+# Test files
+**/cypress/**
+**/*.spec.*
+**/*.test.*
+
+# TypeScript declarations (often auto-generated)
+**/*.d.ts
+
+# Source maps
+**/*.map.js
+**/*.js.map
+**/*.css.map
