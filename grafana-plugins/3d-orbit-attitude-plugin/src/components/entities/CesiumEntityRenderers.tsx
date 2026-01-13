@@ -442,42 +442,96 @@ export const BodyAxesRenderer: React.FC<BodyAxesProps> = ({
 }) => {
   return (
     <>
-      {attitudeVectors.map((vector, index) => (
-        <Entity 
-          availability={satellite.availability} 
-          key={`${satellite.id}-attitude-vector-${index}`}
-        >
-          <PolylineGraphics
-            positions={new CallbackProperty((time) => {
-              const pos = satellite.position.getValue(time);
-              const orient = satellite.orientation.getValue(time);
-              if (!pos || !orient) {
-                return [];
-              }
-              
-              // Calculate dynamic vector length based on tracking mode and camera distance
-              const viewer = viewerRef.current?.cesiumElement;
-              const vectorLength = getScaledLength(50000, isTracked, viewer, pos);
-              
-              // Rotate axis by satellite orientation to get direction in ECEF
-              const rotationMatrix = Matrix3.fromQuaternion(orient);
-              const axisECEF = Matrix3.multiplyByVector(rotationMatrix, vector.axis, new Cartesian3());
-              
-              // Calculate endpoint with dynamic length
-              const endPos = Cartesian3.add(
-                pos,
-                Cartesian3.multiplyByScalar(axisECEF, vectorLength, new Cartesian3()),
-                new Cartesian3()
-              );
-              
-              return [pos, endPos];
-            }, false)}
-            width={10}
-            material={new PolylineArrowMaterialProperty(vector.color)}
-            arcType={ArcType.NONE}
-          />
-        </Entity>
-      ))}
+      {attitudeVectors.map((vector, index) => {
+        // Extract axis letter (X, Y, or Z) from name
+        const axisLetter = vector.name.charAt(0);
+        
+        return (
+          <React.Fragment key={`${satellite.id}-attitude-vector-${index}`}>
+            {/* Vector line */}
+            <Entity 
+              availability={satellite.availability} 
+            >
+              <PolylineGraphics
+                positions={new CallbackProperty((time) => {
+                  const pos = satellite.position.getValue(time);
+                  const orient = satellite.orientation.getValue(time);
+                  if (!pos || !orient) {
+                    return [];
+                  }
+                  
+                  // Calculate dynamic vector length based on tracking mode and camera distance
+                  const viewer = viewerRef.current?.cesiumElement;
+                  const vectorLength = getScaledLength(50000, isTracked, viewer, pos);
+                  
+                  // Rotate axis by satellite orientation to get direction in ECEF
+                  const rotationMatrix = Matrix3.fromQuaternion(orient);
+                  const axisECEF = Matrix3.multiplyByVector(rotationMatrix, vector.axis, new Cartesian3());
+                  
+                  // Calculate endpoint with dynamic length
+                  const endPos = Cartesian3.add(
+                    pos,
+                    Cartesian3.multiplyByScalar(axisECEF, vectorLength, new Cartesian3()),
+                    new Cartesian3()
+                  );
+                  
+                  return [pos, endPos];
+                }, false)}
+                width={10}
+                material={new PolylineArrowMaterialProperty(vector.color)}
+                arcType={ArcType.NONE}
+              />
+            </Entity>
+            
+            {/* Label at vector tip */}
+            <Entity
+              availability={satellite.availability}
+              position={new CallbackProperty((time) => {
+                const pos = satellite.position.getValue(time);
+                const orient = satellite.orientation.getValue(time);
+                if (!pos || !orient) {
+                  return Cartesian3.ZERO;
+                }
+                
+                // Calculate dynamic vector length (same as the line)
+                const viewer = viewerRef.current?.cesiumElement;
+                const vectorLength = getScaledLength(50000, isTracked, viewer, pos);
+                
+                // Rotate axis by satellite orientation to get direction in ECEF
+                const rotationMatrix = Matrix3.fromQuaternion(orient);
+                const axisECEF = Matrix3.multiplyByVector(rotationMatrix, vector.axis, new Cartesian3());
+                
+                // Calculate endpoint (tip of vector)
+                const endPos = Cartesian3.add(
+                  pos,
+                  Cartesian3.multiplyByScalar(axisECEF, vectorLength, new Cartesian3()),
+                  new Cartesian3()
+                );
+                
+                return endPos;
+              }, false) as any}
+            >
+              <LabelGraphics
+                text={axisLetter}
+                font="12px sans-serif"
+                fillColor={(() => {
+                  // Brighten the vector color to almost white (mix 85% white, 15% original color)
+                  const r = Math.min(255, Math.floor(vector.color.red * 255 * 0.15 + 255 * 0.85));
+                  const g = Math.min(255, Math.floor(vector.color.green * 255 * 0.15 + 255 * 0.85));
+                  const b = Math.min(255, Math.floor(vector.color.blue * 255 * 0.15 + 255 * 0.85));
+                  return Color.fromBytes(r, g, b);
+                })()}
+                outlineColor={Color.BLACK}
+                outlineWidth={2}
+                style={LabelStyle.FILL_AND_OUTLINE}
+                pixelOffset={new Cartesian2(5, -5)}
+                horizontalOrigin={HorizontalOrigin.LEFT}
+                verticalOrigin={VerticalOrigin.BOTTOM}
+              />
+            </Entity>
+          </React.Fragment>
+        );
+      })}
     </>
   );
 };

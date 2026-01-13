@@ -961,12 +961,47 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const satelliteModalRef = React.useRef<HTMLDivElement>(null);
   const groundStationModalRef = React.useRef<HTMLDivElement>(null);
 
-  // Attitude vector configurations (can be moved to settings later)
-  const attitudeVectors = React.useMemo(() => [
-    { axis: new Cartesian3(1, 0, 0), color: safeColor(options.xAxisColor, Color.RED), name: 'X-axis' },
-    { axis: new Cartesian3(0, 1, 0), color: safeColor(options.yAxisColor, Color.GREEN), name: 'Y-axis' },
-    { axis: new Cartesian3(0, 0, 1), color: safeColor(options.zAxisColor, Color.BLUE), name: 'Z-axis' },
-  ], [options.xAxisColor, options.yAxisColor, options.zAxisColor]);
+  // Attitude vector configurations - single color with different brightness levels
+  const attitudeVectors = React.useMemo(() => {
+    // Use X-axis color as base, or default to cyan
+    const baseColor = safeColor(options.xAxisColor, Color.CYAN);
+    
+    // Extract RGB values
+    const r = baseColor.red;
+    const g = baseColor.green;
+    const b = baseColor.blue;
+    
+    // Create brightness variations: X (brightest), Y (medium), Z (darkest)
+    return [
+      { 
+        axis: new Cartesian3(1, 0, 0), 
+        color: Color.fromBytes(
+          Math.min(255, Math.floor(r * 255 * 1.0)),
+          Math.min(255, Math.floor(g * 255 * 1.0)),
+          Math.min(255, Math.floor(b * 255 * 1.0))
+        ), 
+        name: 'X-axis' 
+      },
+      { 
+        axis: new Cartesian3(0, 1, 0), 
+        color: Color.fromBytes(
+          Math.min(255, Math.floor(r * 255 * 0.7)),
+          Math.min(255, Math.floor(g * 255 * 0.7)),
+          Math.min(255, Math.floor(b * 255 * 0.7))
+        ), 
+        name: 'Y-axis' 
+      },
+      { 
+        axis: new Cartesian3(0, 0, 1), 
+        color: Color.fromBytes(
+          Math.min(255, Math.floor(r * 255 * 0.4)),
+          Math.min(255, Math.floor(g * 255 * 0.4)),
+          Math.min(255, Math.floor(b * 255 * 0.4))
+        ), 
+        name: 'Z-axis' 
+      },
+    ];
+  }, [options.xAxisColor]);
 
   // Color management helper functions
   // Note: Will be used in Phase 3 (display colors in UI) and Phase 4 (color picker)
