@@ -270,6 +270,7 @@ export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = (
         return initialTriangles.map((_, triIndex) => (
           <Entity
             key={`${satellite.id}-sensor-cone-tri-${sensor.id}-${triIndex}`}
+            name={`${satellite.name} - ${sensor.name} (FOV: ${sensor.fov}°)`}
             availability={satellite.availability}
           >
             <PolygonGraphics

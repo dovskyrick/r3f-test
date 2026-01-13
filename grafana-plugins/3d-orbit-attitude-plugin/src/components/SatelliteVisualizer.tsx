@@ -62,6 +62,8 @@ import {
   UrlTemplateImageryProvider,
   ProviderViewModel,
   buildModuleUrl,
+  ScreenSpaceEventHandler,
+  ScreenSpaceEventType,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -692,6 +694,19 @@ const getStyles = () => {
       color: rgba(255, 255, 255, 0.5);
       font-size: 14px;
     `,
+    hoverTooltip: css`
+      position: fixed;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 10000;
+      white-space: nowrap;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    `,
     cesiumControls: css`
       /* Move Cesium's built-in controls to the left of our custom buttons */
       .cesium-viewer-toolbar {
@@ -925,6 +940,10 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const [expandedLegendItem, setExpandedLegendItem] = useState<string | null>(null);
   const [isLegendCollapsed, setIsLegendCollapsed] = useState<boolean>(false);
   
+  // Hover tooltip state
+  const [hoveredEntityName, setHoveredEntityName] = useState<string | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  
   // Per-satellite render settings (for future features like transparent cones)
   const [satelliteRenderSettings, setSatelliteRenderSettings] = useState<Map<string, {
     transparentCones: boolean;
@@ -1087,6 +1106,81 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       groundStationModalRef.current.focus();
     }
   }, [settingsModalGroundStationId]);
+  
+  // Hover detection for sensor cones
+  useEffect(() => {
+    const viewer = viewerRef.current?.cesiumElement;
+    if (!viewer || !isLoaded) {
+      return;
+    }
+    
+    console.log('🖱️ Hover detection initialized');
+    
+    const handler = new ScreenSpaceEventHandler(viewer.scene.canvas);
+    let hoverTimeout: NodeJS.Timeout | null = null;
+    
+    handler.setInputAction((movement: any) => {
+      // Clear any pending timeout
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+      }
+      
+      const pickedObject = viewer.scene.pick(movement.endPosition);
+      
+      // Debug: Log all picked entities (temporary)
+      if (pickedObject && pickedObject.id) {
+        console.log('🔍 DEBUG - Picked object:', {
+          hasName: !!pickedObject.id.name,
+          name: pickedObject.id.name || 'NO NAME',
+          id: pickedObject.id.id || 'NO ID'
+        });
+      }
+      
+      if (pickedObject && pickedObject.id && pickedObject.id.name) {
+        const entityName = pickedObject.id.name;
+        
+        // Filter for sensor-related entities (containing FOV info, Footprint, or Celestial)
+        // Sensor cones: "SatName - SensorName (FOV: XX°)"
+        // Footprints: "SatName - SensorName Footprint"
+        // Celestial: "SatName - SensorName Celestial FOV"
+        const isSensorEntity = entityName.includes('FOV') || 
+                               entityName.includes('Celestial') || 
+                               entityName.includes('Footprint') ||
+                               /\(FOV:.*°\)/.test(entityName); // Match "(FOV: XX°)" pattern
+        
+        if (isSensorEntity) {
+          console.log('🎯 Hovering over sensor entity:', entityName);
+          console.log('📍 Mouse position:', movement.endPosition.x, movement.endPosition.y);
+          
+          // TEMP: No delay for debugging - show immediately
+          console.log('✅ Setting tooltip state NOW');
+          setHoveredEntityName(entityName);
+          setTooltipPosition({ x: movement.endPosition.x, y: movement.endPosition.y });
+          
+          // Original with delay (commented out for testing):
+          // hoverTimeout = setTimeout(() => {
+          //   console.log('✅ Showing tooltip');
+          //   setHoveredEntityName(entityName);
+          //   setTooltipPosition({ x: movement.endPosition.x, y: movement.endPosition.y });
+          // }, 300); // 300ms delay
+        } else {
+          setHoveredEntityName(null);
+          setTooltipPosition(null);
+        }
+      } else {
+        setHoveredEntityName(null);
+        setTooltipPosition(null);
+      }
+    }, ScreenSpaceEventType.MOUSE_MOVE);
+    
+    return () => {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+      }
+      handler.destroy();
+      console.log('🖱️ Hover detection destroyed');
+    };
+  }, [viewerRef, isLoaded]);
 
   useEffect(() => {
     const timeInterval = new TimeInterval({
@@ -2409,6 +2503,22 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </div>
         )}
       </div>
+      
+      {/* Hover Tooltip for Sensors */}
+      {hoveredEntityName && tooltipPosition && (() => {
+        console.log('🎨 RENDERING TOOLTIP:', hoveredEntityName, 'at', tooltipPosition);
+        return (
+          <div
+            className={styles.hoverTooltip}
+            style={{
+              left: `${tooltipPosition.x + 15}px`,
+              top: `${tooltipPosition.y + 15}px`,
+            }}
+          >
+            {hoveredEntityName}
+          </div>
+        );
+      })()}
     </div>
   );
 };
