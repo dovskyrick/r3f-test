@@ -418,6 +418,30 @@ const getStyles = () => {
       overflow: hidden;
       text-overflow: ellipsis;
     `,
+    povButton: css`
+      flex-shrink: 0;
+      height: 28px;
+      padding: 0 10px;
+      margin-left: 8px;
+      background: rgba(33, 150, 243, 0.2);
+      border: 1px solid rgba(33, 150, 243, 0.4);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+      color: rgba(33, 150, 243, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      
+      &:hover {
+        background: rgba(33, 150, 243, 0.3);
+        border-color: rgba(33, 150, 243, 0.6);
+        color: rgba(100, 181, 246, 1);
+      }
+    `,
     settingsButton: css`
       flex-shrink: 0;
       width: 28px;
@@ -2301,6 +2325,18 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                               {gs.id}
                             </div>
                           </div>
+                          
+                          <button
+                            className={styles.povButton}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // TODO: Implement POV functionality
+                              console.log(`POV clicked for ground station: ${gs.name}`);
+                            }}
+                            title="Switch to ground station POV"
+                          >
+                            POV
+                          </button>
                           
                           <button
                             className={styles.settingsButton}
