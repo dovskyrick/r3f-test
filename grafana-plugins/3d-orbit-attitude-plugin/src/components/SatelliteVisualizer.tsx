@@ -728,19 +728,43 @@ const getStyles = () => {
       position: absolute;
       bottom: 40px;
       right: 10px;
+      top: 60px; /* Don't extend above this point (leaves room for top-right button) */
       z-index: 1000;
       background: rgba(30, 30, 30, 0.95);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 4px;
       max-width: 220px;
       min-width: 180px;
-      max-height: 300px;
+      
+      /* Height is now auto-constrained by top and bottom */
+      /* Will shrink to fit between top:60px and bottom:40px */
+      
       display: flex;
       flex-direction: column;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
       transition: all 0.3s ease;
       
+      /* Responsive sizing for smaller viewports */
+      @media (max-height: 600px) {
+        top: 55px;
+        max-width: 200px;
+        min-width: 160px;
+      }
+      
+      @media (max-height: 400px) {
+        top: 50px;
+        max-width: 180px;
+        min-width: 140px;
+      }
+      
+      /* Narrow width adjustments */
+      @media (max-width: 600px) {
+        max-width: 180px;
+        min-width: 140px;
+      }
+      
       &.collapsed {
+        top: auto; /* Reset top constraint when collapsed */
         max-height: 36px;
         min-width: 100px;
         max-width: 120px;
@@ -781,7 +805,8 @@ const getStyles = () => {
       padding: 6px;
       overflow-y: auto;
       overflow-x: hidden;
-      max-height: 260px;
+      flex: 1; /* Fill available space in flex container */
+      min-height: 0; /* Allow flexbox to shrink below content size */
       
       /* Custom scrollbar */
       &::-webkit-scrollbar {
@@ -1114,8 +1139,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       return;
     }
     
-    console.log('🖱️ Hover detection initialized');
-    
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas);
     let hoverTimeout: NodeJS.Timeout | null = null;
     
@@ -1126,15 +1149,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       }
       
       const pickedObject = viewer.scene.pick(movement.endPosition);
-      
-      // Debug: Log all picked entities (temporary)
-      if (pickedObject && pickedObject.id) {
-        console.log('🔍 DEBUG - Picked object:', {
-          hasName: !!pickedObject.id.name,
-          name: pickedObject.id.name || 'NO NAME',
-          id: pickedObject.id.id || 'NO ID'
-        });
-      }
       
       if (pickedObject && pickedObject.id && pickedObject.id.name) {
         const entityName = pickedObject.id.name;
@@ -1149,20 +1163,11 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                                /\(FOV:.*°\)/.test(entityName); // Match "(FOV: XX°)" pattern
         
         if (isSensorEntity) {
-          console.log('🎯 Hovering over sensor entity:', entityName);
-          console.log('📍 Mouse position:', movement.endPosition.x, movement.endPosition.y);
-          
-          // TEMP: No delay for debugging - show immediately
-          console.log('✅ Setting tooltip state NOW');
-          setHoveredEntityName(entityName);
-          setTooltipPosition({ x: movement.endPosition.x, y: movement.endPosition.y });
-          
-          // Original with delay (commented out for testing):
-          // hoverTimeout = setTimeout(() => {
-          //   console.log('✅ Showing tooltip');
-          //   setHoveredEntityName(entityName);
-          //   setTooltipPosition({ x: movement.endPosition.x, y: movement.endPosition.y });
-          // }, 300); // 300ms delay
+          // Add a small delay before showing tooltip (prevents flickering when moving quickly)
+          hoverTimeout = setTimeout(() => {
+            setHoveredEntityName(entityName);
+            setTooltipPosition({ x: movement.endPosition.x, y: movement.endPosition.y });
+          }, 300); // 300ms delay
         } else {
           setHoveredEntityName(null);
           setTooltipPosition(null);
@@ -1178,7 +1183,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         clearTimeout(hoverTimeout);
       }
       handler.destroy();
-      console.log('🖱️ Hover detection destroyed');
     };
   }, [viewerRef, isLoaded]);
 
