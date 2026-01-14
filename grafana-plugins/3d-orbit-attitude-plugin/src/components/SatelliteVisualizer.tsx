@@ -27,7 +27,7 @@
  * See: grafana-plugins/plans-broad-scope/25-12-december/31-refactoring-complete-summary.md
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { PanelProps, DataHoverEvent, LegacyGraphHoverEvent } from '@grafana/data';
 import { SimpleOptions } from 'types';
 import { generateRADecGrid, generateRADecGridLabels } from 'utils/celestialGrid';
@@ -1106,6 +1106,49 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     }
   }, []);
   
+  // Fly camera to satellite with "from above" nadir view
+  const flyToSatelliteNadirView = useCallback((satelliteId: string, duration = 0.5, distance = 4) => {
+    const viewer = viewerRef.current?.cesiumElement;
+    if (!viewer) {
+      return;
+    }
+
+    const satellite = satellites.find(s => s.id === satelliteId);
+    if (!satellite) {
+      return;
+    }
+
+    // Use current viewer clock time (not the timestamp state which may be stale)
+    const currentTime = viewer.clock.currentTime;
+    const satPos = satellite.position.getValue(currentTime);
+    if (!satPos) {
+      return;
+    }
+
+    // Calculate radial direction (Earth center → Satellite)
+    const radialDirection = Cartesian3.subtract(satPos, Cartesian3.ZERO, new Cartesian3());
+    Cartesian3.normalize(radialDirection, radialDirection);
+
+    // Position camera at specified distance above satellite along radial line
+    const cameraPosition = Cartesian3.add(
+      satPos,
+      Cartesian3.multiplyByScalar(radialDirection, distance, new Cartesian3()),
+      new Cartesian3()
+    );
+
+    // Camera looks at satellite (down toward Earth)
+    viewer.camera.flyTo({
+      destination: cameraPosition,
+      orientation: {
+        direction: Cartesian3.negate(radialDirection, new Cartesian3()), // Point toward Earth
+        up: Cartesian3.UNIT_Z, // Keep "up" aligned with Earth's axis
+      },
+      duration: duration,
+    });
+
+    console.log(`🚀 Flying to ${satellite.name} - Nadir View (${distance}m above, ${duration}s)`);
+  }, [satellites, viewerRef]);
+  
   // Auto-track satellite and adjust camera based on mode
   useEffect(() => {
     if (selectedMode === 'satellite' || selectedMode === 'celestial') {
@@ -1115,20 +1158,22 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         console.log(`🎯 Satellite tracking enabled (${selectedMode === 'satellite' ? 'Satellite Focus' : 'Celestial Map'} mode)`);
       }
     } else if (selectedMode === 'earth') {
-      // Earth Focus mode: fly to nadir view then enable free camera
+      // Earth Focus mode: smooth transition to nadir view then enable free camera
       if (isTracked && trackedSatelliteId) {
         const earthRadius = 6378137; // meters
         const safeDistance = earthRadius * 2; // ~12,756 km (2x Earth radius)
-        flyToSatelliteNadirView(trackedSatelliteId, 0.2, safeDistance);
+        const duration = 1.5; // Smooth 1.5 second transition
         
-        // Wait for animation before activating free camera
+        flyToSatelliteNadirView(trackedSatelliteId, duration, safeDistance);
+        
+        // Wait for animation to complete before activating free camera
         setTimeout(() => {
           setIsTracked(false);
           console.log('🌍 Free camera enabled (Earth Focus mode - Nadir view)');
-        }, 500); // 0.5 second wait
+        }, duration * 1000 + 100); // Animation duration + small buffer
       }
     }
-  }, [selectedMode, isTracked, trackedSatelliteId]);
+  }, [selectedMode, isTracked, trackedSatelliteId, flyToSatelliteNadirView]);
 
   // Focus satellite settings modal when it opens (for ESC key handling)
   useEffect(() => {
@@ -1277,50 +1322,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     
     return undefined;
   }, [isModeDropdownOpen, isCameraDropdownOpen, isAxesDropdownOpen, styles.topLeftControlsContainer]);
-
-  // Fly camera to satellite with "from above" nadir view
-  const flyToSatelliteNadirView = (satelliteId: string, duration = 0.5, distance = 4) => {
-    const viewer = viewerRef.current?.cesiumElement;
-    if (!viewer) {
-      return;
-    }
-
-    const satellite = satellites.find(s => s.id === satelliteId);
-    if (!satellite) {
-      return;
-    }
-
-    // Use current viewer clock time (not the timestamp state which may be stale)
-    const currentTime = viewer.clock.currentTime;
-    const satPos = satellite.position.getValue(currentTime);
-    if (!satPos) {
-      return;
-    }
-
-    // Calculate radial direction (Earth center → Satellite)
-    const radialDirection = Cartesian3.subtract(satPos, Cartesian3.ZERO, new Cartesian3());
-    Cartesian3.normalize(radialDirection, radialDirection);
-
-    // Position camera at specified distance above satellite along radial line
-    const cameraPosition = Cartesian3.add(
-      satPos,
-      Cartesian3.multiplyByScalar(radialDirection, distance, new Cartesian3()),
-      new Cartesian3()
-    );
-
-    // Camera looks at satellite (down toward Earth)
-    viewer.camera.flyTo({
-      destination: cameraPosition,
-      orientation: {
-        direction: Cartesian3.negate(radialDirection, new Cartesian3()), // Point toward Earth
-        up: Cartesian3.UNIT_Z, // Keep "up" aligned with Earth's axis
-      },
-      duration: duration,
-    });
-
-    console.log(`🚀 Flying to ${satellite.name} - Nadir View (${distance}m above, ${duration}s)`);
-  };
-
 
   // Satellite visibility toggle functions
   const toggleSatelliteVisibility = (satelliteId: string) => {
