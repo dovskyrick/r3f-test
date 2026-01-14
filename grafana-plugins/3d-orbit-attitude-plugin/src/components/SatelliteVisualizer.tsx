@@ -64,6 +64,7 @@ import {
   buildModuleUrl,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
+  LabelStyle,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -1897,7 +1898,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           })
         }
         
-        {/* Invisible tracking entity for Celestial Map mode */}
+        {/* Visible tracking entity for Celestial Map mode */}
         {/* Provides a tracking anchor point at satellite position when satellite model is hidden */}
         {selectedMode === 'celestial' && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
@@ -1906,13 +1907,29 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             return (
               <Entity
                 key={`${satellite.id}-celestial-tracker`}
-                id={`${satellite.id}-celestial-tracker`}
-                name={`${satellite.name} (Tracking Point)`}
+                id={satellite.id} // Use same ID as satellite for proper tracking
+                name={`${satellite.name} (Celestial Tracking)`}
                 position={satellite.position}
+                orientation={satellite.orientation}
                 availability={satellite.availability}
                 tracked={isThisSatelliteTracked}
               >
-                {/* Completely invisible - no graphics, just position for tracking */}
+                {/* Visible marker for debugging tracking */}
+                <PointGraphics 
+                  pixelSize={15}
+                  color={Color.YELLOW}
+                  outlineColor={Color.BLACK}
+                  outlineWidth={2}
+                />
+                <LabelGraphics
+                  text={satellite.name}
+                  font="14px sans-serif"
+                  fillColor={Color.WHITE}
+                  outlineColor={Color.BLACK}
+                  outlineWidth={2}
+                  style={LabelStyle.FILL_AND_OUTLINE}
+                  pixelOffset={new Cartesian2(0, -20)}
+                />
               </Entity>
             );
           })
@@ -1967,8 +1984,8 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           })
         }
         
-        {/* Uncertainty Ellipsoids - Per-satellite */}
-        {options.showAttitudeVisualization && options.showUncertaintyEllipsoids && satellites
+        {/* Uncertainty Ellipsoids - Per-satellite - Hidden in Celestial Map mode */}
+        {selectedMode !== 'celestial' && options.showAttitudeVisualization && options.showUncertaintyEllipsoids && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
           .filter(sat => satelliteRenderSettings.get(sat.id)?.showEllipsoid !== false)
           .map((satellite) => {
