@@ -58,7 +58,7 @@ import {
 } from './entities/CesiumEntityRenderers';
 import { css, cx } from '@emotion/css';
 import { useStyles2, ColorPicker } from '@grafana/ui';
-import { Settings, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Eye, EyeOff, Settings, X, ChevronUp } from 'lucide-react';
 import { getStyles } from './styles/SatelliteVisualizerStyles';
 import { safeColor } from './styles/constants';
 import { TopLeftControls } from './controls/TopLeftControls';
@@ -499,6 +499,40 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   }, [isModeDropdownOpen, isCameraDropdownOpen, isAxesDropdownOpen, styles.topLeftControlsContainer]);
 
   // Satellite visibility toggle functions
+  const toggleSatelliteVisibility = (satelliteId: string) => {
+    setHiddenSatellites(prev => {
+      const next = new Set(prev);
+      if (next.has(satelliteId)) {
+        next.delete(satelliteId);
+        console.log(`👁️ Showing satellite: ${satelliteId}`);
+      } else {
+        next.add(satelliteId);
+        console.log(`🙈 Hiding satellite: ${satelliteId}`);
+      }
+      return next;
+    });
+  };
+
+  const isSatelliteVisible = (satelliteId: string) => {
+    return !hiddenSatellites.has(satelliteId);
+  };
+
+  // Handle satellite selection for tracking
+  const handleSatelliteClick = (satelliteId: string) => {
+    if (isTracked) {
+      // Tracked mode: just change the tracked satellite
+      setTrackedSatelliteId(satelliteId);
+      console.log(`🎯 Tracking switched to: ${satelliteId}`);
+    } else {
+      // Free mode: update tracked satellite, fly to nadir with zoom limit respected (2x Earth radius)
+      setTrackedSatelliteId(satelliteId);
+      const earthRadius = 6378137; // meters
+      const safeDistance = earthRadius * 2; // ~12,756 km (within 3x limit)
+      flyToSatelliteNadirView(satelliteId, 0.5, safeDistance);
+      console.log(`🌍 Free camera flying to: ${satelliteId}`);
+    }
+  };
+
   useEffect(() => {
     if (options.modelAssetId) {
       IonResource.fromAssetId(options.modelAssetId, { accessToken: options.accessToken })
@@ -622,33 +656,309 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         {/* Main content area - shrinks when sidebar opens */}
         <div className={cx(styles.mainContent, styles.cesiumControls)}>
           {/* Top-Left Control Panel - Mode & Camera Dropdowns */}
-          <TopLeftControls
-            isModeDropdownOpen={isModeDropdownOpen}
-            setIsModeDropdownOpen={setIsModeDropdownOpen}
-            isCameraDropdownOpen={isCameraDropdownOpen}
-            setIsCameraDropdownOpen={setIsCameraDropdownOpen}
-            isAxesDropdownOpen={isAxesDropdownOpen}
-            setIsAxesDropdownOpen={setIsAxesDropdownOpen}
-            selectedMode={selectedMode}
-            setSelectedMode={setSelectedMode}
-            satelliteCameraView={satelliteCameraView}
-            setSatelliteCameraView={setSatelliteCameraView}
-            celestialCameraView={celestialCameraView}
-            setCelestialCameraView={setCelestialCameraView}
-            earthCameraView={earthCameraView}
-            setEarthCameraView={setEarthCameraView}
-            showLVLHAxes={showLVLHAxes}
-            setShowLVLHAxes={setShowLVLHAxes}
-            showBodyAxes={showBodyAxes}
-            setShowBodyAxes={setShowBodyAxes}
-            showITRFAxes={showITRFAxes}
-            setShowITRFAxes={setShowITRFAxes}
-            showICRFAxes={showICRFAxes}
-            setShowICRFAxes={setShowICRFAxes}
-            onNadirViewClick={() => trackedSatelliteId && flyToSatelliteNadirView(trackedSatelliteId)}
-            trackedSatelliteId={trackedSatelliteId}
-            styles={styles}
-          />
+          <div className={styles.topLeftControlsContainer}>
+            {/* Mode Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className={styles.dropdownButton}
+                onClick={() => {
+                  setIsModeDropdownOpen(!isModeDropdownOpen);
+                  setIsCameraDropdownOpen(false);
+                }}
+                title="View Mode"
+              >
+                Mode
+                <ChevronDown size={16} />
+              </button>
+              
+              {isModeDropdownOpen && (
+                <div className={styles.dropdownMenu}>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedMode === 'satellite' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedMode('satellite');
+                      setIsModeDropdownOpen(false);
+                      // TODO: Implement satellite-centered view logic
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>🛰️ Satellite Focus</span>
+                    <span className={styles.dropdownItemDescription}>Center on tracked satellite</span>
+                  </div>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedMode === 'earth' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedMode('earth');
+                      setIsModeDropdownOpen(false);
+                      // TODO: Implement earth-centered view logic
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>🌍 Earth Focus</span>
+                    <span className={styles.dropdownItemDescription}>Center on Earth</span>
+                  </div>
+                  <div
+                    className={`${styles.dropdownItem} ${selectedMode === 'celestial' ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedMode('celestial');
+                      setIsModeDropdownOpen(false);
+                      // TODO: Implement celestial map view logic
+                    }}
+                  >
+                    <span className={styles.dropdownItemLabel}>⭐ Celestial Map</span>
+                    <span className={styles.dropdownItemDescription}>RA/Dec reference frame</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Camera Angle Dropdown - Options change based on selected mode */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className={styles.dropdownButton}
+                onClick={() => {
+                  setIsCameraDropdownOpen(!isCameraDropdownOpen);
+                  setIsModeDropdownOpen(false);
+                }}
+                title="Camera View"
+              >
+                <Video size={16} />
+                <ChevronDown size={16} />
+              </button>
+              
+              {isCameraDropdownOpen && (
+                <div className={styles.dropdownMenu}>
+                  {/* Satellite Focus Mode - Satellite-centric camera views */}
+                  {selectedMode === 'satellite' && (
+                    <>
+                      <div
+                        className={`${styles.dropdownItem} ${satelliteCameraView === 'nadir' ? 'active' : ''}`}
+                        onClick={() => {
+                          setSatelliteCameraView('nadir');
+                          setIsCameraDropdownOpen(false);
+                          // Use existing nadir view function
+                          if (trackedSatelliteId) {
+                            flyToSatelliteNadirView(trackedSatelliteId);
+                          }
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🔭 Nadir View</span>
+                        <span className={styles.dropdownItemDescription}>View from directly above</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${satelliteCameraView === 'lvlh' ? 'active' : ''}`}
+                        onClick={() => {
+                          setSatelliteCameraView('lvlh');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement LVLH view
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>📐 LVLH View</span>
+                        <span className={styles.dropdownItemDescription}>Local vertical/horizontal frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${satelliteCameraView === 'fixed' ? 'active' : ''}`}
+                        onClick={() => {
+                          setSatelliteCameraView('fixed');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement fixed inertial view
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🧭 Fixed Inertial</span>
+                        <span className={styles.dropdownItemDescription}>Inertial reference frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${satelliteCameraView === 'free' ? 'active' : ''}`}
+                        onClick={() => {
+                          setSatelliteCameraView('free');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement free camera mode
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🎮 Free Camera</span>
+                        <span className={styles.dropdownItemDescription}>Manual camera control</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  {/* Celestial Map Mode - Celestial reference pointing */}
+                  {selectedMode === 'celestial' && (
+                    <>
+                      <div
+                        className={`${styles.dropdownItem} ${celestialCameraView === 'sun' ? 'active' : ''}`}
+                        onClick={() => {
+                          setCelestialCameraView('sun');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement sun pointing
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>☀️ Sun Pointing</span>
+                        <span className={styles.dropdownItemDescription}>Camera points toward sun</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${celestialCameraView === 'lvlh-orbit' ? 'active' : ''}`}
+                        onClick={() => {
+                          setCelestialCameraView('lvlh-orbit');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement LVLH orbit direction pointing
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🛰️ LVLH Orbit Direction</span>
+                        <span className={styles.dropdownItemDescription}>Aligned with orbit velocity</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${celestialCameraView === 'star' ? 'active' : ''}`}
+                        onClick={() => {
+                          setCelestialCameraView('star');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement star pointing
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>⭐ Star Pointing</span>
+                        <span className={styles.dropdownItemDescription}>Fixed stellar reference</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${celestialCameraView === 'groundstation' ? 'active' : ''}`}
+                        onClick={() => {
+                          setCelestialCameraView('groundstation');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement ground station pointing
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>📡 Ground Station Pointing</span>
+                        <span className={styles.dropdownItemDescription}>Camera toward selected station</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  {/* Earth Focus Mode - Reference frame selection */}
+                  {selectedMode === 'earth' && (
+                    <>
+                      <div
+                        className={`${styles.dropdownItem} ${earthCameraView === 'icrf' ? 'active' : ''}`}
+                        onClick={() => {
+                          setEarthCameraView('icrf');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement ICRF frame
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🌌 ICRF</span>
+                        <span className={styles.dropdownItemDescription}>International Celestial Reference Frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${earthCameraView === 'itrf' ? 'active' : ''}`}
+                        onClick={() => {
+                          setEarthCameraView('itrf');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement ITRF frame
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🌍 ITRF</span>
+                        <span className={styles.dropdownItemDescription}>International Terrestrial Reference Frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${earthCameraView === 'gcrf' ? 'active' : ''}`}
+                        onClick={() => {
+                          setEarthCameraView('gcrf');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement GCRF frame
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🔭 GCRF</span>
+                        <span className={styles.dropdownItemDescription}>Geocentric Celestial Reference Frame</span>
+                      </div>
+                      <div
+                        className={`${styles.dropdownItem} ${earthCameraView === 'teme' ? 'active' : ''}`}
+                        onClick={() => {
+                          setEarthCameraView('teme');
+                          setIsCameraDropdownOpen(false);
+                          // TODO: Implement TEME frame
+                        }}
+                      >
+                        <span className={styles.dropdownItemLabel}>🛰️ TEME</span>
+                        <span className={styles.dropdownItemDescription}>True Equator Mean Equinox</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Reference Axes Visibility Toggle - Common to All Modes */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className={styles.dropdownButton}
+                onClick={() => {
+                  setIsAxesDropdownOpen(!isAxesDropdownOpen);
+                  setIsModeDropdownOpen(false);
+                  setIsCameraDropdownOpen(false);
+                }}
+                title="Select visible reference axes"
+              >
+                <Move3d size={16} />
+                <ChevronDown size={16} />
+              </button>
+              
+              {isAxesDropdownOpen && (
+                <div className={styles.dropdownMenu}>
+                  {/* LVLH Reference Frame Toggle */}
+                  <div 
+                    className={styles.toggleItem}
+                    onClick={() => setShowLVLHAxes(!showLVLHAxes)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className={styles.toggleLabel}>
+                      LVLH Reference Frame
+                    </span>
+                    {showLVLHAxes ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </div>
+                  
+                  {/* Body Axes Reference Frame Toggle */}
+                  <div 
+                    className={styles.toggleItem}
+                    onClick={() => setShowBodyAxes(!showBodyAxes)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className={styles.toggleLabel}>
+                      Body Axes Reference Frame
+                    </span>
+                    {showBodyAxes ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </div>
+                  
+                  {/* ITRF Reference Frame Toggle */}
+                  <div 
+                    className={styles.toggleItem}
+                    onClick={() => setShowITRFAxes(!showITRFAxes)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className={styles.toggleLabel}>
+                      ITRF Reference Frame
+                    </span>
+                    {showITRFAxes ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </div>
+                  
+                  {/* ICRF Reference Frame Toggle */}
+                  <div 
+                    className={styles.toggleItem}
+                    onClick={() => setShowICRFAxes(!showICRFAxes)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className={styles.toggleLabel}>
+                      ICRF Reference Frame
+                    </span>
+                    {showICRFAxes ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Sidebar Toggle Button */}
+          <button
+            className={styles.sidebarToggle}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+          >
+            {isSidebarOpen ? <ChevronRight size={20} /> : <Menu size={20} />}
+          </button>
       
           <Viewer
         full
@@ -1053,24 +1363,150 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           </div>
         </div>
 
-        {/* Sidebar Controls */}
-        <SidebarControls
-          isSidebarOpen={isSidebarOpen}
-          setIsSidebarOpen={setIsSidebarOpen}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          satellites={satellites}
-          groundStations={groundStations}
-          trackedSatelliteId={trackedSatelliteId}
-          setTrackedSatelliteId={setTrackedSatelliteId}
-          hiddenSatellites={hiddenSatellites}
-          setHiddenSatellites={setHiddenSatellites}
-          hiddenGroundStations={hiddenGroundStations}
-          setHiddenGroundStations={setHiddenGroundStations}
-          setSettingsModalSatelliteId={setSettingsModalSatelliteId}
-          setSettingsModalGroundStationId={setSettingsModalGroundStationId}
-          styles={styles}
-        />
+        {/* Sidebar - Satellite & Ground Station Lists */}
+        <div className={cx(styles.sidebar, isSidebarOpen && 'open')}>
+          <div className={styles.sidebarContent}>
+            {/* Tab Navigation */}
+            <div className={styles.tabContainer}>
+              <button
+                className={cx(styles.tab, activeTab === 'satellites' && 'active')}
+                onClick={() => setActiveTab('satellites')}
+              >
+                Satellites
+              </button>
+              <button
+                className={cx(styles.tab, activeTab === 'groundstations' && 'active')}
+                onClick={() => setActiveTab('groundstations')}
+              >
+                Ground Stations
+              </button>
+            </div>
+
+            {/* Satellites Tab Content */}
+            {activeTab === 'satellites' && (
+              <>
+                {satellites.length === 0 ? (
+                  <div className={styles.emptyState}>No satellites available</div>
+                ) : (
+                  <div className={styles.satelliteList}>
+                    {satellites.map((satellite) => (
+                      <div 
+                        key={satellite.id} 
+                        className={cx(
+                          styles.satelliteItem,
+                          trackedSatelliteId === satellite.id && 'tracked'
+                        )}
+                        onClick={() => handleSatelliteClick(satellite.id)}
+                      >
+                        <button
+                          className={styles.visibilityToggle}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSatelliteVisibility(satellite.id);
+                          }}
+                          title={isSatelliteVisible(satellite.id) ? 'Hide satellite' : 'Show satellite'}
+                        >
+                          {isSatelliteVisible(satellite.id) ? <Eye size={16} /> : <EyeOff size={16} />}
+                        </button>
+                        
+                        <div className={styles.satelliteInfo}>
+                          <div className={styles.satelliteName} title={satellite.name}>
+                            {satellite.name}
+                          </div>
+                          <div className={styles.satelliteId} title={satellite.id}>
+                            {satellite.id}
+                          </div>
+                        </div>
+                        
+                        <button
+                          className={styles.settingsButton}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSettingsModalSatelliteId(satellite.id);
+                          }}
+                          title="Satellite settings"
+                        >
+                          <Settings size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Ground Stations Tab Content */}
+            {activeTab === 'groundstations' && (
+              <>
+                {groundStations.length === 0 ? (
+                  <div className={styles.emptyState}>No ground stations available</div>
+                ) : (
+                  <div className={styles.satelliteList}>
+                    {groundStations.map((gs) => {
+                      const isHidden = hiddenGroundStations.has(gs.id);
+                      
+                      return (
+                        <div 
+                          key={gs.id} 
+                          className={styles.satelliteItem}
+                        >
+                          <button
+                            className={styles.visibilityToggle}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newHidden = new Set(hiddenGroundStations);
+                              if (isHidden) {
+                                newHidden.delete(gs.id);
+                              } else {
+                                newHidden.add(gs.id);
+                              }
+                              setHiddenGroundStations(newHidden);
+                            }}
+                            title={isHidden ? 'Show ground station' : 'Hide ground station'}
+                          >
+                            {isHidden ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                          
+                          <div className={styles.satelliteInfo}>
+                            <div className={styles.satelliteName} title={gs.name}>
+                              {gs.name}
+                            </div>
+                            <div className={styles.satelliteId} title={gs.id}>
+                              {gs.id}
+                            </div>
+                          </div>
+                          
+                          <button
+                            className={styles.povButton}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // TODO: Implement POV functionality
+                              console.log(`POV clicked for ground station: ${gs.name}`);
+                            }}
+                            title="Switch to ground station POV"
+                          >
+                            POV
+                          </button>
+                          
+                          <button
+                            className={styles.settingsButton}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSettingsModalGroundStationId(gs.id);
+                            }}
+                            title="Ground station settings"
+                          >
+                            <Settings size={16} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
 
         {/* Settings Modal */}
         {settingsModalSatelliteId && (
