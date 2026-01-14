@@ -53,9 +53,13 @@ export const SidebarControls: React.FC<SidebarControlsProps> = ({
 
   return (
     <>
-      {/* Sidebar Toggle Button */}
+      {/* Sidebar Toggle Button - moves with sidebar */}
       <button
         className={styles.sidebarToggle}
+        style={{ 
+          right: isSidebarOpen ? '330px' : '10px',
+          transition: 'right 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)'
+        }}
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         title={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
       >
