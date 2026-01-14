@@ -136,18 +136,6 @@ const getStyles = () => {
         background: rgba(70, 70, 70, 0.9);
       }
     `,
-    trackingButton: css`
-      position: absolute;
-      top: 10px;
-      right: 60px;
-      z-index: 1000;
-      padding: 8px 10px;
-      cursor: pointer;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      line-height: 1;
-    `,
     nadirViewButton: css`
       position: absolute;
       top: 10px;
@@ -1117,6 +1105,30 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       console.warn('Failed to load sensor colors from localStorage:', error);
     }
   }, []);
+  
+  // Auto-track satellite and adjust camera based on mode
+  useEffect(() => {
+    if (selectedMode === 'satellite' || selectedMode === 'celestial') {
+      // Enable tracking for Satellite Focus and Celestial Map modes
+      if (!isTracked) {
+        setIsTracked(true);
+        console.log(`🎯 Satellite tracking enabled (${selectedMode === 'satellite' ? 'Satellite Focus' : 'Celestial Map'} mode)`);
+      }
+    } else if (selectedMode === 'earth') {
+      // Earth Focus mode: fly to nadir view then enable free camera
+      if (isTracked && trackedSatelliteId) {
+        const earthRadius = 6378137; // meters
+        const safeDistance = earthRadius * 2; // ~12,756 km (2x Earth radius)
+        flyToSatelliteNadirView(trackedSatelliteId, 0.2, safeDistance);
+        
+        // Wait for animation before activating free camera
+        setTimeout(() => {
+          setIsTracked(false);
+          console.log('🌍 Free camera enabled (Earth Focus mode - Nadir view)');
+        }, 500); // 0.5 second wait
+      }
+    }
+  }, [selectedMode, isTracked, trackedSatelliteId]);
 
   // Focus satellite settings modal when it opens (for ESC key handling)
   useEffect(() => {
@@ -1309,24 +1321,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     console.log(`🚀 Flying to ${satellite.name} - Nadir View (${distance}m above, ${duration}s)`);
   };
 
-  // Handle tracking mode toggle with nadir transition
-  const handleTrackingToggle = () => {
-    if (isTracked && trackedSatelliteId) {
-      // Going from tracked → free: fly to nadir first with zoom limit respected (2x Earth radius)
-      const earthRadius = 6378137; // meters
-      const safeDistance = earthRadius * 2; // ~12,756 km (within 3x limit)
-      flyToSatelliteNadirView(trackedSatelliteId, 0.2, safeDistance);
-      
-      // Wait for animation + buffer time before activating free camera
-      setTimeout(() => {
-        setIsTracked(false);
-        console.log('🌍 Free camera mode activated');
-      }, 500); // 0.5 second wait
-    } else {
-      // Going from free → tracked: immediate toggle
-      setIsTracked(true);
-    }
-  };
 
   // Satellite visibility toggle functions
   const toggleSatelliteVisibility = (satelliteId: string) => {
@@ -1485,19 +1479,6 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       <div className={styles.panelContainer}>
         {/* Main content area - shrinks when sidebar opens */}
         <div className={cx(styles.mainContent, styles.cesiumControls)}>
-          {/* Tracking Mode Toggle Button */}
-          <button
-            className={styles.trackingButton}
-            onClick={handleTrackingToggle}
-            title={isTracked ? 'Tracking ON' : 'Free Camera'}
-            style={{
-              backgroundColor: isTracked ? '#4CAF50' : '#2196F3',
-              color: 'white',
-            }}
-          >
-            {isTracked ? '🎯' : '🌍'}
-          </button>
-          
           {/* Top-Left Control Panel - Mode & Camera Dropdowns */}
           <div className={styles.topLeftControlsContainer}>
             {/* Mode Dropdown */}
@@ -1898,8 +1879,8 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         {timestamp && <Clock currentTime={timestamp} />}
         
         {/* Main Satellite Entities - Multiple satellites support */}
-        {/* Main Satellite Entities */}
-        {satellites
+        {/* Main Satellite Entities - Hidden in Celestial Map mode */}
+        {selectedMode !== 'celestial' && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
           .map((satellite) => {
             const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
@@ -1914,8 +1895,29 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
             );
           })
         }
-        {/* Body Axes (X/Y/Z attitude vectors) - Per-satellite */}
-        {options.showAttitudeVisualization && options.showBodyAxes && satellites
+        
+        {/* Invisible tracking entity for Celestial Map mode */}
+        {/* Provides a tracking anchor point at satellite position when satellite model is hidden */}
+        {selectedMode === 'celestial' && satellites
+          .filter(sat => !hiddenSatellites.has(sat.id))
+          .map((satellite) => {
+            const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
+            return (
+              <Entity
+                key={`${satellite.id}-celestial-tracker`}
+                id={`${satellite.id}-celestial-tracker`}
+                name={`${satellite.name} (Tracking Point)`}
+                position={satellite.position}
+                availability={satellite.availability}
+                tracked={isThisSatelliteTracked}
+              >
+                {/* Completely invisible - no graphics, just position for tracking */}
+              </Entity>
+            );
+          })
+        }
+        {/* Body Axes (X/Y/Z attitude vectors) - Per-satellite - Hidden in Celestial Map mode */}
+        {selectedMode !== 'celestial' && options.showAttitudeVisualization && options.showBodyAxes && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
           .map((satellite) => {
             const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
@@ -1933,6 +1935,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         }
         
         {/* Sensor Visualization (Cones, Footprints, Celestial Projections) */}
+        {/* In Celestial Map mode: hide cones, show only footprints and celestial projections */}
         {options.showAttitudeVisualization && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
           .map((satellite) => {
@@ -1941,12 +1944,17 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               // Get the actual color for this sensor (respecting user overrides)
               const sensorColor = _getSensorColor(satellite.id, sensor.id, sensor, idx);
               
+              // Override options for Celestial Map mode: hide sensor cones
+              const effectiveOptions = selectedMode === 'celestial' 
+                ? { ...options, showSensorCones: false }
+                : options;
+              
               return (
                 <SensorVisualizationRenderer
                   key={`${satellite.id}-sensor-${sensor.id}`}
                   satellite={satellite}
                   sensor={sensor}
-                  options={options}
+                  options={effectiveOptions}
                   isTracked={isThisSatelliteTracked}
                   viewerRef={viewerRef}
                   sensorIndex={idx}
