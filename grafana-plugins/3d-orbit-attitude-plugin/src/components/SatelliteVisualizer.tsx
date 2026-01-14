@@ -741,7 +741,6 @@ const getStyles = () => {
       position: absolute;
       bottom: 40px;
       right: 10px;
-      top: 60px; /* Don't extend above this point (leaves room for top-right button) */
       z-index: 1000;
       background: rgba(30, 30, 30, 0.95);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -749,23 +748,23 @@ const getStyles = () => {
       max-width: 220px;
       min-width: 180px;
       
-      /* Height is now auto-constrained by top and bottom */
-      /* Will shrink to fit between top:60px and bottom:40px */
+      /* Default max-height for normal/large windows */
+      max-height: 300px;
       
       display: flex;
       flex-direction: column;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
       transition: all 0.3s ease;
       
-      /* Responsive sizing for smaller viewports */
+      /* Responsive sizing for smaller viewports - prevent overlap with top buttons */
       @media (max-height: 600px) {
-        top: 55px;
+        max-height: calc(100vh - 110px); /* Leave room for top button + bottom margin */
         max-width: 200px;
         min-width: 160px;
       }
       
       @media (max-height: 400px) {
-        top: 50px;
+        max-height: calc(100vh - 90px);
         max-width: 180px;
         min-width: 140px;
       }
@@ -777,7 +776,6 @@ const getStyles = () => {
       }
       
       &.collapsed {
-        top: auto; /* Reset top constraint when collapsed */
         max-height: 36px;
         min-width: 100px;
         max-width: 120px;
