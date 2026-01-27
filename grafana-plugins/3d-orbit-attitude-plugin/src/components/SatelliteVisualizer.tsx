@@ -825,6 +825,8 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           .filter(sat => !hiddenSatellites.has(sat.id))
           .map((satellite) => {
             const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
+            const hasEllipsoidVisible = options.showUncertaintyEllipsoids && 
+                                       satelliteRenderSettings.get(satellite.id)?.showEllipsoid === true;
             return (
               <SatelliteEntityRenderer
                 key={satellite.id}
@@ -832,6 +834,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 options={options}
                 satelliteResource={satelliteResource}
                 isTracked={isThisSatelliteTracked}
+                hasEllipsoidVisible={hasEllipsoidVisible}
               />
             );
           })

@@ -63,6 +63,7 @@ export interface SatelliteEntityProps {
   options: SimpleOptions;
   satelliteResource: Resource | IonResource | string | undefined;
   isTracked: boolean;
+  hasEllipsoidVisible?: boolean;
 }
 
 /**
@@ -81,7 +82,11 @@ export const SatelliteEntityRenderer: React.FC<SatelliteEntityProps> = ({
   options,
   satelliteResource,
   isTracked,
+  hasEllipsoidVisible,
 }) => {
+  // When ellipsoid is visible, don't scale up the satellite model to avoid size confusion
+  const effectiveMinimumPixelSize = hasEllipsoidVisible ? 1 : options.modelMinimumPixelSize;
+  
   return (
     <Entity
       id={satellite.id}
@@ -104,7 +109,7 @@ export const SatelliteEntityRenderer: React.FC<SatelliteEntityProps> = ({
         <ModelGraphics
           uri={satelliteResource}
           scale={options.modelScale}
-          minimumPixelSize={options.modelMinimumPixelSize}
+          minimumPixelSize={effectiveMinimumPixelSize}
           maximumScale={options.modelMaximumScale}
         />
       )}
