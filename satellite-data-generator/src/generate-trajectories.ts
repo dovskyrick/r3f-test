@@ -116,20 +116,24 @@ function generateSensors(satelliteIdx: number): SensorDefinition[] {
 
   const orientations = satelliteOrientations[satelliteIdx % satelliteOrientations.length];
 
-  // Default sensor colors (cyan, magenta, yellow pattern)
-  const defaultColors = [
-    '#00FFFF', // Cyan
-    '#FF00FF', // Magenta
-    '#FFFF00', // Yellow
+  // Green color palette for sensors
+  const greenColors = [
+    '#1F5E3B', // Dark forest green
+    '#2E8B57', // Sea green
+    '#4CAF73', // Light green
   ];
 
   const sensorConfigs = [
-    { name: 'Main Camera', fov: 10, orientation: orientations[0], color: defaultColors[0] },
-    { name: 'Nadir Camera', fov: 15, orientation: orientations[1], color: defaultColors[1] },
-    { name: 'Star Tracker', fov: 20, orientation: orientations[2], color: defaultColors[2] },
+    { name: 'Main Camera', fov: 10, orientation: orientations[0], color: greenColors[0] },
+    { name: 'Nadir Camera', fov: 15, orientation: orientations[1], color: greenColors[1] },
+    { name: 'Star Tracker', fov: 20, orientation: orientations[2], color: greenColors[2] },
   ];
 
-  return sensorConfigs.map((config, idx) => ({
+  // Satellite 0: 3 sensors, Satellite 1: 2 sensors, Satellite 2: 1 sensor
+  const numSensors = satelliteIdx === 0 ? 3 : satelliteIdx === 1 ? 2 : 1;
+  const selectedSensors = sensorConfigs.slice(0, numSensors);
+
+  return selectedSensors.map((config, idx) => ({
     id: `sat${satelliteIdx}-sens${idx}`,
     ...config,
   }));
