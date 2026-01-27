@@ -213,6 +213,27 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
     ];
   }, []);
 
+  // ITRF Axes - Greyish-blue (Earth-fixed frame, 60% opacity)
+  const itrfVectors = React.useMemo(() => {
+    return [
+      { 
+        axis: new Cartesian3(1, 0, 0), 
+        color: Color.fromBytes(200, 210, 235, 153), // Brightest (blueish-grey)
+        name: 'ITRF-X' 
+      },
+      { 
+        axis: new Cartesian3(0, 1, 0), 
+        color: Color.fromBytes(170, 185, 215, 153), // Medium (blueish-grey)
+        name: 'ITRF-Y' 
+      },
+      { 
+        axis: new Cartesian3(0, 0, 1), 
+        color: Color.fromBytes(140, 160, 195, 153), // Darkest (blueish-grey)
+        name: 'ITRF-Z' 
+      },
+    ];
+  }, []);
+
   // Compute LVLH orientation from position and velocity
   const computeLVLHOrientation = React.useCallback((satellite: ParsedSatellite) => {
     const lvlhOrientation = new SampledProperty(Quaternion);
@@ -284,6 +305,60 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
       orientation: computeLVLHOrientation(sat),
     }));
   }, [satellites, computeLVLHOrientation]);
+
+  // Compute ITRF orientation (Earth-fixed frame) from position
+  const computeITRFOrientation = React.useCallback((satellite: ParsedSatellite) => {
+    const itrfOrientation = new SampledProperty(Quaternion);
+    
+    const times = (satellite.position as any)._property?._times || [];
+    
+    for (let i = 0; i < times.length; i++) {
+      const time = times[i];
+      const position = satellite.position.getValue(time);
+      
+      if (!position) {
+        continue;
+      }
+      
+      // ITRF Frame (Earth-fixed):
+      // X-axis: Points East (perpendicular to radial, in equatorial plane direction)
+      // Y-axis: Points North (tangent to meridian)
+      // Z-axis: Points Up (radial, away from Earth center)
+      
+      const zAxis = Cartesian3.normalize(position, new Cartesian3()); // Radial (up)
+      const north = new Cartesian3(0, 0, 1); // Earth's north pole direction
+      const east = Cartesian3.normalize(Cartesian3.cross(north, zAxis, new Cartesian3()), new Cartesian3());
+      
+      // If near poles, east vector might be zero, use alternative
+      if (Cartesian3.magnitude(east) < 0.1) {
+        const fallback = new Cartesian3(1, 0, 0);
+        Cartesian3.cross(fallback, zAxis, east);
+        Cartesian3.normalize(east, east);
+      }
+      
+      const northAxis = Cartesian3.cross(zAxis, east, new Cartesian3());
+      
+      // Create rotation matrix: ITRF frame at satellite position
+      const rotationMatrix = new Matrix3(
+        east.x, northAxis.x, zAxis.x,
+        east.y, northAxis.y, zAxis.y,
+        east.z, northAxis.z, zAxis.z
+      );
+      
+      const quaternion = Quaternion.fromRotationMatrix(rotationMatrix);
+      itrfOrientation.addSample(time, quaternion);
+    }
+    
+    return itrfOrientation;
+  }, []);
+
+  // Create ITRF-oriented satellites
+  const itrfSatellites = React.useMemo(() => {
+    return satellites.map(sat => ({
+      ...sat,
+      orientation: computeITRFOrientation(sat),
+    }));
+  }, [satellites, computeITRFOrientation]);
 
   // Color management helper functions
   // Note: Will be used in Phase 3 (display colors in UI) and Phase 4 (color picker)
@@ -877,7 +952,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
           })
         }
         {/* Body Axes (X/Y/Z attitude vectors) - Per-satellite - Hidden in Celestial Map mode */}
-        {selectedMode !== 'celestial' && options.showAttitudeVisualization && options.showBodyAxes && satellites
+        {selectedMode !== 'celestial' && options.showAttitudeVisualization && showBodyAxes && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
           .map((satellite) => {
             const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
@@ -907,6 +982,24 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 isTracked={isThisSatelliteTracked}
                 viewerRef={viewerRef}
                 attitudeVectors={lvlhVectors}
+              />
+            );
+          })
+        }
+
+        {/* ITRF Axes (Earth-fixed reference frame: East/North/Up) */}
+        {selectedMode !== 'celestial' && options.showAttitudeVisualization && showITRFAxes && itrfSatellites
+          .filter(sat => !hiddenSatellites.has(sat.id))
+          .map((satellite) => {
+            const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
+            return (
+              <BodyAxesRenderer
+                key={`${satellite.id}-itrf-axes`}
+                satellite={satellite}
+                options={options}
+                isTracked={isThisSatelliteTracked}
+                viewerRef={viewerRef}
+                attitudeVectors={itrfVectors}
               />
             );
           })
@@ -1063,12 +1156,12 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   </div>
                 )}
                 
-                {/* ITRF Frame (placeholder) */}
+                {/* ITRF Frame - Greyish-blue (Earth-fixed: East/North/Up, 60% opacity) */}
                 {showITRFAxes && (
                   <div className={styles.legendItem}>
                     <div
                       className={styles.legendColorSwatch}
-                      style={{ background: 'rgba(180, 180, 190, 0.7)' }}
+                      style={{ background: 'rgba(185, 197, 225, 0.6)' }}
                       onClick={() => setExpandedLegendItem(expandedLegendItem === 'itrf' ? null : 'itrf')}
                     />
                     <span className={styles.legendItemName}>ITRF Frame</span>
@@ -1080,7 +1173,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   </div>
                 )}
                 
-                {/* ICRF Frame (placeholder) */}
+                {/* ICRF Frame - Celestial inertial (X: vernal equinox, Z: north celestial pole) */}
                 {showICRFAxes && (
                   <div className={styles.legendItem}>
                     <div
@@ -1093,7 +1186,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 )}
                 {expandedLegendItem === 'icrf' && (
                   <div className={styles.legendColorPicker}>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Not yet implemented</div>
                   </div>
                 )}
               </div>
