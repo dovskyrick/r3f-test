@@ -1024,12 +1024,12 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               <div className={styles.legendSection}>
                 <div className={styles.legendSectionTitle}>Reference Frames</div>
                 
-                {/* LVLH Frame (placeholder) */}
+                {/* LVLH Frame - Whitish-grey (50% opacity) */}
                 {showLVLHAxes && (
                   <div className={styles.legendItem}>
                     <div
                       className={styles.legendColorSwatch}
-                      style={{ background: '#FFA500' }}
+                      style={{ background: 'rgba(220, 220, 227, 0.5)' }}
                       onClick={() => setExpandedLegendItem(expandedLegendItem === 'lvlh' ? null : 'lvlh')}
                     />
                     <span className={styles.legendItemName}>LVLH Frame</span>
@@ -1042,12 +1042,12 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   </div>
                 )}
                 
-                {/* Body Axes Frame (placeholder) */}
+                {/* Body Axes Frame - Whitish-grey (90% opacity) */}
                 {showBodyAxes && (
                   <div className={styles.legendItem}>
                     <div
                       className={styles.legendColorSwatch}
-                      style={{ background: '#FF0000' }}
+                      style={{ background: 'rgba(220, 220, 227, 0.9)' }}
                       onClick={() => setExpandedLegendItem(expandedLegendItem === 'body' ? null : 'body')}
                     />
                     <span className={styles.legendItemName}>Body Axes</span>
@@ -1064,7 +1064,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   <div className={styles.legendItem}>
                     <div
                       className={styles.legendColorSwatch}
-                      style={{ background: '#00FF00' }}
+                      style={{ background: 'rgba(180, 180, 190, 0.7)' }}
                       onClick={() => setExpandedLegendItem(expandedLegendItem === 'itrf' ? null : 'itrf')}
                     />
                     <span className={styles.legendItemName}>ITRF Frame</span>
@@ -1081,7 +1081,7 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   <div className={styles.legendItem}>
                     <div
                       className={styles.legendColorSwatch}
-                      style={{ background: '#0000FF' }}
+                      style={{ background: 'rgba(200, 200, 210, 0.7)' }}
                       onClick={() => setExpandedLegendItem(expandedLegendItem === 'icrf' ? null : 'icrf')}
                     />
                     <span className={styles.legendItemName}>ICRF Frame</span>
@@ -1094,53 +1094,42 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 )}
               </div>
               
-              {/* Sensors Section (placeholder for selected satellite) */}
-              <div className={styles.legendSection}>
-                <div className={styles.legendSectionTitle}>Sensors (Satellite 1)</div>
+              {/* Sensors Section - Show sensors of tracked satellite */}
+              {trackedSatelliteId && (() => {
+                const trackedSat = satellites.find(s => s.id === trackedSatelliteId);
+                if (!trackedSat || trackedSat.sensors.length === 0) {
+                  return null;
+                }
                 
-                {/* Sample sensors - replace with real data later */}
-                <div className={styles.legendItem}>
-                  <div
-                    className={styles.legendColorSwatch}
-                    style={{ background: '#FF1493' }}
-                    onClick={() => setExpandedLegendItem(expandedLegendItem === 'sensor1' ? null : 'sensor1')}
-                  />
-                  <span className={styles.legendItemName}>Main Camera</span>
-                </div>
-                {expandedLegendItem === 'sensor1' && (
-                  <div className={styles.legendColorPicker}>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                return (
+                  <div className={styles.legendSection}>
+                    <div className={styles.legendSectionTitle}>Sensors ({trackedSat.name})</div>
+                    
+                    {trackedSat.sensors.map((sensor, idx) => {
+                      const sensorColor = _getSensorColor(trackedSat.id, sensor.id, sensor, idx);
+                      const sensorKey = `${trackedSat.id}-${sensor.id}`;
+                      
+                      return (
+                        <React.Fragment key={sensorKey}>
+                          <div className={styles.legendItem}>
+                            <div
+                              className={styles.legendColorSwatch}
+                              style={{ background: sensorColor }}
+                              onClick={() => setExpandedLegendItem(expandedLegendItem === sensorKey ? null : sensorKey)}
+                            />
+                            <span className={styles.legendItemName}>{sensor.name}</span>
+                          </div>
+                          {expandedLegendItem === sensorKey && (
+                            <div className={styles.legendColorPicker}>
+                              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                            </div>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
-                )}
-                
-                <div className={styles.legendItem}>
-                  <div
-                    className={styles.legendColorSwatch}
-                    style={{ background: '#00CED1' }}
-                    onClick={() => setExpandedLegendItem(expandedLegendItem === 'sensor2' ? null : 'sensor2')}
-                  />
-                  <span className={styles.legendItemName}>Star Tracker</span>
-                </div>
-                {expandedLegendItem === 'sensor2' && (
-                  <div className={styles.legendColorPicker}>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
-                  </div>
-                )}
-                
-                <div className={styles.legendItem}>
-                  <div
-                    className={styles.legendColorSwatch}
-                    style={{ background: '#FFD700' }}
-                    onClick={() => setExpandedLegendItem(expandedLegendItem === 'sensor3' ? null : 'sensor3')}
-                  />
-                  <span className={styles.legendItemName}>Antenna</span>
-                </div>
-                {expandedLegendItem === 'sensor3' && (
-                  <div className={styles.legendColorPicker}>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
-                  </div>
-                )}
-              </div>
+                );
+              })()}
             </div>
             )}
           </div>
