@@ -208,7 +208,12 @@ export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = (
               
               // Generate cone mesh with camera-scaled length (reduced to 60% to avoid overlap with reference axes)
               const viewer = viewerRef.current?.cesiumElement;
-              const coneLength = getScaledLength(30000, isTracked, viewer, satPos);
+              let coneLength = getScaledLength(30000, isTracked, viewer, satPos);
+              
+              // In tracked mode, reduce sensor cones to 60% of standard tracked length
+              if (isTracked) {
+                coneLength *= 0.6;
+              }
               
               return generateConeMesh(satPos, sensorDir, sensor.fov, coneLength, 16);
             }, false)}
@@ -258,7 +263,12 @@ export const SensorVisualizationRenderer: React.FC<SensorVisualizationProps> = (
           if (!viewer) {
             return [];
           }
-          const coneLength = getScaledLength(30000, isTracked, viewer, satPos);
+          let coneLength = getScaledLength(30000, isTracked, viewer, satPos);
+          
+          // In tracked mode, reduce sensor cones to 60% of standard tracked length
+          if (isTracked) {
+            coneLength *= 0.6;
+          }
           
           // Generate solid cone triangles
           return generateSolidConeMesh(satPos, sensorDir, sensor.fov, coneLength, 24); // 24 segments for good performance
