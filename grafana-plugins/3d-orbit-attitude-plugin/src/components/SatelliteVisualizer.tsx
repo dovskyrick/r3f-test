@@ -171,64 +171,64 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const groundStationModalRef = React.useRef<HTMLDivElement>(null);
 
   // Attitude vector configurations - single color with different brightness levels
-  // Body Axes - Whitish-grey with slight brightness variations (90% opacity)
+  // Body Axes - Almost white, all same brightness (90% opacity)
   const attitudeVectors = React.useMemo(() => {
     return [
       { 
         axis: new Cartesian3(1, 0, 0), 
-        color: Color.fromBytes(240, 240, 245, 230), // Brightest (whitish-grey)
+        color: Color.fromBytes(245, 245, 250, 230), // Almost white
         name: 'X-axis' 
       },
       { 
         axis: new Cartesian3(0, 1, 0), 
-        color: Color.fromBytes(200, 200, 210, 230), // Medium (grey)
+        color: Color.fromBytes(245, 245, 250, 230), // Almost white
         name: 'Y-axis' 
       },
       { 
         axis: new Cartesian3(0, 0, 1), 
-        color: Color.fromBytes(160, 160, 170, 230), // Darkest (darker grey)
+        color: Color.fromBytes(245, 245, 250, 230), // Almost white
         name: 'Z-axis' 
       },
     ];
   }, []);
 
-  // LVLH Axes - Whitish-grey with slight brightness variations (50% opacity)
+  // LVLH Axes - Medium grey, all same brightness (70% opacity)
   const lvlhVectors = React.useMemo(() => {
     return [
       { 
         axis: new Cartesian3(1, 0, 0), 
-        color: Color.fromBytes(240, 240, 245, 128), // Brightest (whitish-grey, translucent)
+        color: Color.fromBytes(180, 180, 185, 179), // Medium grey
         name: 'LVLH-X' 
       },
       { 
         axis: new Cartesian3(0, 1, 0), 
-        color: Color.fromBytes(200, 200, 210, 128), // Medium (grey, translucent)
+        color: Color.fromBytes(180, 180, 185, 179), // Medium grey
         name: 'LVLH-Y' 
       },
       { 
         axis: new Cartesian3(0, 0, 1), 
-        color: Color.fromBytes(160, 160, 170, 128), // Darkest (darker grey, translucent)
+        color: Color.fromBytes(180, 180, 185, 179), // Medium grey
         name: 'LVLH-Z' 
       },
     ];
   }, []);
 
-  // ITRF Axes - Greyish-blue (Earth-fixed frame, 60% opacity)
+  // ITRF Axes - Dark grey, all same brightness (60% opacity)
   const itrfVectors = React.useMemo(() => {
     return [
       { 
         axis: new Cartesian3(1, 0, 0), 
-        color: Color.fromBytes(200, 210, 235, 153), // Brightest (blueish-grey)
+        color: Color.fromBytes(120, 120, 130, 153), // Dark grey
         name: 'ITRF-X' 
       },
       { 
         axis: new Cartesian3(0, 1, 0), 
-        color: Color.fromBytes(170, 185, 215, 153), // Medium (blueish-grey)
+        color: Color.fromBytes(120, 120, 130, 153), // Dark grey
         name: 'ITRF-Y' 
       },
       { 
         axis: new Cartesian3(0, 0, 1), 
-        color: Color.fromBytes(140, 160, 195, 153), // Darkest (blueish-grey)
+        color: Color.fromBytes(120, 120, 130, 153), // Dark grey
         name: 'ITRF-Z' 
       },
     ];
@@ -1121,12 +1121,29 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
               <div className={styles.legendSection}>
                 <div className={styles.legendSectionTitle}>Reference Frames</div>
                 
-                {/* LVLH Frame - Whitish-grey (50% opacity) */}
+                {/* Body Axes Frame - Almost white (90% opacity) */}
+                {showBodyAxes && (
+                  <div className={styles.legendItem}>
+                    <div
+                      className={styles.legendColorSwatch}
+                      style={{ background: 'rgba(245, 245, 250, 0.9)' }}
+                      onClick={() => setExpandedLegendItem(expandedLegendItem === 'body' ? null : 'body')}
+                    />
+                    <span className={styles.legendItemName}>Body Axes</span>
+                  </div>
+                )}
+                {expandedLegendItem === 'body' && (
+                  <div className={styles.legendColorPicker}>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
+                  </div>
+                )}
+                
+                {/* LVLH Frame - Medium grey (70% opacity) */}
                 {showLVLHAxes && (
                   <div className={styles.legendItem}>
                     <div
                       className={styles.legendColorSwatch}
-                      style={{ background: 'rgba(220, 220, 227, 0.5)' }}
+                      style={{ background: 'rgba(180, 180, 185, 0.7)' }}
                       onClick={() => setExpandedLegendItem(expandedLegendItem === 'lvlh' ? null : 'lvlh')}
                     />
                     <span className={styles.legendItemName}>LVLH Frame</span>
@@ -1139,29 +1156,12 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                   </div>
                 )}
                 
-                {/* Body Axes Frame - Whitish-grey (90% opacity) */}
-                {showBodyAxes && (
-                  <div className={styles.legendItem}>
-                    <div
-                      className={styles.legendColorSwatch}
-                      style={{ background: 'rgba(220, 220, 227, 0.9)' }}
-                      onClick={() => setExpandedLegendItem(expandedLegendItem === 'body' ? null : 'body')}
-                    />
-                    <span className={styles.legendItemName}>Body Axes</span>
-                  </div>
-                )}
-                {expandedLegendItem === 'body' && (
-                  <div className={styles.legendColorPicker}>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Color picker here</div>
-                  </div>
-                )}
-                
-                {/* ITRF Frame - Greyish-blue (Earth-fixed: East/North/Up, 60% opacity) */}
+                {/* ITRF Frame - Dark grey (60% opacity) */}
                 {showITRFAxes && (
                   <div className={styles.legendItem}>
                     <div
                       className={styles.legendColorSwatch}
-                      style={{ background: 'rgba(185, 197, 225, 0.6)' }}
+                      style={{ background: 'rgba(120, 120, 130, 0.6)' }}
                       onClick={() => setExpandedLegendItem(expandedLegendItem === 'itrf' ? null : 'itrf')}
                     />
                     <span className={styles.legendItemName}>ITRF Frame</span>
