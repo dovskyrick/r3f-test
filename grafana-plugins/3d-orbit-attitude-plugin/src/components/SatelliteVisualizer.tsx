@@ -60,7 +60,6 @@ import { css, cx } from '@emotion/css';
 import { useStyles2, ColorPicker } from '@grafana/ui';
 import { Settings, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { getStyles } from './styles/SatelliteVisualizerStyles';
-import { safeColor } from './styles/constants';
 import { TopLeftControls } from './controls/TopLeftControls';
 import { SidebarControls } from './controls/SidebarControls';
 
@@ -81,6 +80,9 @@ import {
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
   LabelStyle,
+  Matrix3,
+  Quaternion,
+  SampledProperty,
 } from 'cesium';
 
 import 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -169,46 +171,119 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
   const groundStationModalRef = React.useRef<HTMLDivElement>(null);
 
   // Attitude vector configurations - single color with different brightness levels
+  // Body Axes - Whitish-grey with slight brightness variations (90% opacity)
   const attitudeVectors = React.useMemo(() => {
-    // Use X-axis color as base, or default to cyan
-    const baseColor = safeColor(options.xAxisColor, Color.CYAN);
-    
-    // Extract RGB values
-    const r = baseColor.red;
-    const g = baseColor.green;
-    const b = baseColor.blue;
-    
-    // Create brightness variations: X (brightest), Y (medium), Z (darkest)
     return [
       { 
         axis: new Cartesian3(1, 0, 0), 
-        color: Color.fromBytes(
-          Math.min(255, Math.floor(r * 255 * 1.0)),
-          Math.min(255, Math.floor(g * 255 * 1.0)),
-          Math.min(255, Math.floor(b * 255 * 1.0))
-        ), 
+        color: Color.fromBytes(240, 240, 245, 230), // Brightest (whitish-grey)
         name: 'X-axis' 
       },
       { 
         axis: new Cartesian3(0, 1, 0), 
-        color: Color.fromBytes(
-          Math.min(255, Math.floor(r * 255 * 0.7)),
-          Math.min(255, Math.floor(g * 255 * 0.7)),
-          Math.min(255, Math.floor(b * 255 * 0.7))
-        ), 
+        color: Color.fromBytes(200, 200, 210, 230), // Medium (grey)
         name: 'Y-axis' 
       },
       { 
         axis: new Cartesian3(0, 0, 1), 
-        color: Color.fromBytes(
-          Math.min(255, Math.floor(r * 255 * 0.4)),
-          Math.min(255, Math.floor(g * 255 * 0.4)),
-          Math.min(255, Math.floor(b * 255 * 0.4))
-        ), 
+        color: Color.fromBytes(160, 160, 170, 230), // Darkest (darker grey)
         name: 'Z-axis' 
       },
     ];
-  }, [options.xAxisColor]);
+  }, []);
+
+  // LVLH Axes - Whitish-grey with slight brightness variations (50% opacity)
+  const lvlhVectors = React.useMemo(() => {
+    return [
+      { 
+        axis: new Cartesian3(1, 0, 0), 
+        color: Color.fromBytes(240, 240, 245, 128), // Brightest (whitish-grey, translucent)
+        name: 'LVLH-X' 
+      },
+      { 
+        axis: new Cartesian3(0, 1, 0), 
+        color: Color.fromBytes(200, 200, 210, 128), // Medium (grey, translucent)
+        name: 'LVLH-Y' 
+      },
+      { 
+        axis: new Cartesian3(0, 0, 1), 
+        color: Color.fromBytes(160, 160, 170, 128), // Darkest (darker grey, translucent)
+        name: 'LVLH-Z' 
+      },
+    ];
+  }, []);
+
+  // Compute LVLH orientation from position and velocity
+  const computeLVLHOrientation = React.useCallback((satellite: ParsedSatellite) => {
+    const lvlhOrientation = new SampledProperty(Quaternion);
+    
+    // Sample at same times as position property
+    const times = (satellite.position as any)._property?._times || [];
+    
+    for (let i = 0; i < times.length; i++) {
+      const time = times[i];
+      const position = satellite.position.getValue(time);
+      
+      if (!position) {
+        continue;
+      }
+      
+      // Compute velocity from consecutive position samples (finite difference)
+      let velocity;
+      if (i < times.length - 1) {
+        const nextTime = times[i + 1];
+        const nextPosition = satellite.position.getValue(nextTime);
+        if (nextPosition) {
+          const dt = JulianDate.secondsDifference(nextTime, time);
+          velocity = Cartesian3.subtract(nextPosition, position, new Cartesian3());
+          Cartesian3.divideByScalar(velocity, dt, velocity);
+        }
+      } else if (i > 0) {
+        const prevTime = times[i - 1];
+        const prevPosition = satellite.position.getValue(prevTime);
+        if (prevPosition) {
+          const dt = JulianDate.secondsDifference(time, prevTime);
+          velocity = Cartesian3.subtract(position, prevPosition, new Cartesian3());
+          Cartesian3.divideByScalar(velocity, dt, velocity);
+        }
+      }
+      
+      if (position && velocity && Cartesian3.magnitude(velocity) > 0) {
+        // LVLH Frame:
+        // Z-axis: -radial (towards Earth center, nadir)
+        // Y-axis: along velocity (tangent to orbit)
+        // X-axis: cross-track (Y × Z, perpendicular to orbital plane)
+        
+        const zAxis = Cartesian3.normalize(Cartesian3.negate(position, new Cartesian3()), new Cartesian3());
+        const yAxis = Cartesian3.normalize(velocity, new Cartesian3());
+        const xAxis = Cartesian3.normalize(Cartesian3.cross(yAxis, zAxis, new Cartesian3()), new Cartesian3());
+        
+        // Recompute Y to ensure orthogonality (Z × X)
+        const yAxisOrtho = Cartesian3.cross(zAxis, xAxis, new Cartesian3());
+        
+        // Create rotation matrix from LVLH frame
+        const rotationMatrix = new Matrix3(
+          xAxis.x, yAxisOrtho.x, zAxis.x,
+          xAxis.y, yAxisOrtho.y, zAxis.y,
+          xAxis.z, yAxisOrtho.z, zAxis.z
+        );
+        
+        // Convert to quaternion
+        const quaternion = Quaternion.fromRotationMatrix(rotationMatrix);
+        lvlhOrientation.addSample(time, quaternion);
+      }
+    }
+    
+    return lvlhOrientation;
+  }, []);
+
+  // Create LVLH-oriented satellites (same as body satellites but with LVLH orientation)
+  const lvlhSatellites = React.useMemo(() => {
+    return satellites.map(sat => ({
+      ...sat,
+      orientation: computeLVLHOrientation(sat),
+    }));
+  }, [satellites, computeLVLHOrientation]);
 
   // Color management helper functions
   // Note: Will be used in Phase 3 (display colors in UI) and Phase 4 (color picker)
@@ -811,6 +886,24 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
                 isTracked={isThisSatelliteTracked}
                 viewerRef={viewerRef}
                 attitudeVectors={attitudeVectors}
+              />
+            );
+          })
+        }
+
+        {/* LVLH Axes (orbit-aligned reference frame: radial/tangent/cross-track) */}
+        {selectedMode !== 'celestial' && options.showAttitudeVisualization && showLVLHAxes && lvlhSatellites
+          .filter(sat => !hiddenSatellites.has(sat.id))
+          .map((satellite) => {
+            const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
+            return (
+              <BodyAxesRenderer
+                key={`${satellite.id}-lvlh-axes`}
+                satellite={satellite}
+                options={options}
+                isTracked={isThisSatelliteTracked}
+                viewerRef={viewerRef}
+                attitudeVectors={lvlhVectors}
               />
             );
           })
