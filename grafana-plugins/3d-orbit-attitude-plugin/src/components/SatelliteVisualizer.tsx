@@ -942,9 +942,10 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         }
         
         {/* Uncertainty Ellipsoids - Per-satellite - Hidden in Celestial Map mode */}
+        {/* Only render if global toggle is ON and per-satellite toggle is explicitly ON */}
         {selectedMode !== 'celestial' && options.showAttitudeVisualization && options.showUncertaintyEllipsoids && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
-          .filter(sat => satelliteRenderSettings.get(sat.id)?.showEllipsoid !== false)
+          .filter(sat => satelliteRenderSettings.get(sat.id)?.showEllipsoid === true)
           .map((satellite) => {
             // Only render if satellite has covariance data
             if (!satellite.covariance || satellite.covariance.length === 0) {
