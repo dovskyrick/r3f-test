@@ -1006,9 +1006,27 @@ export const SatelliteVisualizer: React.FC<Props> = ({ options, data, timeRange,
         }
         
         {/* Sensor Visualization (Cones, Footprints, Celestial Projections) */}
-        {/* In Celestial Map mode: hide cones, show only footprints and celestial projections */}
+        {/* Satellite & Celestial modes: show only tracked satellite's FOVs. Earth mode: hide all FOVs */}
         {options.showAttitudeVisualization && satellites
           .filter(sat => !hiddenSatellites.has(sat.id))
+          .filter(sat => {
+            // Earth Focus mode: hide all FOVs for clean Earth view
+            if (selectedMode === 'earth') {
+              return false;
+            }
+            
+            // Satellite Focus & Celestial Map modes: show only tracked satellite's FOVs
+            if (selectedMode === 'satellite' || selectedMode === 'celestial') {
+              // Only show if we have a tracked satellite and this is it
+              if (!trackedSatelliteId) {
+                return false; // No satellite tracked, hide all
+              }
+              return sat.id === trackedSatelliteId;
+            }
+            
+            // Fallback (shouldn't reach here)
+            return false;
+          })
           .map((satellite) => {
             const isThisSatelliteTracked = isTracked && trackedSatelliteId === satellite.id;
             return satellite.sensors.map((sensor, idx) => {
